@@ -1,23 +1,57 @@
 import React, { useState } from "react";
 import { View, StyleSheet, ScrollView, useWindowDimensions } from "react-native";
-import { Hospital, Mail, Lock } from "lucide-react-native";
-import { palette, radius, layout, gradients } from "@shared/designSystem";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { LinearGradient } from "expo-linear-gradient";
-import { Text, VStack, HStack, Button, TextField, Banner, Card } from "@shared/ui";
+import { Hospital, Mail, Lock } from "lucide-react-native";
 
-/**
- * Sign-in.
- *
- * Wired to the real auth endpoint in the next phase; the form, validation and
- * error surface are built now so the shell is exercised end to end.
- */
-export default function LoginScreen() {
+import { palette, radius, layout, gradients } from "@shared/designSystem";
+import { Text, VStack, HStack, Button, Banner, Card, Select } from "@shared/ui";
+import { ControlledTextField } from "@shared/form/ControlledTextField";
+import { apiErrorCode, apiErrorMessage } from "@api/apiClient";
+import { useLogin, useHospitalsForEmail } from "@modules/auth/hooks/useAuth";
+import { loginSchema, type LoginForm } from "@modules/auth/auth.validation";
+import type { HospitalChoice } from "@modules/auth/api/authApi";
+
+export default function LoginScreen({ navigation }: { navigation?: any }) {
   const { width } = useWindowDimensions();
   const isWide = width >= layout.wideBreakpoint;
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error] = useState<string | null>(null);
+  const login = useLogin();
+  const lookupHospitals = useHospitalsForEmail();
+
+  /**
+   * A locum may hold accounts at more than one hospital on this platform. The
+   * server refuses to guess — signing someone into the wrong hospital's patient
+   * list is both a breach and a clinical hazard — so it answers with the
+   * choices and this picker appears.
+   */
+  const [hospitals, setHospitals] = useState<HospitalChoice[] | null>(null);
+  const [hospitalId, setHospitalId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const { control, handleSubmit, getValues } = useForm<LoginForm>({
+    resolver: zodResolver(loginSchema),
+    mode: "onTouched",
+    defaultValues: { email: "", password: "" },
+  });
+
+  const submit = handleSubmit(async (values) => {
+    setError(null);
+    try {
+      await login.mutateAsync({ ...values, hospitalId: hospitalId ?? undefined });
+    } catch (err) {
+      if (apiErrorCode(err) === "HOSPITAL_SELECTION_REQUIRED") {
+        const list = await lookupHospitals.mutateAsync(getValues("email")).catch(() => []);
+        setHospitals(list);
+        setError("You have an account at more than one hospital. Choose which one.");
+        return;
+      }
+      setError(apiErrorMessage(err, "Could not sign you in"));
+    }
+  });
+
+  const busy = login.isPending || lookupHospitals.isPending;
 
   return (
     <View style={styles.root}>
@@ -64,35 +98,62 @@ export default function LoginScreen() {
             </Text>
           </VStack>
 
-          {error ? <Banner tone="danger" message={error} /> : null}
+          {error ? <Banner tone="danger" message={error} onDismiss={() => setError(null)} /> : null}
 
           <VStack gap={14}>
-            <TextField
+            <ControlledTextField
+              control={control}
+              name="email"
               label="Email"
-              value={email}
-              onChangeText={setEmail}
               placeholder="you@hospital.in"
               autoCapitalize="none"
               autoComplete="email"
               keyboardType="email-address"
+              testID="login-email"
               leading={<Mail size={16} color={palette.text.tertiary} strokeWidth={1.9} />}
             />
-            <TextField
+            <ControlledTextField
+              control={control}
+              name="password"
               label="Password"
-              value={password}
-              onChangeText={setPassword}
               placeholder="Your password"
               secureTextEntry
               autoComplete="current-password"
+              testID="login-password"
+              onSubmitEditing={submit}
+              returnKeyType="go"
               leading={<Lock size={16} color={palette.text.tertiary} strokeWidth={1.9} />}
             />
-            <Button label="Sign in" onPress={() => {}} />
+
+            {hospitals && hospitals.length > 1 ? (
+              <Select
+                label="Hospital"
+                required
+                value={hospitalId}
+                onChange={setHospitalId}
+                placeholder="Choose a hospital"
+                options={hospitals.map((h) => ({
+                  value: h.hospitalId,
+                  label: h.hospitalName,
+                  sublabel: h.hospitalCode,
+                }))}
+              />
+            ) : null}
+
+            <Button label="Sign in" onPress={submit} loading={busy} testID="login-submit" />
+
+            <Button
+              label="Forgot your password?"
+              variant="ghost"
+              size="sm"
+              onPress={() => navigation?.navigate?.("ForgotPassword")}
+            />
           </VStack>
 
           <Card compact>
             <Text variant="caption" tone="tertiary">
-              Every action you take is recorded against your account. Do not sign in on behalf of a
-              colleague.
+              Everything you do is recorded against your account. Do not share it, and do not sign
+              in on behalf of a colleague.
             </Text>
           </Card>
         </VStack>
@@ -113,12 +174,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   pane: { flex: 1, backgroundColor: palette.surface.primary },
-  paneContent: {
-    flexGrow: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 28,
-  },
+  paneContent: { flexGrow: 1, alignItems: "center", justifyContent: "center", padding: 28 },
   mark: {
     width: 38,
     height: 38,
