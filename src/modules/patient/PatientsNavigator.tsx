@@ -6,6 +6,8 @@ import PatientDetailScreen from "./screens/PatientDetailScreen";
 import RegisterPatientScreen from "./screens/RegisterPatientScreen";
 import BookAppointmentScreen from "@modules/appointment/screens/BookAppointmentScreen";
 import AppointmentBookedScreen from "@modules/appointment/screens/AppointmentBookedScreen";
+import MedicalRecordScreen from "@modules/consultation/screens/MedicalRecordScreen";
+import ConsultationScreen from "@modules/consultation/screens/ConsultationScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -25,6 +27,10 @@ export default function PatientsNavigator() {
       <Stack.Screen name="RegisterPatient" component={RegisterPatientScreen} />
       <Stack.Screen name="BookAppointment" component={BookAppointmentScreen} />
       <Stack.Screen name="AppointmentBooked" component={AppointmentBookedScreen} />
+      {/* A doctor who finds a patient by search must be able to open their
+          chart from there, rather than being sent to another section. */}
+      <Stack.Screen name="MedicalRecord" component={MedicalRecordScreen} />
+      <Stack.Screen name="Consultation" component={ConsultationScreen} />
     </Stack.Navigator>
   );
 }

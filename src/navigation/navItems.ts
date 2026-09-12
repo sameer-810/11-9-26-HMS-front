@@ -153,7 +153,22 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Medical record",
     icon: ClipboardList,
     section: "Clinical",
-    permission: PERMISSIONS.RECORD_VIEW,
+    /**
+     * MUST mirror the API's grant on GET /records/:patientId.
+     *
+     * These lists drifted once: the route was registered for record.view
+     * alone, while the API also serves nursing, laboratory and pharmacy their
+     * own scoped views. A pharmacist could therefore fetch a record they could
+     * not open — the screen was simply not registered for them, so the link
+     * went nowhere with no error to explain it.
+     */
+    permissionAny: [
+      PERMISSIONS.RECORD_VIEW,
+      PERMISSIONS.CONSULTATION_MANAGE,
+      PERMISSIONS.VITALS_RECORD,
+      PERMISSIONS.LAB_RESULTS_MANAGE,
+      PERMISSIONS.PHARMACY_DISPENSE,
+    ],
     hidden: true,
   },
 

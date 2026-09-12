@@ -16,6 +16,8 @@ import PatientsNavigator from "@modules/patient/PatientsNavigator";
 import AppointmentsNavigator from "@modules/appointment/AppointmentsNavigator";
 import RegisterPatientScreen from "@modules/patient/screens/RegisterPatientScreen";
 import OpdQueueScreen from "@modules/appointment/screens/OpdQueueScreen";
+import ClinicalNavigator from "@modules/consultation/ClinicalNavigator";
+import MedicalRecordScreen from "@modules/consultation/screens/MedicalRecordScreen";
 import { PlaceholderScreen } from "./PlaceholderScreen";
 
 /**
@@ -35,6 +37,10 @@ const SCREENS: Record<string, React.ComponentType<Record<string, unknown>>> = {
   RegisterPatient: RegisterPatientScreen,
   Appointments: AppointmentsNavigator,
   OpdQueue: OpdQueueScreen,
+  MyAppointments: ClinicalNavigator,
+  MyPatients: ClinicalNavigator,
+  Consultation: ClinicalNavigator,
+  MedicalRecord: MedicalRecordScreen,
 };
 
 const Drawer = createDrawerNavigator();
