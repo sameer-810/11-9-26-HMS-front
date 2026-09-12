@@ -1,0 +1,413 @@
+import React, { useMemo, useState } from "react";
+import { View, Pressable, StyleSheet } from "react-native";
+import { palette, radius, signal, layout } from "@shared/designSystem";
+import { Text, HStack, VStack, TextField, Button, Card, Banner } from "@shared/ui";
+import { News2Score } from "./News2Score";
+import { useRecordObservation } from "@modules/inpatient/hooks/useInpatient";
+import type { Consciousness, Observation } from "@modules/inpatient/types";
+
+/**
+ * NU-02: recording a set of observations.
+ *
+ * ---------------------------------------------------------------------------
+ * What this form deliberately does NOT have
+ * ---------------------------------------------------------------------------
+ * There is no "escalate" checkbox. Whether a set of observations escalates is
+ * decided by the server from the score, and a nurse at 3am on a ward of
+ * twenty-eight patients should not also be carrying that judgement — it is
+ * exactly the judgement that erodes with fatigue.
+ *
+ * There is also no Scale 2 toggle. Scale 2 belongs to the patient's respiratory
+ * physiology and is a prescribing decision; applying it here by guess would
+ * score a deteriorating patient as well.
+ *
+ * What the nurse CAN add is concern. `clinicalConcern` escalates on its own,
+ * regardless of the score — every early-warning system that ignored a worried
+ * nurse has had to add that back after an inquest.
+ */
+
+const ACVPU: { value: Consciousness; label: string; hint: string }[] = [
+  { value: "alert", label: "Alert", hint: "Awake, oriented" },
+  { value: "confusion", label: "Confusion", hint: "New confusion" },
+  { value: "voice", label: "Voice", hint: "Responds to voice" },
+  { value: "pain", label: "Pain", hint: "Responds to pain" },
+  { value: "unresponsive", label: "Unresponsive", hint: "No response" },
+];
+
+interface Props {
+  admissionId: string;
+  useScale2?: boolean;
+  onRecorded?: (observation: Observation) => void;
+}
+
+type Draft = Record<string, string>;
+
+/**
+ * Blank is MISSING, never zero.
+ *
+ * `Number("")` is 0 in JavaScript. Sending that would record a pulse of zero
+ * and score 3 for a parameter nobody measured — which is both a false alarm and
+ * a corrupted record.
+ */
+function num(v: string | undefined): number | null {
+  if (v === undefined || v.trim() === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+export function ObservationForm({ admissionId, useScale2, onRecorded }: Props) {
+  const [draft, setDraft] = useState<Draft>({});
+  const [consciousness, setConsciousness] = useState<Consciousness | "">("");
+  const [onOxygen, setOnOxygen] = useState<boolean | null>(null);
+  const [concern, setConcern] = useState("");
+  const [result, setResult] = useState<Observation | null>(null);
+
+  const record = useRecordObservation();
+  const set = (key: string) => (v: string) => setDraft((d) => ({ ...d, [key]: v }));
+
+  /**
+   * What is still missing, shown while they type.
+   *
+   * A nurse who finds out at the end that the set will not score has to go back
+   * to the patient. Telling them now is the difference between a complete
+   * observation and a partial one filed and forgotten.
+   */
+  const missing = useMemo(() => {
+    const out: string[] = [];
+    if (num(draft.respiratoryRate) === null) out.push("respiratory rate");
+    if (num(draft.spo2) === null) out.push("oxygen saturation");
+    if (onOxygen === null) out.push("air or oxygen");
+    if (num(draft.systolic) === null) out.push("blood pressure");
+    if (num(draft.pulse) === null) out.push("pulse");
+    if (!consciousness) out.push("consciousness");
+    if (num(draft.temperatureC) === null) out.push("temperature");
+    return out;
+  }, [draft, onOxygen, consciousness]);
+
+  const submit = async () => {
+    const observation = await record.mutateAsync({
+      admissionId,
+      respiratoryRate: num(draft.respiratoryRate),
+      spo2: num(draft.spo2),
+      onOxygen,
+      oxygenLitresPerMin: num(draft.oxygenLitresPerMin),
+      oxygenDevice: draft.oxygenDevice || undefined,
+      systolic: num(draft.systolic),
+      diastolic: num(draft.diastolic),
+      pulse: num(draft.pulse),
+      consciousness: consciousness || null,
+      temperatureC: num(draft.temperatureC),
+      painScore: num(draft.painScore),
+      bloodSugar: num(draft.bloodSugar),
+      urineOutputMl: num(draft.urineOutputMl),
+      clinicalConcern: concern.trim() || undefined,
+    });
+
+    setResult(observation);
+    setDraft({});
+    setConsciousness("");
+    setOnOxygen(null);
+    setConcern("");
+    onRecorded?.(observation);
+  };
+
+  return (
+    <VStack gap={16}>
+      {result ? (
+        <VStack gap={8} testID="observation-result">
+          <News2Score result={result.news2} size="lg" showResponse />
+          {result.escalation.required ? (
+            <View testID="escalation-banner">
+              <Banner
+                tone="danger"
+                title="This patient has been escalated"
+                message={result.escalation.reason}
+              />
+            </View>
+          ) : null}
+        </VStack>
+      ) : null}
+
+      <Card>
+        <VStack gap={14}>
+          <Text variant="h4">Observations</Text>
+          {useScale2 ? (
+            <Banner
+              tone="info"
+              title="NEWS2 Scale 2 is prescribed for this patient"
+              message="Oxygen saturations are scored on the hypercapnic respiratory failure scale. A high saturation on oxygen scores as abnormal."
+            />
+          ) : null}
+
+          <View style={styles.grid}>
+            <Field
+              label="Respiratory rate"
+              unit="/min"
+              value={draft.respiratoryRate}
+              onChange={set("respiratoryRate")}
+              testID="obs-respiratoryRate"
+            />
+            <Field
+              label="SpO₂"
+              unit="%"
+              value={draft.spo2}
+              onChange={set("spo2")}
+              testID="obs-spo2"
+            />
+            <Field
+              label="Systolic BP"
+              unit="mmHg"
+              value={draft.systolic}
+              onChange={set("systolic")}
+              testID="obs-systolic"
+            />
+            <Field
+              label="Diastolic BP"
+              unit="mmHg"
+              value={draft.diastolic}
+              onChange={set("diastolic")}
+              testID="obs-diastolic"
+            />
+            <Field
+              label="Pulse"
+              unit="bpm"
+              value={draft.pulse}
+              onChange={set("pulse")}
+              testID="obs-pulse"
+            />
+            <Field
+              label="Temperature"
+              unit="°C"
+              value={draft.temperatureC}
+              onChange={set("temperatureC")}
+              testID="obs-temperatureC"
+            />
+          </View>
+
+          {/**
+           * Air or oxygen is a NEWS2 parameter in its own right, worth 2 points.
+           * A default of "air" would quietly score every patient on oxygen two
+           * points low, so it starts unanswered and has to be answered.
+           */}
+          <VStack gap={6}>
+            <Text variant="label">Air or oxygen</Text>
+            <HStack gap={8}>
+              <Choice
+                label="Breathing air"
+                selected={onOxygen === false}
+                onPress={() => setOnOxygen(false)}
+                testID="obs-air"
+              />
+              <Choice
+                label="On oxygen"
+                selected={onOxygen === true}
+                onPress={() => setOnOxygen(true)}
+                tone="urgent"
+                testID="obs-oxygen"
+              />
+            </HStack>
+            {onOxygen ? (
+              <HStack gap={10}>
+                <Field
+                  label="Flow rate"
+                  unit="L/min"
+                  value={draft.oxygenLitresPerMin}
+                  onChange={set("oxygenLitresPerMin")}
+                  testID="obs-o2flow"
+                />
+                <Field
+                  label="Device"
+                  value={draft.oxygenDevice}
+                  onChange={set("oxygenDevice")}
+                  keyboard="default"
+                  testID="obs-o2device"
+                />
+              </HStack>
+            ) : null}
+          </VStack>
+
+          <VStack gap={6}>
+            <Text variant="label">Consciousness (ACVPU)</Text>
+            <HStack gap={8} wrap>
+              {ACVPU.map((c) => (
+                <Choice
+                  key={c.value}
+                  label={c.label}
+                  hint={c.hint}
+                  selected={consciousness === c.value}
+                  onPress={() => setConsciousness(c.value)}
+                  tone={c.value === "alert" ? "normal" : "critical"}
+                  testID={`obs-acvpu-${c.value}`}
+                />
+              ))}
+            </HStack>
+          </VStack>
+
+          <View style={styles.grid}>
+            <Field
+              label="Pain score"
+              unit="0–10"
+              value={draft.painScore}
+              onChange={set("painScore")}
+              testID="obs-painScore"
+            />
+            <Field
+              label="Blood sugar"
+              unit="mg/dL"
+              value={draft.bloodSugar}
+              onChange={set("bloodSugar")}
+              testID="obs-bloodSugar"
+            />
+            <Field
+              label="Urine output"
+              unit="mL"
+              value={draft.urineOutputMl}
+              onChange={set("urineOutputMl")}
+              testID="obs-urineOutputMl"
+            />
+          </View>
+
+          <TextField
+            label="Are you concerned about this patient?"
+            placeholder="Anything that worries you, even if the numbers look fine"
+            hint="A stated concern escalates on its own, whatever the score says."
+            value={concern}
+            onChangeText={setConcern}
+            multiline
+            testID="obs-concern"
+          />
+
+          {missing.length > 0 ? (
+            <View style={styles.missing} testID="obs-missing">
+              <Text variant="caption" tone="secondary">
+                {missing.length === 7
+                  ? "NEWS2 needs all seven parameters."
+                  : `Still needed for a NEWS2 score: ${missing.join(", ")}.`}
+              </Text>
+              <Text variant="caption" tone="secondary">
+                An incomplete set is still recorded — it just will not be given a
+                score, because a partial score would be read as a whole one.
+              </Text>
+            </View>
+          ) : null}
+
+          {record.isError ? (
+            <Banner
+              tone="danger"
+              title="Not recorded"
+              message={
+                (record.error as { response?: { data?: { error?: { message?: string } } } })
+                  ?.response?.data?.error?.message ?? "Something went wrong. Try again."
+              }
+            />
+          ) : null}
+
+          <Button
+            label={record.isPending ? "Recording…" : "Record observations"}
+            onPress={submit}
+            disabled={record.isPending}
+            testID="obs-submit"
+          />
+        </VStack>
+      </Card>
+    </VStack>
+  );
+}
+
+function Field({
+  label,
+  unit,
+  value,
+  onChange,
+  keyboard = "decimal-pad",
+  testID,
+}: {
+  label: string;
+  unit?: string;
+  value?: string;
+  onChange: (v: string) => void;
+  keyboard?: "decimal-pad" | "default";
+  testID?: string;
+}) {
+  return (
+    <View style={styles.field}>
+      <TextField
+        label={label}
+        suffix={unit}
+        numericField={keyboard === "decimal-pad"}
+        value={value ?? ""}
+        onChangeText={onChange}
+        testID={testID}
+      />
+    </View>
+  );
+}
+
+function Choice({
+  label,
+  hint,
+  selected,
+  onPress,
+  tone = "normal",
+  testID,
+}: {
+  label: string;
+  hint?: string;
+  selected: boolean;
+  onPress: () => void;
+  tone?: "normal" | "urgent" | "critical";
+  testID?: string;
+}) {
+  const s = signal[tone];
+  return (
+    <Pressable
+      onPress={onPress}
+      testID={testID}
+      accessibilityRole="radio"
+      accessibilityState={{ selected }}
+      accessibilityLabel={hint ? `${label}. ${hint}` : label}
+      style={[
+        styles.choice,
+        selected ? { borderColor: s.border, backgroundColor: s.bg } : null,
+      ]}
+    >
+      <Text variant="label" style={selected ? { color: s.text } : undefined}>
+        {label}
+      </Text>
+      {hint ? (
+        <Text variant="caption" tone="tertiary">
+          {hint}
+        </Text>
+      ) : null}
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  field: {
+    minWidth: 140,
+    flexGrow: 1,
+    flexBasis: 140,
+  },
+  choice: {
+    minHeight: layout.minTouchTarget,
+    justifyContent: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: palette.border.default,
+    backgroundColor: palette.surface.raised,
+  },
+  missing: {
+    gap: 4,
+    padding: 10,
+    borderRadius: radius.sm,
+    backgroundColor: palette.surface.sunken,
+  },
+});

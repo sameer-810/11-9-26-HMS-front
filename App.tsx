@@ -53,6 +53,15 @@ const queryClient = new QueryClient({
  * names and their parameters are type-checked here, and a typo in the linking
  * table below is a compile error rather than a dead link.
  */
+type InpatientParamList = {
+  WardBoard: { mode?: "ward" | "icu" | "mine" } | undefined;
+  Bedside: { admissionId: string };
+  AdmitPatient: { patientId?: string; consultationId?: string } | undefined;
+  Discharge: { admissionId: string };
+  MedicalRecord: { patientId: string };
+  PatientDetail: { patientId: string };
+};
+
 type AppParamList = {
   Dashboard: undefined;
   Patients: undefined;
@@ -64,10 +73,14 @@ type AppParamList = {
   MyPatients: undefined;
   Consultation: { patientId: string };
   MedicalRecord: { patientId: string };
-  AdmittedPatients: undefined;
+  /**
+   * The inpatient stack. Addressable all the way down, because a bedside chart
+   * is exactly the kind of link that gets pasted into a handover message.
+   */
+  AdmittedPatients: NavigatorScreenParams<InpatientParamList> | undefined;
   Beds: undefined;
-  Icu: undefined;
-  NursingPatients: undefined;
+  Icu: NavigatorScreenParams<InpatientParamList> | undefined;
+  NursingPatients: NavigatorScreenParams<InpatientParamList> | undefined;
   Handover: undefined;
   LabQueue: undefined;
   LabReports: undefined;
@@ -104,10 +117,30 @@ const linking: LinkingOptions<RootParamList> = {
           MyPatients: "doctor/patients",
           Consultation: "opd/consultation/:patientId",
           MedicalRecord: "patients/:patientId/record",
-          AdmittedPatients: "ipd/patients",
+          AdmittedPatients: {
+            path: "ipd",
+            screens: {
+              WardBoard: "patients",
+              Bedside: "patients/:admissionId",
+              AdmitPatient: "admit",
+              Discharge: "patients/:admissionId/discharge",
+            },
+          },
           Beds: "beds",
-          Icu: "icu",
-          NursingPatients: "nursing/patients",
+          Icu: {
+            path: "icu",
+            screens: {
+              WardBoard: "",
+              Bedside: "patients/:admissionId",
+            },
+          },
+          NursingPatients: {
+            path: "nursing",
+            screens: {
+              WardBoard: "patients",
+              Bedside: "patients/:admissionId",
+            },
+          },
           Handover: "nursing/handover",
           LabQueue: "lab/requests",
           LabReports: "lab/reports",

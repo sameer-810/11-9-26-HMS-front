@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { View, StyleSheet } from "react-native";
-import { Pill, Plus, Trash2, TriangleAlert, ShieldAlert, Search } from "lucide-react-native";
+import { Pill, Trash2, TriangleAlert, ShieldAlert, Search } from "lucide-react-native";
 
 import { palette, radius, signal } from "@shared/designSystem";
 import {
