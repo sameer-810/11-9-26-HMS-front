@@ -12,6 +12,10 @@ import { Sidebar } from "./Sidebar";
 import { NAV_ITEMS, useVisibleNavItems } from "./navItems";
 
 import DashboardScreen from "@modules/dashboard/screens/DashboardScreen";
+import PatientsNavigator from "@modules/patient/PatientsNavigator";
+import AppointmentsNavigator from "@modules/appointment/AppointmentsNavigator";
+import RegisterPatientScreen from "@modules/patient/screens/RegisterPatientScreen";
+import OpdQueueScreen from "@modules/appointment/screens/OpdQueueScreen";
 import { PlaceholderScreen } from "./PlaceholderScreen";
 
 /**
@@ -27,6 +31,10 @@ import { PlaceholderScreen } from "./PlaceholderScreen";
  */
 const SCREENS: Record<string, React.ComponentType<Record<string, unknown>>> = {
   Dashboard: DashboardScreen,
+  Patients: PatientsNavigator,
+  RegisterPatient: RegisterPatientScreen,
+  Appointments: AppointmentsNavigator,
+  OpdQueue: OpdQueueScreen,
 };
 
 const Drawer = createDrawerNavigator();

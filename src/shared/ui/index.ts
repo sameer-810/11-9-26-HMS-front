@@ -24,6 +24,8 @@ export { ErrorState } from "./ErrorState";
 export { Skeleton } from "./Skeleton";
 export { Avatar } from "./Avatar";
 export { StatTile } from "./StatTile";
+export { SlotGrid } from "./SlotGrid";
+export type { GridSlot } from "./SlotGrid";
 
 // ---- Clinical ----
 export { SignalBadge } from "./SignalBadge";
