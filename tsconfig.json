@@ -1,0 +1,18 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": false,
+    "jsx": "react-jsx",
+    "paths": {
+      "@/*": ["./*"],
+      "@api/*": ["./src/shared/api/*"],
+      "@modules/*": ["./src/modules/*"],
+      "@navigation/*": ["./src/navigation/*"],
+      "@shared/*": ["./src/shared/*"],
+      "@config/*": ["./src/config/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "dist", "tests", "tools"]
+}

@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "HMS",
+    "slug": "hms",
+    "version": "1.0.0",
+    "orientation": "default",
+    "scheme": "hms",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.hms.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Used to scan patient wristbands, sample labels and medicine packs.",
+        "NSPhotoLibraryUsageDescription": "Used to attach scanned reports and consent forms to a patient record."
+      }
+    },
+    "android": {
+      "package": "com.hms.app",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.VIBRATE"
+      ],
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-font",
+      "expo-camera",
+      "expo-audio"
+    ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "extra": {}
+  }
+}
