@@ -22,7 +22,11 @@
       "package": "com.hms.app",
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.VIBRATE"
+        "android.permission.VIBRATE",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ],
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO",
@@ -46,6 +50,11 @@
     "runtimeVersion": {
       "policy": "appVersion"
     },
-    "extra": {}
+    "extra": {
+      "eas": {
+        "projectId": "de336b74-2d97-49c5-b626-adadb2237145"
+      }
+    },
+    "owner": "hms699s-team"
   }
 }
