@@ -10,6 +10,7 @@ export interface DashboardSummary {
     lab?: { pending: number; criticalOpen: number };
     pharmacy?: { pendingPrescriptions: number };
     inventory?: { lowStock: number; expiringSoon: number; expiredOnShelf: number };
+    billing?: { draftBills: number; outstandingBills: number; outstandingPaise: number; collectedTodayPaise: number };
   };
   pending: string[];
 }

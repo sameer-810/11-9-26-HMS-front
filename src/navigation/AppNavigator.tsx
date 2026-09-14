@@ -32,6 +32,7 @@ import {
   StoreInventoryNavigator,
   PharmacyStockNavigator,
 } from "@modules/inventory/InventoryNavigator";
+import BillingNavigator from "@modules/billing/BillingNavigator";
 import { PlaceholderScreen } from "./PlaceholderScreen";
 
 /**
@@ -70,6 +71,9 @@ const SCREENS: Record<string, React.ComponentType<Record<string, unknown>>> = {
   PharmacyQueue: PharmacyNavigator,
   MedicineStock: PharmacyStockNavigator,
   Inventory: StoreInventoryNavigator,
+
+  // ---- Finance (Phase 7) ----
+  Bills: BillingNavigator,
 };
 
 const Drawer = createDrawerNavigator();

@@ -84,6 +84,15 @@ type StockParamList = {
   StockLedger: undefined;
 };
 
+type BillingParamList = {
+  BillsList: undefined;
+  GenerateBill: { patientId?: string } | undefined;
+  BillDetail: { billId: string };
+  RecordPayment: { billId: string };
+  Receipt: { paymentId: string };
+  Outstanding: undefined;
+};
+
 type AppParamList = {
   Dashboard: undefined;
   Patients: undefined;
@@ -109,7 +118,7 @@ type AppParamList = {
   PharmacyQueue: NavigatorScreenParams<PharmacyParamList> | undefined;
   MedicineStock: NavigatorScreenParams<StockParamList> | undefined;
   Inventory: NavigatorScreenParams<StockParamList> | undefined;
-  Bills: undefined;
+  Bills: NavigatorScreenParams<BillingParamList> | undefined;
   Reports: undefined;
   AuditTrail: undefined;
   UserManagement: undefined;
@@ -202,7 +211,20 @@ const linking: LinkingOptions<RootParamList> = {
               StockLedger: "movements",
             },
           },
-          Bills: "billing/bills",
+          // The spec's routes: /billing/bills, /billing/generate/:patientId,
+          // /billing/payment/:billId, /billing/receipt/:paymentId and
+          // /billing/outstanding.
+          Bills: {
+            path: "billing",
+            screens: {
+              BillsList: "bills",
+              GenerateBill: "generate/:patientId?",
+              BillDetail: "bills/:billId",
+              RecordPayment: "payment/:billId",
+              Receipt: "receipt/:paymentId",
+              Outstanding: "outstanding",
+            },
+          },
           Reports: "reports",
           AuditTrail: "admin/audit",
           UserManagement: "admin/users",

@@ -10,7 +10,9 @@ import {
   OctagonAlert,
   Pill,
   Boxes,
+  Receipt,
 } from "lucide-react-native";
+import { formatRupees } from "@shared/format";
 
 import { palette } from "@shared/designSystem";
 import { useAuthStore } from "@shared/store/useAuthStore";
@@ -164,6 +166,25 @@ export default function DashboardScreen() {
                       icon={OctagonAlert}
                       accent="clinical"
                       attention={tiles.inventory.expiredOnShelf > 0}
+                    />
+                  </>
+                ) : null}
+
+                {tiles?.billing ? (
+                  <>
+                    <StatTile
+                      label="Collected today"
+                      value={formatRupees(tiles.billing.collectedTodayPaise / 100)}
+                      icon={Receipt}
+                      accent="green"
+                    />
+                    <StatTile
+                      label="Outstanding"
+                      value={formatRupees(tiles.billing.outstandingPaise / 100)}
+                      sublabel={`${tiles.billing.outstandingBills} unpaid · ${tiles.billing.draftBills} drafts`}
+                      icon={Receipt}
+                      accent="violet"
+                      attention={tiles.billing.outstandingBills > 0}
                     />
                   </>
                 ) : null}
