@@ -8,6 +8,8 @@ import {
   ShieldCheck,
   FlaskConical,
   OctagonAlert,
+  Pill,
+  Boxes,
 } from "lucide-react-native";
 
 import { palette } from "@shared/designSystem";
@@ -130,6 +132,38 @@ export default function DashboardScreen() {
                       icon={OctagonAlert}
                       accent="clinical"
                       attention={tiles.lab.criticalOpen > 0}
+                    />
+                  </>
+                ) : null}
+
+                {tiles?.pharmacy ? (
+                  <StatTile
+                    label="Prescriptions waiting"
+                    value={tiles.pharmacy.pendingPrescriptions}
+                    sublabel="to dispense"
+                    icon={Pill}
+                    accent="violet"
+                  />
+                ) : null}
+
+                {tiles?.inventory ? (
+                  <>
+                    <StatTile
+                      label="Low stock"
+                      value={tiles.inventory.lowStock}
+                      sublabel="at or below reorder level"
+                      icon={Boxes}
+                      accent="teal"
+                      attention={tiles.inventory.lowStock > 0}
+                    />
+                    {/* A separate tile: expired stock is a different problem, and the one that ends with an expired box handed over. */}
+                    <StatTile
+                      label="Expired on the shelf"
+                      value={tiles.inventory.expiredOnShelf}
+                      sublabel={`${tiles.inventory.expiringSoon} batches expire within 90 days`}
+                      icon={OctagonAlert}
+                      accent="clinical"
+                      attention={tiles.inventory.expiredOnShelf > 0}
                     />
                   </>
                 ) : null}

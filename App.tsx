@@ -70,6 +70,20 @@ type LaboratoryParamList = {
   PatientDetail: { patientId: string };
 };
 
+type PharmacyParamList = {
+  PharmacyQueueList: undefined;
+  Dispense: { prescriptionId: string };
+};
+
+type StockParamList = {
+  InventoryList: undefined;
+  InventoryItem: { itemId: string };
+  ReceiveStock: undefined;
+  IssueStock: undefined;
+  LowStock: undefined;
+  StockLedger: undefined;
+};
+
 type AppParamList = {
   Dashboard: undefined;
   Patients: undefined;
@@ -92,9 +106,9 @@ type AppParamList = {
   Handover: undefined;
   LabQueue: NavigatorScreenParams<LaboratoryParamList> | undefined;
   LabReports: NavigatorScreenParams<LaboratoryParamList> | undefined;
-  PharmacyQueue: undefined;
-  MedicineStock: undefined;
-  Inventory: undefined;
+  PharmacyQueue: NavigatorScreenParams<PharmacyParamList> | undefined;
+  MedicineStock: NavigatorScreenParams<StockParamList> | undefined;
+  Inventory: NavigatorScreenParams<StockParamList> | undefined;
   Bills: undefined;
   Reports: undefined;
   AuditTrail: undefined;
@@ -160,9 +174,34 @@ const linking: LinkingOptions<RootParamList> = {
             path: "lab/reports",
             screens: { LabResultsList: "", LabOrder: ":orderId" },
           },
-          PharmacyQueue: "pharmacy/prescriptions",
-          MedicineStock: "pharmacy/stock",
-          Inventory: "inventory",
+          // The spec's routes: /pharmacy/prescriptions, /pharmacy/dispense/:id,
+          // /pharmacy/stock, /inventory/receive, /inventory/issue and
+          // /inventory/low-stock.
+          PharmacyQueue: {
+            path: "pharmacy",
+            screens: { PharmacyQueueList: "prescriptions", Dispense: "dispense/:prescriptionId" },
+          },
+          MedicineStock: {
+            path: "pharmacy/stock",
+            screens: {
+              InventoryList: "",
+              InventoryItem: "items/:itemId",
+              ReceiveStock: "receive",
+              LowStock: "low-stock",
+              StockLedger: "movements",
+            },
+          },
+          Inventory: {
+            path: "inventory",
+            screens: {
+              InventoryList: "",
+              InventoryItem: "items/:itemId",
+              ReceiveStock: "receive",
+              IssueStock: "issue",
+              LowStock: "low-stock",
+              StockLedger: "movements",
+            },
+          },
           Bills: "billing/bills",
           Reports: "reports",
           AuditTrail: "admin/audit",
