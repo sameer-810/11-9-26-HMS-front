@@ -38,6 +38,7 @@ import {
   useSetAllergies,
 } from "@modules/patient/hooks/usePatients";
 import type { Allergy, AllergySeverity } from "@modules/patient/types";
+import { PrintWristbandButton } from "@modules/printing/components/PrintWristbandButton";
 
 const SEVERITIES = [
   { value: "mild", label: "Mild", sublabel: "Rash, mild discomfort" },
@@ -68,6 +69,12 @@ export default function PatientDetailScreen() {
     hasPermission(PERMISSIONS.CONSULTATION_MANAGE) ||
     hasPermission(PERMISSIONS.NURSING_NOTES_MANAGE) ||
     hasPermission(PERMISSIONS.PATIENTS_MANAGE);
+  // Whoever puts the band on: the desk at registration, the admitting team, and
+  // the nurse who replaces a band that is missing, illegible or wrong.
+  const canPrintWristband =
+    hasPermission(PERMISSIONS.PATIENTS_MANAGE) ||
+    hasPermission(PERMISSIONS.ADMISSION_MANAGE) ||
+    hasPermission(PERMISSIONS.VITALS_RECORD);
 
   const { data: patient, isLoading, isError, error, refetch, isRefetching } = usePatient(id);
   const { data: banner } = usePatientBanner(id);
@@ -109,14 +116,21 @@ export default function PatientDetailScreen() {
       onRefresh={refetch}
       testID="patient-detail"
       right={
-        canBook ? (
-          <Button
-            label="Book appointment"
-            fullWidth={false}
-            testID="book-from-patient"
-            icon={<CalendarPlus size={16} color="#FFFFFF" strokeWidth={2.2} />}
-            onPress={() => navigation.navigate("BookAppointment", { patientId: patient.id })}
-          />
+        canBook || canPrintWristband ? (
+          <HStack gap={8} align="flex-start" wrap>
+            {canPrintWristband ? (
+              <PrintWristbandButton patient={patient} banner={banner ?? undefined} />
+            ) : null}
+            {canBook ? (
+              <Button
+                label="Book appointment"
+                fullWidth={false}
+                testID="book-from-patient"
+                icon={<CalendarPlus size={16} color="#FFFFFF" strokeWidth={2.2} />}
+                onPress={() => navigation.navigate("BookAppointment", { patientId: patient.id })}
+              />
+            ) : null}
+          </HStack>
         ) : undefined
       }
     >

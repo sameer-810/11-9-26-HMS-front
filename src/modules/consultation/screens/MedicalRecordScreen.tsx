@@ -78,8 +78,24 @@ export default function MedicalRecordScreen() {
 
   const [tab, setTab] = useState("summary");
   const { data: banner } = usePatientBanner(patientId);
-  const { data: record, isLoading, isError, error, refetch, isRefetching } =
+  const { data: record, isLoading, isError, error, refetch, isRefetching, fetchStatus } =
     useMedicalRecord(patientId);
+
+  // Offline, and this record was never opened here while online. The mirror
+  // holds what this user saw, not the whole hospital — and says so.
+  if (!record && fetchStatus === "paused") {
+    return (
+      <Screen title="Medical record" patient={banner ?? undefined}>
+        <View testID="record-not-saved">
+          <EmptyState
+            icon={FileText}
+            title="Not saved on this device"
+            message="This record was not opened on this device while it was online, so there is no copy to show offline. It will load when the connection returns."
+          />
+        </View>
+      </Screen>
+    );
+  }
 
   if (isLoading) {
     return (

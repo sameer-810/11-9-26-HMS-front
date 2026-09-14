@@ -20,6 +20,7 @@ import {
   ClipboardList,
   CalendarClock,
   UserRound,
+  ScanLine,
   type LucideIcon,
 } from "lucide-react-native";
 import { PERMISSIONS } from "@shared/permissions";
@@ -86,6 +87,22 @@ export const NAV_ITEMS: NavItem[] = [
     icon: LayoutDashboard,
     section: "Overview",
     permission: PERMISSIONS.DASHBOARD_VIEW,
+  },
+  // A wristband or tube label, scanned. MUST mirror the API's grant on
+  // GET /patients/scan/:code — which deliberately leaves out billing.
+  {
+    name: "Scan",
+    label: "Scan",
+    icon: ScanLine,
+    section: "Overview",
+    permissionAny: [
+      PERMISSIONS.PATIENTS_MANAGE,
+      PERMISSIONS.VITALS_RECORD,
+      PERMISSIONS.CONSULTATION_MANAGE,
+      PERMISSIONS.RECORD_VIEW,
+      PERMISSIONS.LAB_QUEUE_VIEW,
+      PERMISSIONS.PHARMACY_DISPENSE,
+    ],
   },
 
   // ---- Front office ----

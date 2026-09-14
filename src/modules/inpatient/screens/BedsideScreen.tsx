@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { View, StyleSheet } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { palette, signal } from "@shared/designSystem";
@@ -16,8 +16,11 @@ import {
   ErrorState,
   TextField,
   Select,
+  Banner,
+  EmptyState,
 } from "@shared/ui";
 import { formatDateTime } from "@shared/format";
+import { useMyOps, type OutboxOp } from "@shared/offline/outbox";
 import { useBedside, useAddNursingNote, useTransfer } from "@modules/inpatient/hooks/useInpatient";
 import { useSelectableBeds } from "@modules/inpatient/hooks/useBeds";
 import { News2Score } from "@modules/inpatient/components/News2Score";
@@ -25,7 +28,8 @@ import { ObservationForm } from "@modules/inpatient/components/ObservationForm";
 import { DrugRoundPanel } from "@modules/inpatient/components/DrugRoundPanel";
 import { SbarPanel } from "@modules/inpatient/components/SbarPanel";
 import type { PatientBanner } from "@modules/patient/types";
-import type { Observation } from "@modules/inpatient/types";
+import type { News2Result, Observation } from "@modules/inpatient/types";
+import { calculateNews2, type News2Input } from "@shared/clinical/news2";
 
 /**
  * The bedside chart — IP-04.
@@ -64,10 +68,43 @@ export default function BedsideScreen() {
   const canManageAdmission = hasPermission(PERMISSIONS.ADMISSION_MANAGE);
 
   const [tab, setTab] = useState<Tab>("chart");
-  const { data, isLoading, isError, error, refetch, isRefetching } = useBedside(admissionId);
+  const { data, isLoading, isError, error, refetch, isRefetching, fetchStatus } = useBedside(admissionId);
+
+  /**
+   * The newest set charted on this device and not yet sent, scored here.
+   *
+   * The pinned score must be the patient's latest — not the latest the server
+   * happens to have. Offline, a nurse who charts an 11 and glances back at the
+   * top of the chart must not find a reassuring "0, routine" from this morning.
+   */
+  const myOps = useMyOps();
+  const news2Scale = data?.admission?.news2Scale;
+  const pendingScore = useMemo(() => {
+    const newest = [...myOps]
+      .reverse()
+      .find((o) => o.kind === "observation" && o.admissionId === admissionId && o.status === "pending");
+    if (!newest) return null;
+    const local = calculateNews2({ ...(newest.body as News2Input), useScale2: news2Scale === 2 });
+    return { ...local, delta: null, significantRise: false } as News2Result;
+  }, [myOps, admissionId, news2Scale]);
 
   const admission = data?.admission;
   const patient = admission?.patient as PatientBanner | undefined;
+
+  // Offline, and this chart was never opened on this device while online.
+  // Said plainly — a spinner here would read as "loading", and nothing is coming.
+  if (!data && fetchStatus === "paused") {
+    return (
+      <Screen title="Bedside">
+        <View testID="bedside-not-saved">
+          <EmptyState
+            title="Not saved on this device"
+            message="This chart was not opened on this device while it was online, so there is no copy to show. It will load when the connection returns."
+          />
+        </View>
+      </Screen>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -144,13 +181,32 @@ export default function BedsideScreen() {
          * Pinned above the tabs. The current score and its escalation policy
          * are not a tab you can be on the wrong side of.
          */}
-        <News2Score
-          result={
-            data?.observations.find((o) => o.news2.complete)?.news2 ?? null
-          }
-          size="lg"
-          showResponse
-        />
+        {pendingScore ? (
+          <View testID="bedside-pending-score">
+            <VStack gap={6}>
+              <Banner
+                tone="warning"
+                title="The newest observations are on this device, not yet sent"
+                message="This score is from the set charted here and worked out on this device. The escalation board has not seen it — act on it as you would on any score."
+              />
+              <News2Score result={pendingScore} size="lg" showResponse />
+            </VStack>
+          </View>
+        ) : null}
+        <VStack gap={4}>
+          {pendingScore ? (
+            <Text variant="caption" tone="tertiary">
+              Last score filed on the server
+            </Text>
+          ) : null}
+          <News2Score
+            result={
+              data?.observations.find((o) => o.news2.complete)?.news2 ?? null
+            }
+            size={pendingScore ? "md" : "lg"}
+            showResponse={!pendingScore}
+          />
+        </VStack>
 
         <ChipsRow
           chips={visibleTabs.map((t) => ({ key: t.key, label: t.label }))}
@@ -169,6 +225,7 @@ export default function BedsideScreen() {
         {tab === "observations" && canRecordVitals ? (
           <ObservationForm
             admissionId={admissionId}
+            patientName={patient?.fullName}
             useScale2={admission.news2Scale === 2}
             onRecorded={() => refetch()}
           />
@@ -178,8 +235,8 @@ export default function BedsideScreen() {
 
         {tab === "notes" ? (
           <VStack gap={16}>
-            {canWriteNotes ? <NoteComposer admissionId={admissionId} /> : null}
-            <NotesList notes={data?.notes ?? []} />
+            {canWriteNotes ? <NoteComposer admissionId={admissionId} patientName={patient?.fullName} /> : null}
+            <NotesList notes={data?.notes ?? []} admissionId={admissionId} />
             <SbarPanel admissionId={admissionId} />
           </VStack>
         ) : null}
@@ -197,12 +254,29 @@ function ChartTab({
   admissionId: string;
   canTransfer: boolean;
 }) {
+  const myOps = useMyOps();
+  const pending = useMemo(
+    () => myOps.filter((o) => o.kind === "observation" && o.admissionId === admissionId),
+    [myOps, admissionId],
+  );
+
   return (
     <VStack gap={16}>
       <Card>
         <VStack gap={10}>
           <Text variant="h4">Observation trend</Text>
-          {data.observations.length === 0 ? (
+          {/* Sets charted offline, above the chart: newest things first, and never mistaken for filed ones. */}
+          {pending.length > 0 ? (
+            <VStack gap={8} testID="pending-observations">
+              {pending
+                .slice()
+                .reverse()
+                .map((op) => (
+                  <PendingObservationRow key={op.id} op={op} />
+                ))}
+            </VStack>
+          ) : null}
+          {data.observations.length === 0 && pending.length === 0 ? (
             <Text variant="caption" tone="secondary">
               Nothing recorded yet.
             </Text>
@@ -237,6 +311,11 @@ function ObservationRow({ observation: o }: { observation: Observation }) {
           <Text variant="caption" tone="tertiary">
             {o.recordedBy}
           </Text>
+          {o.syncedLateMinutes && o.syncedLateMinutes >= 5 ? (
+            <Text variant="caption" tone="tertiary">
+              charted offline · sent {o.syncedLateMinutes} min later
+            </Text>
+          ) : null}
         </VStack>
 
         <HStack gap={10} wrap style={{ flex: 1 }}>
@@ -269,6 +348,53 @@ function ObservationRow({ observation: o }: { observation: Observation }) {
           ) : null}
         </VStack>
       </HStack>
+    </View>
+  );
+}
+
+const VITAL_LABELS: [key: string, label: string, suffix?: string][] = [
+  ["respiratoryRate", "RR"],
+  ["spo2", "SpO₂", "%"],
+  ["systolic", "BP"],
+  ["pulse", "HR"],
+  ["temperatureC", "Temp", "°C"],
+  ["consciousness", "ACVPU"],
+];
+
+/** A set on this device, not yet on the server — shown as exactly that. */
+function PendingObservationRow({ op }: { op: OutboxOp }) {
+  const failed = op.status === "failed";
+  return (
+    <View
+      style={[styles.obsRow, { borderLeftColor: failed ? signal.critical.color : palette.border.strong, borderStyle: "dashed" }]}
+      testID={`pending-observation-${op.id}`}
+    >
+      <HStack gap={10} align="center" wrap>
+        <VStack gap={2} style={{ minWidth: 120 }}>
+          <Text variant="label-sm">{formatDateTime(op.takenAt)}</Text>
+          <Text variant="caption" style={{ color: failed ? signal.critical.text : palette.warning.text }}>
+            {failed ? "Not filed" : "Waiting to send"}
+          </Text>
+        </VStack>
+        <HStack gap={10} wrap style={{ flex: 1 }}>
+          {VITAL_LABELS.map(([key, label, suffix]) => {
+            const value = op.body[key];
+            return (
+              <Vital
+                key={key}
+                label={label}
+                value={typeof value === "number" || typeof value === "string" ? value : null}
+                suffix={suffix}
+              />
+            );
+          })}
+        </HStack>
+      </HStack>
+      {failed && op.error ? (
+        <Text variant="caption" style={{ color: signal.critical.text }}>
+          {op.error}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -362,15 +488,26 @@ function TransferPanel({ admissionId }: { admissionId: string }) {
   );
 }
 
-function NoteComposer({ admissionId }: { admissionId: string }) {
+function NoteComposer({ admissionId, patientName }: { admissionId: string; patientName?: string }) {
   const [note, setNote] = useState("");
   const [category, setCategory] = useState("general");
-  const add = useAddNursingNote(admissionId);
+  const [queued, setQueued] = useState(false);
+  const add = useAddNursingNote(admissionId, patientName ? `Nursing note · ${patientName}` : "Nursing note");
 
   return (
     <Card>
       <VStack gap={12}>
         <Text variant="h4">Nursing note</Text>
+        {queued ? (
+          <View testID="note-queued">
+            <Banner
+              tone="warning"
+              title="Saved on this device — not yet sent"
+              message="The note will be filed automatically, at the time you wrote it, when the connection returns."
+              onDismiss={() => setQueued(false)}
+            />
+          </View>
+        ) : null}
         <Select
           label="Category"
           value={category}
@@ -395,7 +532,15 @@ function NoteComposer({ admissionId }: { admissionId: string }) {
           label={add.isPending ? "Saving…" : "Add note"}
           disabled={note.trim().length < 3 || add.isPending}
           onPress={() =>
-            add.mutate({ note: note.trim(), category }, { onSuccess: () => setNote("") })
+            add.mutate(
+              { note: note.trim(), category },
+              {
+                onSuccess: (result) => {
+                  setNote("");
+                  setQueued(result.status === "queued");
+                },
+              },
+            )
           }
           testID="note-submit"
         />
@@ -404,14 +549,48 @@ function NoteComposer({ admissionId }: { admissionId: string }) {
   );
 }
 
-function NotesList({ notes }: { notes: { id: string; note: string; category: string; recordedAt: string; recordedBy: string; shift: string }[] }) {
-  if (notes.length === 0) return null;
+function NotesList({
+  notes,
+  admissionId,
+}: {
+  notes: { id: string; note: string; category: string; recordedAt: string; recordedBy: string; shift: string }[];
+  admissionId: string;
+}) {
+  const myOps = useMyOps();
+  const pending = useMemo(
+    () => myOps.filter((o) => o.kind === "note" && o.admissionId === admissionId),
+    [myOps, admissionId],
+  );
+  if (notes.length === 0 && pending.length === 0) return null;
   return (
     <Card>
       <VStack gap={10}>
         <Text variant="overline" tone="secondary">
           Recent notes
         </Text>
+        {pending
+          .slice()
+          .reverse()
+          .map((op) => (
+            <View key={op.id} style={styles.note} testID={`pending-note-${op.id}`}>
+              <VStack gap={3}>
+                <HStack gap={8} align="center" wrap>
+                  <Text variant="label-sm" style={{ color: op.status === "failed" ? signal.critical.text : palette.warning.text }}>
+                    {op.status === "failed" ? "Not filed" : "Waiting to send"}
+                  </Text>
+                  <Text variant="caption" tone="tertiary">
+                    {formatDateTime(op.takenAt)}
+                  </Text>
+                </HStack>
+                <Text variant="body-sm">{String(op.body.note ?? "")}</Text>
+                {op.error ? (
+                  <Text variant="caption" style={{ color: signal.critical.text }}>
+                    {op.error}
+                  </Text>
+                ) : null}
+              </VStack>
+            </View>
+          ))}
         {notes.map((n) => (
           <View key={n.id} style={styles.note}>
             <VStack gap={3}>

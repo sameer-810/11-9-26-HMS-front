@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View, Pressable, StyleSheet, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -40,7 +40,15 @@ import UsersNavigator from "@modules/admin/UsersNavigator";
 import HospitalConfigScreen from "@modules/admin/screens/HospitalConfigScreen";
 import BedsScreen from "@modules/admin/screens/BedsScreen";
 import ProfileScreen from "@modules/admin/screens/ProfileScreen";
+import ScanScreen from "@modules/printing/screens/ScanScreen";
 import { PlaceholderScreen } from "./PlaceholderScreen";
+import { useAuthStore } from "@shared/store/useAuthStore";
+import { queryClient } from "@api/queryClient";
+import { startMirror } from "@shared/offline/mirror";
+import { startOutboxSync } from "@shared/offline/outbox";
+import { OfflineStatusBar } from "@shared/offline/OfflineStatusBar";
+import { startRealtime } from "@shared/realtime/realtime";
+import { RealtimeAlerts } from "@shared/realtime/RealtimeAlerts";
 
 /**
  * Route name -> screen component.
@@ -90,6 +98,9 @@ const SCREENS: Record<string, React.ComponentType<Record<string, unknown>>> = {
   UserManagement: UsersNavigator,
   HospitalConfig: HospitalConfigScreen,
   Profile: ProfileScreen,
+
+  // ---- Printing and scanning (Phase 9) ----
+  Scan: ScanScreen,
 };
 
 const Drawer = createDrawerNavigator();
@@ -100,6 +111,14 @@ export default function AppNavigator() {
   const [collapsed, setCollapsed] = useState(false);
   const drawerNav = useRef<DrawerContentComponentProps["navigation"] | null>(null);
   const items = useVisibleNavItems();
+
+  // Services that live as long as a signed-in session: the record mirror for
+  // this user, the offline write queue, and live updates on this user's token.
+  const userId = useAuthStore((s) => s.user?.id);
+  const token = useAuthStore((s) => s.token);
+  useEffect(() => (userId ? startMirror(queryClient, userId) : undefined), [userId]);
+  useEffect(() => startOutboxSync(), []);
+  useEffect(() => (token ? startRealtime(token) : undefined), [token]);
 
   const drawerContent = (props: DrawerContentComponentProps) => {
     drawerNav.current = props.navigation;
@@ -115,6 +134,8 @@ export default function AppNavigator() {
 
   return (
     <View style={{ flex: 1 }}>
+      <OfflineStatusBar />
+      <RealtimeAlerts />
       <Drawer.Navigator
         initialRouteName="Dashboard"
         drawerContent={drawerContent}

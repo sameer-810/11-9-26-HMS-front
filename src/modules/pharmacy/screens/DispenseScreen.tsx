@@ -24,6 +24,7 @@ import { useDispenseContext, useDispense, useDispensings } from "@modules/pharma
 import { StockStatusBadge, ExpiryBadge } from "@modules/inventory/components/StockBadges";
 import { UrgencyBadge } from "@modules/laboratory/screens/LabQueueScreen";
 import type { DispenseContext, DispenseLine, Dispensing } from "@modules/pharmacy/types";
+import { PrintPrescriptionButton } from "@modules/printing/components/PrintPrescriptionButton";
 
 /**
  * Dispense a prescription — Flow 1 step 11.
@@ -80,7 +81,12 @@ export default function DispenseScreen() {
       overline="Pharmacy"
       title={`Dispense ${ctx.prescription.prescriptionNumber}`}
       subtitle={`Prescribed by Dr ${ctx.prescription.doctor.fullName} · ${formatDateTime(ctx.prescription.createdAt)}`}
-      right={<UrgencyBadge urgency={ctx.prescription.urgency} />}
+      right={
+        <HStack gap={10} align="flex-start">
+          <PrintPrescriptionButton ctx={ctx} />
+          <UrgencyBadge urgency={ctx.prescription.urgency} />
+        </HStack>
+      }
       refreshing={isRefetching}
       onRefresh={refetch}
       testID="dispense-screen"

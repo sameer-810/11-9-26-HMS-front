@@ -170,6 +170,9 @@ async function newPage() {
   p.on("console", (m) => { if (m.type() === "error") consoleErrors.push(m.text()); });
   p.on("pageerror", (e) => consoleErrors.push(String(e)));
   p.on("response", (r) => { if (r.status() >= 400) httpFailures.push(`${r.status()} ${r.request().method()} ${new URL(r.url()).pathname}`); });
+  // The live-update socket is not under test here. Blocked, so the gate never
+  // reaches whatever else happens to listen on the dev port baked into the build.
+  await p.route("**/socket.io/**", (route) => route.abort());
   await p.route("**/api/v1/**", async (route) => {
     const url = new URL(route.request().url());
     const response = await route.fetch({ url: `${API}${url.pathname}${url.search}` });

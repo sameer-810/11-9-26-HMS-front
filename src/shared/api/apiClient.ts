@@ -2,6 +2,7 @@ import axios, { InternalAxiosRequestConfig } from "axios";
 import { environment } from "@config/env";
 import { useAuthStore } from "../store/useAuthStore";
 import { getDeviceId } from "./deviceId";
+import { useNetworkStore, isNetworkError } from "../offline/network";
 
 interface RetryableConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
@@ -23,8 +24,16 @@ apiClient.interceptors.request.use(async (config) => {
 });
 
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    useNetworkStore.getState().setOnline(true);
+    return response;
+  },
   async (error) => {
+    // Any answer, even a refusal, proves the server is reachable. No answer at
+    // all is the fastest signal the device has that it is not.
+    if (error?.response) useNetworkStore.getState().setOnline(true);
+    else if (isNetworkError(error)) useNetworkStore.getState().setOnline(false);
+
     const originalRequest = error.config as RetryableConfig | undefined;
     if (!originalRequest) return Promise.reject(error);
 

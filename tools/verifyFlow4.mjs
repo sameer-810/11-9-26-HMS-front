@@ -196,6 +196,9 @@ await page.addInitScript((apiUrl) => {
 
 // Route the app's API calls to this run's server regardless of what was baked
 // into the bundle at export time.
+// The live-update socket is not under test here. Blocked, so the gate never
+// reaches whatever else happens to listen on the dev port baked into the build.
+await page.route("**/socket.io/**", (route) => route.abort());
 await page.route("**/api/v1/**", async (route) => {
   const url = new URL(route.request().url());
   const target = `${API}${url.pathname}${url.search}`;
@@ -346,6 +349,9 @@ try {
   // -- Step 8: the phone layout of the same journey --------------------------
   const phone = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const pPage = await phone.newPage();
+  // The live-update socket is not under test here. Blocked, so the gate never
+  // reaches whatever else happens to listen on the dev port baked into the build.
+  await pPage.route("**/socket.io/**", (route) => route.abort());
   await pPage.route("**/api/v1/**", async (route) => {
     const url = new URL(route.request().url());
     const response = await route.fetch({ url: `${API}${url.pathname}${url.search}` });

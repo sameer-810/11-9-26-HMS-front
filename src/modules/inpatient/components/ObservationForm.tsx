@@ -4,7 +4,8 @@ import { palette, radius, signal, layout } from "@shared/designSystem";
 import { Text, HStack, VStack, TextField, Button, Card, Banner } from "@shared/ui";
 import { News2Score } from "./News2Score";
 import { useRecordObservation } from "@modules/inpatient/hooks/useInpatient";
-import type { Consciousness, Observation } from "@modules/inpatient/types";
+import type { Consciousness, News2Result, Observation } from "@modules/inpatient/types";
+import { calculateNews2, type LocalNews2Result } from "@shared/clinical/news2";
 
 /**
  * NU-02: recording a set of observations.
@@ -36,6 +37,8 @@ const ACVPU: { value: Consciousness; label: string; hint: string }[] = [
 
 interface Props {
   admissionId: string;
+  /** For the offline queue's label — "Observations · Sanjay Case". */
+  patientName?: string;
   useScale2?: boolean;
   onRecorded?: (observation: Observation) => void;
 }
@@ -55,12 +58,14 @@ function num(v: string | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export function ObservationForm({ admissionId, useScale2, onRecorded }: Props) {
+export function ObservationForm({ admissionId, patientName, useScale2, onRecorded }: Props) {
   const [draft, setDraft] = useState<Draft>({});
   const [consciousness, setConsciousness] = useState<Consciousness | "">("");
   const [onOxygen, setOnOxygen] = useState<boolean | null>(null);
   const [concern, setConcern] = useState("");
   const [result, setResult] = useState<Observation | null>(null);
+  /** A set kept on this device, scored here, not yet seen by the server. */
+  const [queued, setQueued] = useState<{ local: LocalNews2Result; concern: boolean } | null>(null);
 
   const record = useRecordObservation();
   const set = (key: string) => (v: string) => setDraft((d) => ({ ...d, [key]: v }));
@@ -85,7 +90,7 @@ export function ObservationForm({ admissionId, useScale2, onRecorded }: Props) {
   }, [draft, onOxygen, consciousness]);
 
   const submit = async () => {
-    const observation = await record.mutateAsync({
+    const body = {
       admissionId,
       respiratoryRate: num(draft.respiratoryRate),
       spo2: num(draft.spo2),
@@ -101,18 +106,66 @@ export function ObservationForm({ admissionId, useScale2, onRecorded }: Props) {
       bloodSugar: num(draft.bloodSugar),
       urineOutputMl: num(draft.urineOutputMl),
       clinicalConcern: concern.trim() || undefined,
+    };
+    const outcome = await record.mutateAsync({
+      ...body,
+      label: patientName ? `Observations · ${patientName}` : "Observations",
     });
 
-    setResult(observation);
+    if (outcome.status === "sent") {
+      setResult(outcome.data);
+      setQueued(null);
+      onRecorded?.(outcome.data);
+    } else {
+      setResult(null);
+      setQueued({ local: calculateNews2({ ...body, useScale2 }), concern: Boolean(body.clinicalConcern) });
+    }
     setDraft({});
     setConsciousness("");
     setOnOxygen(null);
     setConcern("");
-    onRecorded?.(observation);
   };
+
+  const queuedWorrying =
+    queued &&
+    (queued.concern ||
+      (queued.local.complete && (queued.local.band?.tier === "urgent" || queued.local.band?.tier === "critical")));
 
   return (
     <VStack gap={16}>
+      {/*
+        Charted with no connection. Three things must be said, in this order:
+        it is saved but not sent; what the score is; and — when it is worrying —
+        that the escalation board cannot see it, so escalating is on the nurse,
+        in person, now.
+      */}
+      {queued ? (
+        <VStack gap={8} testID="observation-queued">
+          <Banner
+            tone="warning"
+            title="Saved on this device — not yet sent"
+            message="There is no connection to the hospital server. These observations will be sent automatically, in the order they were charted, when it returns."
+          />
+          <News2Score result={{ ...queued.local, delta: null, significantRise: false } as News2Result} size="lg" showResponse />
+          <Text variant="caption" tone="tertiary">
+            Score worked out on this device. The server scores the set again when it arrives, and that is the score filed.
+          </Text>
+          {queuedWorrying ? (
+            <View testID="observation-queued-escalate">
+              <Banner
+                tone="danger"
+                title="Escalate in person now"
+                message={
+                  queued.local.complete && queued.local.band && queued.local.band.tier !== "normal" && queued.local.band.tier !== "caution"
+                    ? `NEWS2 ${queued.local.total} — ${queued.local.band.label}. The escalation board will not see this until the connection returns. ${queued.local.band.response}`
+                    : "You recorded a concern. The escalation board will not see it until the connection returns — tell the nurse in charge or the doctor directly."
+                }
+              />
+            </View>
+          ) : null}
+        </VStack>
+      ) : null}
+
       {result ? (
         <VStack gap={8} testID="observation-result">
           <News2Score result={result.news2} size="lg" showResponse />

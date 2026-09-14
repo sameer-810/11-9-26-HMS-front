@@ -36,6 +36,7 @@ import { ResultTable } from "@modules/laboratory/components/ResultTable";
 import { ResultEntryForm } from "@modules/laboratory/components/ResultEntryForm";
 import { LabFlagGlyph } from "@modules/laboratory/components/LabFlag";
 import { UrgencyBadge } from "./LabQueueScreen";
+import { PrintTubeLabelButton, PrintLabReportButton } from "@modules/printing/components/PrintLabButtons";
 import type { LabOrder, LabStatus } from "@modules/laboratory/types";
 import type { PatientBanner } from "@modules/patient/types";
 
@@ -90,6 +91,10 @@ export default function LabOrderScreen() {
   const next = NEXT_ACTION[order.status];
   const showResults =
     order.results.length > 0 && (order.status === "reported" || (canWork && order.status === "completed"));
+  // The tube label exists only once a sample number does (at collection); the
+  // report only once the result is reported.
+  const canPrintTubeLabel = canWork && Boolean(order.sampleId) && order.status !== "cancelled";
+  const canPrintReport = order.status === "reported";
 
   const doAdvance = () => {
     if (!next) return;
@@ -123,6 +128,13 @@ export default function LabOrderScreen() {
         ) : null}
 
         <RequestCard order={order} />
+
+        {canPrintTubeLabel || canPrintReport ? (
+          <HStack gap={12} wrap testID="lab-print-actions">
+            {canPrintTubeLabel ? <PrintTubeLabelButton order={order} /> : null}
+            {canPrintReport ? <PrintLabReportButton order={order} /> : null}
+          </HStack>
+        ) : null}
 
         <Card>
           <VStack gap={10}>

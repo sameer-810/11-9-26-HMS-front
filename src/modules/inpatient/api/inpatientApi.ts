@@ -51,6 +51,9 @@ export interface ObservationBody {
   weightKg?: number | null;
   urineOutputMl?: number | null;
   clinicalConcern?: string;
+  /** Stamped before the first attempt; see shared/offline/outbox.ts. */
+  clientOpId?: string;
+  takenAt?: string;
   /**
    * Note what is NOT here: there is no `escalationRequired`, and no
    * `useScale2`. Whether an observation escalates is decided by the server from
@@ -175,7 +178,13 @@ export const inpatientApi = {
   },
 
   // ---- Notes --------------------------------------------------------------
-  addNote: async (body: { admissionId: string; category?: string; note: string }) => {
+  addNote: async (body: {
+    admissionId: string;
+    category?: string;
+    note: string;
+    clientOpId?: string;
+    takenAt?: string;
+  }) => {
     const res = await apiClient.post<{ data: NursingNote }>("/nursing/notes", body);
     return res.data.data;
   },

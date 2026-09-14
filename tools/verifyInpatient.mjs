@@ -242,6 +242,9 @@ page.on("response", (r) => {
 });
 
 const proxy = async (p) => {
+  // The live-update socket is not under test here. Blocked, so the gate never
+  // reaches whatever else happens to listen on the dev port baked into the build.
+  await p.route("**/socket.io/**", (route) => route.abort());
   await p.route("**/api/v1/**", async (route) => {
     const url = new URL(route.request().url());
     const response = await route.fetch({ url: `${API}${url.pathname}${url.search}` });

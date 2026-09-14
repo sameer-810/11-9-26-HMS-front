@@ -6,6 +6,8 @@ import { decode } from "base-64";
 import axios from "axios";
 import { environment } from "@config/env";
 import type { Role } from "../permissions";
+import { clearMirrors } from "../offline/mirror";
+import { queryClient } from "../api/queryClient";
 
 // Some RN engines lack `atob`, used below to read the JWT expiry.
 const runtimeGlobal = globalThis as unknown as { atob?: typeof decode };
@@ -152,6 +154,12 @@ export const useAuthStore = create<AuthState>()(
           }
         }
         await secureStorage.removeItem(STORAGE_KEY);
+        // A shared ward tablet must not show the next person what the last one
+        // read: the saved records go, and so does everything held in memory.
+        // Queued vitals and notes are NOT dropped — they belong to the nurse
+        // who charted them and send when that nurse signs in again.
+        await clearMirrors();
+        queryClient.clear();
         set({
           user: null,
           hospital: null,

@@ -141,6 +141,8 @@ export interface Observation {
   admissionId: string | null;
   recordedAt: string;
   recordedBy: string;
+  /** Minutes between charting and the server receiving it — non-zero for sets charted offline. */
+  syncedLateMinutes?: number;
   vitals: ObservationVitals;
   news2: News2Result;
   escalation: {
@@ -172,6 +174,7 @@ export interface NursingNote {
   recordedAt: string;
   recordedBy: string;
   recordedByRole: string;
+  syncedLateMinutes?: number;
 }
 
 export type AdministrationStatus =

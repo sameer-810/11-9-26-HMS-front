@@ -7,7 +7,7 @@ import {
   type LinkingOptions,
   type NavigatorScreenParams,
 } from "@react-navigation/native";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import * as SplashScreen from "expo-splash-screen";
 import {
   useFonts,
@@ -18,25 +18,11 @@ import {
 
 import RootNavigator from "@navigation/RootNavigator";
 import { palette } from "@shared/designSystem";
+import { queryClient } from "@api/queryClient";
+import { startNetworkWatch } from "@shared/offline/network";
+import { registerServiceWorker } from "@shared/offline/serviceWorker";
 
 void SplashScreen.preventAutoHideAsync();
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      // A clinical record is not a social feed. Refetching on every window
-      // focus means a doctor comparing two values watches them flicker and
-      // re-sort under the cursor.
-      refetchOnWindowFocus: false,
-      retry: 1,
-      staleTime: 30_000,
-      // React Query pauses on navigator.onLine by default, which would stop a
-      // request before it can reach the offline queue.
-      networkMode: "always",
-    },
-    mutations: { networkMode: "always" },
-  },
-});
 
 /**
  * URL <-> route mapping.
@@ -131,6 +117,7 @@ type AppParamList = {
   UserManagement: undefined;
   HospitalConfig: undefined;
   Profile: undefined;
+  Scan: undefined;
 };
 
 type RootParamList = {
@@ -246,6 +233,8 @@ const linking: LinkingOptions<RootParamList> = {
           UserManagement: "admin/users",
           HospitalConfig: "admin/config",
           Profile: "profile",
+          // A USB scanner types into whatever has focus; this is where it should.
+          Scan: "scan",
         },
       },
     },
@@ -262,6 +251,11 @@ export default function App() {
   useEffect(() => {
     if (fontsLoaded) void SplashScreen.hideAsync();
   }, [fontsLoaded]);
+
+  // Watched from the first render, before anyone signs in — the sign-in screen
+  // is where "no connection" most needs saying.
+  useEffect(() => startNetworkWatch(), []);
+  useEffect(() => registerServiceWorker(), []);
 
   if (!fontsLoaded) return null;
 
