@@ -11,6 +11,8 @@ export interface DashboardSummary {
     pharmacy?: { pendingPrescriptions: number };
     inventory?: { lowStock: number; expiringSoon: number; expiredOnShelf: number };
     billing?: { draftBills: number; outstandingBills: number; outstandingPaise: number; collectedTodayPaise: number };
+    /** Over target: triaged, not yet seen by a doctor, past the level's time. */
+    emergency?: { expected: number; waitingTriage: number; inDepartment: number; overTarget: number };
   };
   pending: string[];
 }

@@ -28,7 +28,8 @@ import {
   VitalTile,
   useBreakpoint,
 } from "@shared/ui";
-import { apiErrorMessage } from "@api/apiClient";
+import { apiErrorMessage, apiErrorCode, apiErrorDetails } from "@api/apiClient";
+import { BreakGlassPrompt, EmergencyAccessBanner } from "@modules/consultation/components/BreakGlassPrompt";
 import { useDebouncedValue } from "@shared/hooks/useDebouncedValue";
 import { usePatientBanner } from "@modules/patient/hooks/usePatients";
 import {
@@ -42,7 +43,7 @@ import { PrescribePanel } from "@modules/consultation/components/PrescribePanel"
 import { OrderTestsPanel } from "@modules/laboratory/components/OrderTestsPanel";
 import { LabFlagGlyph } from "@modules/laboratory/components/LabFlag";
 import { formatDateTime } from "@shared/format";
-import type { Diagnosis } from "@modules/consultation/types";
+import type { Diagnosis, RestrictedDetails } from "@modules/consultation/types";
 
 /**
  * The doctor's workspace.
@@ -66,7 +67,9 @@ export default function ConsultationScreen() {
 
   const patientId = routePatientId ?? (consultation?.patient as { id: string })?.id;
   const { data: banner } = usePatientBanner(patientId);
-  const { data: context } = useClinicalContext(patientId);
+  const { data: context, error: contextError, refetch: refetchContext } = useClinicalContext(patientId);
+  const restricted =
+    apiErrorCode(contextError) === "RECORD_RESTRICTED" ? apiErrorDetails<RestrictedDetails>(contextError) : undefined;
 
   const [signOpen, setSignOpen] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -158,7 +161,16 @@ export default function ConsultationScreen() {
         ) : null}
 
         {/* OP-01 — the history, before anything is written. */}
-        <HistoryPanel context={context} compact={!isWide} />
+        {restricted && patientId ? (
+            <BreakGlassPrompt patientId={patientId} details={restricted} compact />
+          ) : (
+            <VStack gap={10}>
+              {context?.access?.viaBreakGlass && context.access.expiresAt ? (
+                <EmergencyAccessBanner expiresAt={context.access.expiresAt} onExpired={refetchContext} />
+              ) : null}
+              <HistoryPanel context={context} compact={!isWide} />
+            </VStack>
+          )}
 
         <ConsultationForm
           consultation={consultation}

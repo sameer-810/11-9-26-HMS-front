@@ -67,6 +67,7 @@ export interface Consultation {
 
 /** OP-01: the history a doctor needs open before they start. */
 export interface ClinicalContext {
+  access?: RecordAccess;
   allergies: Allergy[];
   allergiesRecorded: boolean;
   chronicConditions: string[];
@@ -206,7 +207,34 @@ export interface DraftLine {
 
 export type RecordScope = "full" | "nursing" | "laboratory" | "pharmacy";
 
+/** How this read was allowed. `viaBreakGlass` drives the emergency-access countdown. */
+export interface RecordAccess {
+  restricted: boolean;
+  viaBreakGlass: boolean;
+  basis: string | null;
+  expiresAt: string | null;
+}
+
+/** What the server says when a restricted record refuses a read. */
+export interface RestrictedDetails {
+  canBreakGlass: boolean;
+  categories: Record<string, string>;
+  minutes: number;
+}
+
+export interface BreakGlassGrant {
+  id: string;
+  category: string;
+  categoryLabel: string;
+  reason: string;
+  grantedAt: string;
+  expiresAt: string;
+  active: boolean;
+  reused?: boolean;
+}
+
 export interface MedicalRecord {
+  access?: RecordAccess;
   /** Named so the UI can say "you are seeing the nursing view". */
   scope: RecordScope;
   patient: PatientBanner & Record<string, unknown>;

@@ -93,13 +93,20 @@ type BillingParamList = {
   Outstanding: undefined;
 };
 
+type EmergencyParamList = {
+  EmergencyBoard: undefined;
+  RegisterArrival: undefined;
+  EmergencyVisit: { visitId: string };
+  MedicalRecord: { patientId: string };
+};
+
 type AppParamList = {
   Dashboard: undefined;
   Patients: undefined;
   RegisterPatient: undefined;
   Appointments: undefined;
   OpdQueue: undefined;
-  Emergency: undefined;
+  Emergency: NavigatorScreenParams<EmergencyParamList> | undefined;
   MyAppointments: undefined;
   MyPatients: undefined;
   Consultation: { patientId: string };
@@ -143,7 +150,16 @@ const linking: LinkingOptions<RootParamList> = {
           RegisterPatient: "patients/new",
           Appointments: "appointments",
           OpdQueue: "opd/queue",
-          Emergency: "emergency",
+          // An attendance has its own address, so "ED-000042 is ESI 1" is a link.
+          Emergency: {
+            path: "emergency",
+            screens: {
+              EmergencyBoard: "",
+              RegisterArrival: "arrival",
+              EmergencyVisit: "visits/:visitId",
+              MedicalRecord: "patients/:patientId/record",
+            },
+          },
           MyAppointments: "doctor/appointments",
           MyPatients: "doctor/patients",
           Consultation: "opd/consultation/:patientId",

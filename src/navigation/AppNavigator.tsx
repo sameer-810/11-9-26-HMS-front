@@ -33,6 +33,13 @@ import {
   PharmacyStockNavigator,
 } from "@modules/inventory/InventoryNavigator";
 import BillingNavigator from "@modules/billing/BillingNavigator";
+import EmergencyNavigator from "@modules/emergency/EmergencyNavigator";
+import ReportsScreen from "@modules/reports/screens/ReportsScreen";
+import AuditTrailScreen from "@modules/audit/screens/AuditTrailScreen";
+import UsersNavigator from "@modules/admin/UsersNavigator";
+import HospitalConfigScreen from "@modules/admin/screens/HospitalConfigScreen";
+import BedsScreen from "@modules/admin/screens/BedsScreen";
+import ProfileScreen from "@modules/admin/screens/ProfileScreen";
 import { PlaceholderScreen } from "./PlaceholderScreen";
 
 /**
@@ -74,6 +81,15 @@ const SCREENS: Record<string, React.ComponentType<Record<string, unknown>>> = {
 
   // ---- Finance (Phase 7) ----
   Bills: BillingNavigator,
+
+  // ---- Emergency and oversight (Phase 8) ----
+  Emergency: EmergencyNavigator,
+  Reports: ReportsScreen,
+  AuditTrail: AuditTrailScreen,
+  Beds: BedsScreen,
+  UserManagement: UsersNavigator,
+  HospitalConfig: HospitalConfigScreen,
+  Profile: ProfileScreen,
 };
 
 const Drawer = createDrawerNavigator();

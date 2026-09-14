@@ -116,11 +116,13 @@ export function DataTable<T>({
       <View style={[styles.headerRow, { minHeight: 36 }]} accessibilityRole="none">
         {columns.map((c) => {
           const active = sortKey === c.key;
+          // The column's size goes on the outer wrapper, not on this cell. A
+          // flex cell inside an unsized Pressable shrinks to its label while the
+          // body cells below it stretch, and the headers drift off their columns.
           const cell = (
             <View
               style={[
                 styles.cell,
-                cellSize(c),
                 { justifyContent: justifyFor(c.align), flexDirection: "row", alignItems: "center", gap: 4 },
               ]}
             >
@@ -140,6 +142,7 @@ export function DataTable<T>({
           return c.sortable && c.sortValue ? (
             <Pressable
               key={c.key}
+              style={cellSize(c)}
               onPress={() => toggleSort(c.key)}
               accessibilityRole="button"
               accessibilityLabel={`Sort by ${c.header}`}
@@ -148,7 +151,9 @@ export function DataTable<T>({
               {cell}
             </Pressable>
           ) : (
-            <View key={c.key}>{cell}</View>
+            <View key={c.key} style={cellSize(c)}>
+              {cell}
+            </View>
           );
         })}
       </View>

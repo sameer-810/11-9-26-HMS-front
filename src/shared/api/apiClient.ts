@@ -55,6 +55,11 @@ export function apiErrorCode(err: unknown): string | undefined {
     ?.code;
 }
 
+/** The structured detail the server attached to a refusal, when it sent any. */
+export function apiErrorDetails<T>(err: unknown): T | undefined {
+  return (err as { response?: { data?: { error?: { details?: T } } } })?.response?.data?.error?.details;
+}
+
 /** Turns a Zod path into something a receptionist can act on. */
 function fieldLabel(path: (string | number)[]) {
   const parts = path.filter((p) => p !== "body" && p !== "query" && p !== "params");

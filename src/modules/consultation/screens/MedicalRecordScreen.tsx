@@ -30,7 +30,9 @@ import {
 import { formatDateTime, formatCalendarDate, formatWallTime } from "@shared/format";
 import { usePatientBanner } from "@modules/patient/hooks/usePatients";
 import { useMedicalRecord } from "@modules/consultation/hooks/useConsultation";
-import type { RecordScope, Consultation, Prescription } from "@modules/consultation/types";
+import type { RecordScope, Consultation, Prescription, RestrictedDetails } from "@modules/consultation/types";
+import { apiErrorCode, apiErrorDetails } from "@api/apiClient";
+import { BreakGlassPrompt, EmergencyAccessBanner } from "@modules/consultation/components/BreakGlassPrompt";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { PERMISSIONS } from "@shared/permissions";
 import { OrderTestsPanel } from "@modules/laboratory/components/OrderTestsPanel";
@@ -96,9 +98,15 @@ export default function MedicalRecordScreen() {
   }
 
   if (isError || !record) {
+    const restricted =
+      apiErrorCode(error) === "RECORD_RESTRICTED" ? apiErrorDetails<RestrictedDetails>(error) : undefined;
     return (
       <Screen title="Medical record" patient={banner ?? undefined}>
-        <ErrorState error={error} title="Couldn't open this record" onRetry={refetch} />
+        {restricted ? (
+          <BreakGlassPrompt patientId={patientId} details={restricted} />
+        ) : (
+          <ErrorState error={error} title="Couldn't open this record" onRetry={refetch} />
+        )}
       </Screen>
     );
   }
@@ -140,6 +148,16 @@ export default function MedicalRecordScreen() {
       }
     >
       <VStack gap={14}>
+        {record.access?.viaBreakGlass && record.access.expiresAt ? (
+          <EmergencyAccessBanner expiresAt={record.access.expiresAt} onExpired={refetch} />
+        ) : record.access?.restricted ? (
+          <Banner
+            tone="warning"
+            title="Restricted record"
+            message="Open only to the patient's treating team. You have access as part of it; handle it accordingly."
+          />
+        ) : null}
+
         {/*
           Says plainly that this is a partial record, rather than letting a
           missing section read as an absent history.

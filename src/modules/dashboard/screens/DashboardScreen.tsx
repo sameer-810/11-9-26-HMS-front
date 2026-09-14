@@ -11,6 +11,7 @@ import {
   Pill,
   Boxes,
   Receipt,
+  Ambulance,
 } from "lucide-react-native";
 import { formatRupees } from "@shared/format";
 
@@ -166,6 +167,27 @@ export default function DashboardScreen() {
                       icon={OctagonAlert}
                       accent="clinical"
                       attention={tiles.inventory.expiredOnShelf > 0}
+                    />
+                  </>
+                ) : null}
+
+                {tiles?.emergency ? (
+                  <>
+                    <StatTile
+                      label="In emergency"
+                      value={tiles.emergency.inDepartment}
+                      sublabel={`${tiles.emergency.waitingTriage} waiting triage${tiles.emergency.expected ? ` · ${tiles.emergency.expected} ambulance expected` : ""}`}
+                      icon={Ambulance}
+                      accent="clinical"
+                      attention={tiles.emergency.waitingTriage > 0}
+                    />
+                    <StatTile
+                      label="Past triage target"
+                      value={tiles.emergency.overTarget}
+                      sublabel="not yet seen by a doctor"
+                      icon={OctagonAlert}
+                      accent="clinical"
+                      attention={tiles.emergency.overTarget > 0}
                     />
                   </>
                 ) : null}

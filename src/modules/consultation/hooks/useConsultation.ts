@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiErrorCode } from "@api/apiClient";
 import {
   consultationApi,
   prescriptionApi,
@@ -14,6 +15,7 @@ export const useClinicalContext = (patientId?: string) =>
     // Fresh every time the screen opens. A stale allergy on a consultation
     // screen is the single worst thing this application could show.
     staleTime: 0,
+    retry: (count, err) => apiErrorCode(err) !== "RECORD_RESTRICTED" && count < 1,
   });
 
 export const useConsultation = (id?: string) =>
@@ -120,4 +122,19 @@ export const useMedicalRecord = (patientId?: string) =>
     queryKey: ["medical-record", patientId],
     queryFn: () => recordApi.forPatient(patientId!),
     enabled: Boolean(patientId),
+    // A restriction refusal is an answer, not a network blip. Retrying it only
+    // delays the break-the-glass prompt.
+    retry: (count, err) => apiErrorCode(err) !== "RECORD_RESTRICTED" && count < 1,
   });
+
+/** On success both chart reads are refetched, so the record opens under the new grant. */
+export const useBreakGlass = (patientId: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { category: string; reason: string }) => recordApi.breakGlass(patientId, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["medical-record", patientId] });
+      qc.invalidateQueries({ queryKey: ["clinical-context", patientId] });
+    },
+  });
+};

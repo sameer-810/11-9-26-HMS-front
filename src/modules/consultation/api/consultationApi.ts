@@ -8,6 +8,7 @@ import type {
   Prescription,
   SafetyResult,
   MedicalRecord,
+  BreakGlassGrant,
   Vitals,
   Diagnosis,
 } from "@modules/consultation/types";
@@ -137,6 +138,15 @@ export const recordApi = {
    */
   forPatient: async (patientId: string) => {
     const res = await apiClient.get<{ data: MedicalRecord }>(`/records/${patientId}`);
+    return res.data.data;
+  },
+
+  /**
+   * Emergency access to a restricted record. The reason is the whole point —
+   * it is what the reviewer reads afterwards — so the server refuses a short one.
+   */
+  breakGlass: async (patientId: string, body: { category: string; reason: string }) => {
+    const res = await apiClient.post<{ data: BreakGlassGrant }>(`/access/patients/${patientId}/break-glass`, body);
     return res.data.data;
   },
 };
