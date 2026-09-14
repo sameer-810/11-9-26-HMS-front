@@ -6,6 +6,8 @@ import {
   Building2,
   Activity,
   ShieldCheck,
+  FlaskConical,
+  OctagonAlert,
 } from "lucide-react-native";
 
 import { palette } from "@shared/designSystem";
@@ -106,6 +108,30 @@ export default function DashboardScreen() {
                     icon={Users}
                     accent="violet"
                   />
+                ) : null}
+
+                {tiles?.lab ? (
+                  <>
+                    <StatTile
+                      label="Tests pending"
+                      value={tiles.lab.pending}
+                      sublabel="in the laboratory"
+                      icon={FlaskConical}
+                      accent="teal"
+                    />
+                    {/*
+                      Beside the pending count, never instead of it. "12 pending"
+                      without "1 critical nobody has acknowledged" is the wrong
+                      number to lead with.
+                    */}
+                    <StatTile
+                      label="Critical, unacknowledged"
+                      value={tiles.lab.criticalOpen}
+                      icon={OctagonAlert}
+                      accent="clinical"
+                      attention={tiles.lab.criticalOpen > 0}
+                    />
+                  </>
                 ) : null}
 
                 {tiles?.departments !== undefined ? (

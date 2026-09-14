@@ -1,4 +1,5 @@
 import type { PatientBanner, Allergy } from "@modules/patient/types";
+import type { RecordLabResult, PendingLabOrder } from "@modules/laboratory/types";
 import type { DoctorSummary, DepartmentSummary } from "@modules/appointment/types";
 
 export interface Vitals {
@@ -79,6 +80,9 @@ export interface ClinicalContext {
     lastRecorded: string;
     occurrences: number;
   }[];
+  /** OP-01 with LB-05: the latest results, and what is already on its way. */
+  recentLabResults: RecordLabResult[];
+  pendingLabOrders: PendingLabOrder[];
 }
 
 export interface ConsultationDraft {
@@ -230,4 +234,7 @@ export interface MedicalRecord {
     doctor: string;
     department: string;
   }[];
+  /** Reported only. Empty (not absent) for the pharmacy scope. */
+  labResults: RecordLabResult[];
+  pendingLabOrders: PendingLabOrder[];
 }

@@ -6,6 +6,8 @@ export interface DashboardSummary {
     beds?: { available: number; occupied: number; total: number; occupancyPercent: number };
     staff?: { active: number; inactive: number; total: number };
     departments?: number;
+    /** Pending tests, and critical results nobody has acknowledged yet. */
+    lab?: { pending: number; criticalOpen: number };
   };
   pending: string[];
 }

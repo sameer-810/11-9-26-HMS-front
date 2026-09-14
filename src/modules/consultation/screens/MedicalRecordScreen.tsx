@@ -31,6 +31,15 @@ import { formatDateTime, formatCalendarDate, formatWallTime } from "@shared/form
 import { usePatientBanner } from "@modules/patient/hooks/usePatients";
 import { useMedicalRecord } from "@modules/consultation/hooks/useConsultation";
 import type { RecordScope, Consultation, Prescription } from "@modules/consultation/types";
+import { useAuthStore } from "@shared/store/useAuthStore";
+import { PERMISSIONS } from "@shared/permissions";
+import { OrderTestsPanel } from "@modules/laboratory/components/OrderTestsPanel";
+import { ResultTable } from "@modules/laboratory/components/ResultTable";
+import {
+  LAB_STAGE_LABELS,
+  type RecordLabResult,
+  type PendingLabOrder,
+} from "@modules/laboratory/types";
 
 /**
  * MR-01: one record, holding everything known about the patient.
@@ -53,7 +62,7 @@ const SCOPE_LABEL: Record<RecordScope, { label: string; note: string }> = {
   },
   laboratory: {
     label: "Laboratory view",
-    note: "You see patient identity and the clinical indication for tests. Treatment plans are not included.",
+    note: "You see patient identity, allergies and previous laboratory results. Diagnoses and treatment plans are not included; each request carries its own clinical indication.",
   },
   pharmacy: {
     label: "Pharmacy view",
@@ -104,6 +113,11 @@ export default function MedicalRecordScreen() {
     ...(record.prescriptions.length > 0 || record.scope === "pharmacy"
       ? [{ key: "medication", label: "Medication", count: record.prescriptions.length }]
       : []),
+    // Shown to every scope that holds results, even when empty, so "no lab
+    // results" is a stated fact rather than a missing tab.
+    ...(record.scope !== "pharmacy"
+      ? [{ key: "lab", label: "Lab results", count: record.labResults?.length ?? 0 }]
+      : []),
     ...(record.visits.length > 0 ? [{ key: "visits", label: "Visits", count: record.visits.length }] : []),
   ];
 
@@ -137,6 +151,13 @@ export default function MedicalRecordScreen() {
         {tab === "summary" ? <SummaryTab record={record} /> : null}
         {tab === "consultations" ? <ConsultationsTab consultations={record.consultations} /> : null}
         {tab === "medication" ? <MedicationTab prescriptions={record.prescriptions} /> : null}
+        {tab === "lab" ? (
+          <LabResultsTab
+            patientId={patientId}
+            results={record.labResults ?? []}
+            pending={record.pendingLabOrders ?? []}
+          />
+        ) : null}
         {tab === "visits" ? <VisitsTab visits={record.visits} /> : null}
       </VStack>
     </Screen>
@@ -397,6 +418,94 @@ function MedicationTab({ prescriptions }: { prescriptions: Prescription[] }) {
           </VStack>
         </Card>
       ))}
+    </VStack>
+  );
+}
+
+/**
+ * LB-01 and LB-05 on the record.
+ *
+ * "Order a test straight from the patient's record" — so the order panel sits
+ * here for anyone who may order, above the results it will eventually add to.
+ * Reported results only; pending orders are listed separately so a doctor sees
+ * a result is on its way before ordering the same test twice.
+ */
+function LabResultsTab({
+  patientId,
+  results,
+  pending,
+}: {
+  patientId: string;
+  results: RecordLabResult[];
+  pending: PendingLabOrder[];
+}) {
+  const canOrder = useAuthStore((s) => s.hasPermission)(PERMISSIONS.LAB_REQUEST_CREATE);
+  const [ordered, setOrdered] = useState<string | null>(null);
+
+  return (
+    <VStack gap={12} testID="record-lab-tab">
+      {ordered ? (
+        <Banner
+          tone="success"
+          title="Sent to the laboratory"
+          message={ordered}
+          onDismiss={() => setOrdered(null)}
+        />
+      ) : null}
+      {canOrder ? <OrderTestsPanel patientId={patientId} onOrdered={setOrdered} /> : null}
+
+      {pending.length > 0 ? (
+        <Card testID="record-lab-pending">
+          <SectionHeader title="Waiting for the laboratory" />
+          <VStack gap={6}>
+            {pending.map((o) => (
+              <HStack key={o.id} gap={8} align="center" wrap>
+                <Text variant="label">{o.testName}</Text>
+                <Text variant="caption" tone="secondary">
+                  {LAB_STAGE_LABELS[o.status]} · {o.urgency} · ordered {formatDateTime(o.requestedAt)} by {o.doctorName}
+                </Text>
+              </HStack>
+            ))}
+          </VStack>
+        </Card>
+      ) : null}
+
+      {results.length === 0 ? (
+        <EmptyState icon={FileText} title="No reported laboratory results" />
+      ) : (
+        results.map((r) => (
+          <Card
+            key={r.id}
+            accentColor={r.hasCritical ? signal.critical.color : r.abnormalCount ? signal.urgent.color : undefined}
+            testID={`record-lab-${r.orderNumber}`}
+          >
+            <VStack gap={8}>
+              <SectionHeader
+                title={r.testName}
+                subtitle={`Reported ${formatDateTime(r.reportedAt)} · ordered by ${r.doctorName}`}
+                right={
+                  r.hasCritical ? (
+                    <SignalBadge
+                      level={r.criticalStatus === "acknowledged" ? "normal" : "critical"}
+                      label={r.criticalStatus === "acknowledged" ? `Critical, acknowledged by ${r.acknowledgedByName}` : "Critical, not acknowledged"}
+                      size="sm"
+                    />
+                  ) : null
+                }
+              />
+              <Text variant="caption" tone="tertiary">
+                Indication: {r.clinicalIndication}
+              </Text>
+              <ResultTable results={r.results} />
+              {r.labComment ? (
+                <Text variant="caption" tone="secondary">
+                  Laboratory comment: {r.labComment}
+                </Text>
+              ) : null}
+            </VStack>
+          </Card>
+        ))
+      )}
     </VStack>
   );
 }

@@ -39,6 +39,8 @@ import {
   useAddAddendum,
 } from "@modules/consultation/hooks/useConsultation";
 import { PrescribePanel } from "@modules/consultation/components/PrescribePanel";
+import { OrderTestsPanel } from "@modules/laboratory/components/OrderTestsPanel";
+import { LabFlagGlyph } from "@modules/laboratory/components/LabFlag";
 import { formatDateTime } from "@shared/format";
 import type { Diagnosis } from "@modules/consultation/types";
 
@@ -69,6 +71,7 @@ export default function ConsultationScreen() {
   const [signOpen, setSignOpen] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [lastPrescription, setLastPrescription] = useState<string | null>(null);
+  const [lastLabOrder, setLastLabOrder] = useState<string | null>(null);
   const sign = useSignConsultation(id ?? "");
 
   const doSign = async () => {
@@ -172,6 +175,25 @@ export default function ConsultationScreen() {
               setSaveError(null);
               setLastPrescription(rx);
             }}
+          />
+        ) : null}
+
+        {lastLabOrder ? (
+          <Banner
+            tone="success"
+            title="Sent to the laboratory"
+            message={`${lastLabOrder} is in the laboratory queue.`}
+            onDismiss={() => setLastLabOrder(null)}
+          />
+        ) : null}
+
+        {/* LB-01, from the consultation. Flow 1 step 9: "request reaches laboratory". */}
+        {patientId ? (
+          <OrderTestsPanel
+            patientId={patientId}
+            consultationId={consultation.id}
+            disabled={signed}
+            onOrdered={setLastLabOrder}
           />
         ) : null}
 
@@ -311,6 +333,50 @@ function HistoryPanel({
               ))}
             </VStack>
           </VStack>
+        ) : null}
+
+        {/*
+          Recent results, abnormal values named. Before the doctor orders, so a
+          creatinine from yesterday is seen before a second one is requested.
+        */}
+        {context.recentLabResults?.length ? (
+          <VStack gap={4} testID="history-lab-results">
+            <Text variant="label-sm" tone="tertiary">
+              Recent laboratory results
+            </Text>
+            <VStack gap={4}>
+              {context.recentLabResults.slice(0, compact ? 3 : 5).map((r) => {
+                const flagged = r.results.filter((x) => x.isAbnormal);
+                return (
+                  <HStack key={r.id} gap={8} align="center" wrap>
+                    <Text variant="body-sm" tone="secondary">
+                      {r.testName} · {formatDateTime(r.reportedAt)}
+                    </Text>
+                    {flagged.length === 0 ? (
+                      <Text variant="caption" tone="tertiary">
+                        within range
+                      </Text>
+                    ) : (
+                      flagged.slice(0, 4).map((x) => (
+                        <HStack key={x.code} gap={3} align="center">
+                          <Text variant="caption" tabular style={{ color: x.isCritical ? signal.critical.text : signal.urgent.text }}>
+                            {x.name} {x.valueText}
+                          </Text>
+                          <LabFlagGlyph flag={x.flag} />
+                        </HStack>
+                      ))
+                    )}
+                  </HStack>
+                );
+              })}
+            </VStack>
+          </VStack>
+        ) : null}
+
+        {context.pendingLabOrders?.length ? (
+          <Text variant="body-sm" tone="secondary" testID="history-lab-pending">
+            Awaiting results: {context.pendingLabOrders.map((o) => o.testName).join(", ")}
+          </Text>
         ) : null}
 
         {context.recentConsultations.length === 0 ? (

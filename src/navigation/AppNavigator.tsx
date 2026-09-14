@@ -23,6 +23,10 @@ import {
   IcuNavigator,
   MyWardNavigator,
 } from "@modules/inpatient/InpatientNavigator";
+import {
+  LabQueueNavigator,
+  LabResultsNavigator,
+} from "@modules/laboratory/LaboratoryNavigator";
 import { PlaceholderScreen } from "./PlaceholderScreen";
 
 /**
@@ -52,6 +56,10 @@ const SCREENS: Record<string, React.ComponentType<Record<string, unknown>>> = {
   Icu: IcuNavigator,
   NursingPatients: MyWardNavigator,
   Handover: MyWardNavigator,
+
+  // ---- Diagnostics (Phase 5) ----
+  LabQueue: LabQueueNavigator,
+  LabReports: LabResultsNavigator,
 };
 
 const Drawer = createDrawerNavigator();

@@ -62,6 +62,14 @@ type InpatientParamList = {
   PatientDetail: { patientId: string };
 };
 
+type LaboratoryParamList = {
+  LabQueueList: undefined;
+  LabResultsList: undefined;
+  LabOrder: { orderId: string };
+  MedicalRecord: { patientId: string };
+  PatientDetail: { patientId: string };
+};
+
 type AppParamList = {
   Dashboard: undefined;
   Patients: undefined;
@@ -82,8 +90,8 @@ type AppParamList = {
   Icu: NavigatorScreenParams<InpatientParamList> | undefined;
   NursingPatients: NavigatorScreenParams<InpatientParamList> | undefined;
   Handover: undefined;
-  LabQueue: undefined;
-  LabReports: undefined;
+  LabQueue: NavigatorScreenParams<LaboratoryParamList> | undefined;
+  LabReports: NavigatorScreenParams<LaboratoryParamList> | undefined;
   PharmacyQueue: undefined;
   MedicineStock: undefined;
   Inventory: undefined;
@@ -142,8 +150,16 @@ const linking: LinkingOptions<RootParamList> = {
             },
           },
           Handover: "nursing/handover",
-          LabQueue: "lab/requests",
-          LabReports: "lab/reports",
+          // A lab order has its own address, so "LAB-000123 is critical" in a
+          // handover message is a link, not a search.
+          LabQueue: {
+            path: "lab/requests",
+            screens: { LabQueueList: "", LabOrder: ":orderId" },
+          },
+          LabReports: {
+            path: "lab/reports",
+            screens: { LabResultsList: "", LabOrder: ":orderId" },
+          },
           PharmacyQueue: "pharmacy/prescriptions",
           MedicineStock: "pharmacy/stock",
           Inventory: "inventory",
