@@ -4,6 +4,8 @@ import { Receipt } from "lucide-react-native";
 
 import { Screen, Text, VStack, HStack, Card, Skeleton, ErrorState, EmptyState, StatTile } from "@shared/ui";
 import { formatRupees } from "@shared/format";
+import { useProgressiveList } from "@shared/hooks/useProgressiveList";
+import { ShowMoreButton } from "@shared/ui/ShowMoreButton";
 import { useOutstanding } from "@modules/billing/hooks/useBilling";
 import { BillStatusText } from "@modules/billing/components/BillStatusText";
 import type { AgingBucket } from "@modules/billing/types";
@@ -20,6 +22,7 @@ const BUCKETS: AgingBucket[] = ["0_30", "31_60", "61_90", "90_plus"];
 export default function OutstandingScreen() {
   const navigation = useNavigation<any>();
   const { data, isLoading, isError, error, refetch, isRefetching } = useOutstanding();
+  const rows = useProgressiveList(data?.rows ?? []);
 
   return (
     <Screen overline="Billing" title="Outstanding bills" subtitle="Oldest first" refreshing={isRefetching} onRefresh={refetch} testID="outstanding-screen">
@@ -39,7 +42,7 @@ export default function OutstandingScreen() {
             <EmptyState icon={Receipt} title="Nothing outstanding" />
           ) : (
             <VStack gap={8} testID="outstanding-rows">
-              {data.rows.map((r) => (
+              {rows.visible.map((r) => (
                 <Card key={r.id} compact onPress={() => navigation.navigate("BillDetail", { billId: r.id })} testID={`outstanding-${r.billNumber}`}>
                   <HStack gap={12} align="center" wrap>
                     <VStack gap={2} style={{ flex: 1, minWidth: 220 }}>
@@ -58,6 +61,7 @@ export default function OutstandingScreen() {
                   </HStack>
                 </Card>
               ))}
+              <ShowMoreButton hidden={rows.hidden} pageSize={rows.pageSize} onPress={rows.showMore} noun="bills" testID="outstanding-show-more" />
             </VStack>
           )}
         </VStack>

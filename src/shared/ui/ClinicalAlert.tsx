@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Modal, StyleSheet, View, TextInput, ScrollView } from "react-native";
+import { useReducedMotion } from "react-native-reanimated";
 import { OctagonAlert, TriangleAlert, Info, CircleCheck } from "lucide-react-native";
 import { signal, alertTier, palette, radius, shadows, type SignalLevel } from "../designSystem";
 import { Text } from "./Text";
@@ -75,6 +76,7 @@ export function ClinicalAlert({
 }: ClinicalAlertProps) {
   const [reason, setReason] = useState("");
   const [showReason, setShowReason] = useState(false);
+  const reduceMotion = useReducedMotion();
 
   const s = signal[level];
   const tier = alertTier[level];
@@ -103,7 +105,7 @@ export function ClinicalAlert({
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType={reduceMotion ? "none" : "fade"}
       // A critical alert has no escape hatch — no backdrop tap, no back button.
       onRequestClose={tier.dismissible ? onRecommended : () => {}}
     >
@@ -123,7 +125,7 @@ export function ClinicalAlert({
                   {s.label}
                 </Text>
                 {/* Sentence case, short. Never uppercased in code. */}
-                <Text variant="h2" tone="primary">
+                <Text variant="h2" tone="primary" heading={2}>
                   {title}
                 </Text>
               </VStack>

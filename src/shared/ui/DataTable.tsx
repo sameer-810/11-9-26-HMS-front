@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { View, Pressable, ScrollView, StyleSheet, ViewStyle, StyleProp } from "react-native";
+import { View, Pressable, ScrollView, StyleSheet, ViewStyle, StyleProp, Platform } from "react-native";
+import { webAria } from "./a11y";
 import { ChevronUp, ChevronDown, type LucideIcon } from "lucide-react-native";
 import { palette, radius, breakpoints } from "../designSystem";
 import { Text } from "./Text";
@@ -145,8 +146,9 @@ export function DataTable<T>({
               style={cellSize(c)}
               onPress={() => toggleSort(c.key)}
               accessibilityRole="button"
-              accessibilityLabel={`Sort by ${c.header}`}
-              accessibilityState={{ selected: active }}
+              accessibilityLabel={`Sort by ${c.header}${active ? (sortDir === "asc" ? ", ascending" : ", descending") : ""}`}
+              accessibilityState={Platform.OS === "web" ? undefined : { selected: active }}
+              {...webAria({ pressed: active })}
             >
               {cell}
             </Pressable>

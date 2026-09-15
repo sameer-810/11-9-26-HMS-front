@@ -1,10 +1,12 @@
-import React, { useState } from "react";
-import { Pressable, Modal, ScrollView, StyleSheet } from "react-native";
+import React, { useId, useState } from "react";
+import { Pressable, Modal, ScrollView, StyleSheet, View } from "react-native";
+import { useReducedMotion } from "react-native-reanimated";
 import { ChevronDown, Check } from "lucide-react-native";
 import { palette, radius, shadows } from "../designSystem";
 import { Text } from "./Text";
 import { HStack, VStack } from "./Stack";
 import { useControlHeight } from "./useBreakpoint";
+import { domId, webAria } from "./a11y";
 
 export interface SelectOption {
   value: string;
@@ -34,6 +36,9 @@ interface Props {
  * 12, the useful answer is "bed 12 is occupied", not a list with bed 12 quietly
  * missing — the second makes the user hunt for something they can see on the
  * ward. Same for an expired batch in the dispensing screen.
+ *
+ * Keyboard: the trigger opens on Enter or Space; the sheet keeps focus inside
+ * while open, Escape closes it, and focus returns to the trigger.
  */
 export function Select({
   label,
@@ -48,6 +53,8 @@ export function Select({
 }: Props) {
   const [open, setOpen] = useState(false);
   const height = useControlHeight();
+  const reduceMotion = useReducedMotion();
+  const messageId = domId(useId(), "message");
   const selected = options.find((o) => o.value === value);
 
   return (
@@ -58,7 +65,7 @@ export function Select({
             {label}
           </Text>
           {required ? (
-            <Text variant="label" style={{ color: palette.danger.text }}>
+            <Text variant="label" style={{ color: palette.danger.text }} aria-hidden>
               *
             </Text>
           ) : null}
@@ -69,8 +76,11 @@ export function Select({
         onPress={() => !disabled && setOpen(true)}
         disabled={disabled}
         accessibilityRole="button"
-        accessibilityLabel={label ? `${label}. ${selected?.label ?? placeholder}` : placeholder}
+        // "Required" is spoken at the end: aria-required is not allowed on a
+        // button, and the label must still start with the field name.
+        accessibilityLabel={`${label ? `${label}. ${selected?.label ?? placeholder}` : placeholder}${required ? ". Required" : ""}`}
         accessibilityState={{ disabled: Boolean(disabled), expanded: open }}
+        {...webAria({ hasPopup: "menu", expanded: open, describedBy: error || hint ? messageId : undefined, invalid: Boolean(error) })}
         style={[
           styles.control,
           {
@@ -83,7 +93,9 @@ export function Select({
       >
         <Text
           variant="body"
-          tone={selected ? "primary" : "disabled"}
+          // The placeholder is read, so it meets text contrast: tertiary is
+          // 5.9:1 on white where the old disabled grey was 3.0:1.
+          tone={selected ? "primary" : "tertiary"}
           numberOfLines={1}
           style={{ flex: 1 }}
         >
@@ -93,65 +105,74 @@ export function Select({
       </Pressable>
 
       {error ? (
-        <Text variant="caption" tone="danger">
+        <Text variant="caption" tone="danger" nativeID={messageId} accessibilityRole="alert" accessibilityLiveRegion="polite">
           {error}
         </Text>
       ) : hint ? (
-        <Text variant="caption" tone="tertiary">
+        <Text variant="caption" tone="tertiary" nativeID={messageId}>
           {hint}
         </Text>
       ) : null}
 
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.overlay} onPress={() => setOpen(false)}>
-          <Pressable style={styles.sheet} onPress={() => {}}>
+      <Modal
+        visible={open}
+        transparent
+        animationType={reduceMotion ? "none" : "fade"}
+        onRequestClose={() => setOpen(false)}
+      >
+        {/* Neither the backdrop nor the sheet is a Tab stop: they exist for the
+            pointer, and a nameless focus stop is noise to a keyboard user. */}
+        <Pressable style={styles.overlay} onPress={() => setOpen(false)} focusable={false}>
+          <Pressable style={styles.sheet} onPress={() => {}} focusable={false}>
             {label ? (
-              <Text variant="h3" tone="primary" style={{ marginBottom: 8 }}>
+              <Text variant="h3" tone="primary" heading={2} style={{ marginBottom: 8 }}>
                 {label}
               </Text>
             ) : null}
             <ScrollView bounces={false}>
-              {options.map((o) => {
-                const isSelected = o.value === value;
-                return (
-                  <Pressable
-                    key={o.value}
-                    disabled={o.disabled}
-                    onPress={() => {
-                      onChange(o.value);
-                      setOpen(false);
-                    }}
-                    accessibilityRole="menuitem"
-                    accessibilityState={{ selected: isSelected, disabled: Boolean(o.disabled) }}
-                    style={({ pressed }) => [
-                      styles.option,
-                      pressed && !o.disabled ? { backgroundColor: palette.ink[50] } : null,
-                      isSelected ? { backgroundColor: palette.clinical[50] } : null,
-                      o.disabled ? { opacity: 0.5 } : null,
-                    ]}
-                  >
-                    <VStack gap={1} flex={1}>
-                      <Text variant="body" tone={o.disabled ? "disabled" : "primary"}>
-                        {o.label}
-                      </Text>
-                      {/* The reason it is unavailable, in the place the user
-                          is already looking. */}
-                      {o.disabled && o.disabledReason ? (
-                        <Text variant="caption" tone="danger">
-                          {o.disabledReason}
+              <View accessibilityRole="menu" accessibilityLabel={label ?? placeholder}>
+                {options.map((o) => {
+                  const isSelected = o.value === value;
+                  return (
+                    <Pressable
+                      key={o.value}
+                      disabled={o.disabled}
+                      onPress={() => {
+                        onChange(o.value);
+                        setOpen(false);
+                      }}
+                      accessibilityRole="menuitem"
+                      accessibilityState={{ selected: isSelected, disabled: Boolean(o.disabled) }}
+                      style={({ pressed }) => [
+                        styles.option,
+                        pressed && !o.disabled ? { backgroundColor: palette.ink[50] } : null,
+                        isSelected ? { backgroundColor: palette.clinical[50] } : null,
+                        o.disabled ? { opacity: 0.5 } : null,
+                      ]}
+                    >
+                      <VStack gap={1} flex={1}>
+                        <Text variant="body" tone={o.disabled ? "disabled" : "primary"}>
+                          {o.label}
                         </Text>
-                      ) : o.sublabel ? (
-                        <Text variant="caption" tone="tertiary">
-                          {o.sublabel}
-                        </Text>
+                        {/* The reason it is unavailable, in the place the user
+                            is already looking. */}
+                        {o.disabled && o.disabledReason ? (
+                          <Text variant="caption" tone="danger">
+                            {o.disabledReason}
+                          </Text>
+                        ) : o.sublabel ? (
+                          <Text variant="caption" tone="tertiary">
+                            {o.sublabel}
+                          </Text>
+                        ) : null}
+                      </VStack>
+                      {isSelected ? (
+                        <Check size={16} color={palette.clinical[700]} strokeWidth={2.4} />
                       ) : null}
-                    </VStack>
-                    {isSelected ? (
-                      <Check size={16} color={palette.clinical[700]} strokeWidth={2.4} />
-                    ) : null}
-                  </Pressable>
-                );
-              })}
+                    </Pressable>
+                  );
+                })}
+              </View>
             </ScrollView>
           </Pressable>
         </Pressable>

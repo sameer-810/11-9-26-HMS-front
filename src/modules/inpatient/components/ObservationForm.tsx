@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { View, Pressable, StyleSheet } from "react-native";
 import { palette, radius, signal, layout } from "@shared/designSystem";
 import { Text, HStack, VStack, TextField, Button, Card, Banner } from "@shared/ui";
+import { checkable } from "@shared/ui/a11y";
 import { News2Score } from "./News2Score";
 import { useRecordObservation } from "@modules/inpatient/hooks/useInpatient";
 import type { Consciousness, News2Result, Observation } from "@modules/inpatient/types";
@@ -417,7 +418,8 @@ function Choice({
       onPress={onPress}
       testID={testID}
       accessibilityRole="radio"
-      accessibilityState={{ selected }}
+      accessibilityState={{ checked: selected }}
+      {...checkable(selected, onPress)}
       accessibilityLabel={hint ? `${label}. ${hint}` : label}
       style={[
         styles.choice,

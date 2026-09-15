@@ -43,7 +43,8 @@ export interface AuditFilters {
 /** Note `pages`: the audit controller names it differently from the grants route. */
 export interface AuditListResponse {
   data: AuditEntry[];
-  meta: { total: number; pages: number; page: number };
+  /** `totalCapped`: counting stopped at `total`; there are at least that many. */
+  meta: { total: number; totalCapped?: boolean; pages: number; page: number };
 }
 
 export type GrantStatus = "pending" | "appropriate" | "inappropriate";

@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Pressable, StyleSheet, ScrollView } from "react-native";
+import { View, Pressable, StyleSheet, ScrollView, Platform } from "react-native";
+import { webAria } from "@shared/ui/a11y";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LogOut, ChevronsLeft, ChevronsRight, Hospital } from "lucide-react-native";
 import { useAuthStore } from "@shared/store/useAuthStore";
@@ -24,6 +25,9 @@ export function Sidebar({ activeRoute, onNavigate, collapsed = false, onToggleCo
 
   return (
     <View
+      // The navigation landmark: a screen reader user jumps here, and past it.
+      role="navigation"
+      accessibilityLabel="Main navigation"
       style={[
         styles.wrap,
         {
@@ -181,7 +185,10 @@ function NavRow({
       onPress={onPress}
       accessibilityRole="link"
       accessibilityLabel={item.label}
-      accessibilityState={{ selected: active }}
+      // Native reads "selected"; the web has aria-current for the link to the
+      // page you are on (aria-selected is not allowed on a link).
+      accessibilityState={Platform.OS === "web" ? undefined : { selected: active }}
+      {...webAria({ current: active ? "page" : undefined })}
       style={({ pressed }) => [
         styles.navRow,
         collapsed && styles.navRowCollapsed,

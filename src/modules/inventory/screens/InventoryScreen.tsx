@@ -28,6 +28,8 @@ import {
 } from "@shared/ui";
 import { apiClient, apiErrorMessage } from "@api/apiClient";
 import { useDebouncedValue } from "@shared/hooks/useDebouncedValue";
+import { useProgressiveList } from "@shared/hooks/useProgressiveList";
+import { ShowMoreButton } from "@shared/ui/ShowMoreButton";
 import { useInventoryItems, useCreateItem, useLowStock } from "@modules/inventory/hooks/useInventory";
 import { useStockMode } from "@modules/inventory/StockMode";
 import { formatExpiry } from "@modules/inventory/utils/expiry";
@@ -59,6 +61,7 @@ export default function InventoryScreen() {
   });
   const { data: alerts } = useLowStock();
   const rows = data?.data ?? [];
+  const shown = useProgressiveList(rows);
 
   return (
     <Screen
@@ -116,9 +119,10 @@ export default function InventoryScreen() {
           <EmptyState icon={Boxes} title="No items" message={search ? "Nothing matches that search." : "Items appear here once they are added."} />
         ) : (
           <VStack gap={8} testID="inventory-rows">
-            {rows.map((item) => (
+            {shown.visible.map((item) => (
               <ItemRow key={item.id} item={item} pharmacyOnly={mode === "pharmacy"} onPress={() => navigation.navigate("InventoryItem", { itemId: item.id })} />
             ))}
+            <ShowMoreButton hidden={shown.hidden} pageSize={shown.pageSize} onPress={shown.showMore} noun="items" testID="inventory-show-more" />
           </VStack>
         )}
       </VStack>

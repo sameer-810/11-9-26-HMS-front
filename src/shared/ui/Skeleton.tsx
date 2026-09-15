@@ -6,6 +6,7 @@ import Animated, {
   withRepeat,
   withTiming,
   withSequence,
+  useReducedMotion,
 } from "react-native-reanimated";
 import { palette, radius } from "../designSystem";
 
@@ -18,8 +19,12 @@ interface Props {
 
 export function Skeleton({ width = "100%", height = 14, radius: r = radius.sm, style }: Props) {
   const pulse = useSharedValue(0.45);
+  // A pulse is decoration. Someone who has asked the OS for less motion gets
+  // the placeholder shape, still — WCAG 2.3.3.
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
+    if (reduceMotion) return;
     pulse.set(
       withRepeat(
         withSequence(withTiming(0.85, { duration: 700 }), withTiming(0.45, { duration: 700 })),
@@ -27,7 +32,7 @@ export function Skeleton({ width = "100%", height = 14, radius: r = radius.sm, s
         false,
       ),
     );
-  }, [pulse]);
+  }, [pulse, reduceMotion]);
 
   const animStyle = useAnimatedStyle(() => ({ opacity: pulse.get() }));
 

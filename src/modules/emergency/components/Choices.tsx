@@ -4,6 +4,7 @@ import { Square, SquareCheck } from "lucide-react-native";
 
 import { palette, radius, layout } from "@shared/designSystem";
 import { Text, VStack, HStack } from "@shared/ui";
+import { checkable } from "@shared/ui/a11y";
 
 /**
  * Selectable chips with a testID on each chip.
@@ -38,7 +39,8 @@ export function ChoiceChips({
             disabled={disabled}
             testID={`${testIDPrefix}-${o.key}`}
             accessibilityRole={multi ? "checkbox" : "radio"}
-            accessibilityState={{ selected, checked: selected, disabled }}
+            accessibilityState={{ checked: selected, disabled }}
+            {...checkable(selected, () => onPress(o.key), disabled)}
             accessibilityLabel={o.label}
             style={[styles.chip, selected && styles.chipActive, disabled && { opacity: 0.55 }]}
           >
@@ -78,6 +80,7 @@ export function CheckToggle({
       testID={testID}
       accessibilityRole="checkbox"
       accessibilityState={{ checked: value }}
+      {...checkable(value, () => onChange(!value))}
       accessibilityLabel={label}
       style={styles.check}
     >

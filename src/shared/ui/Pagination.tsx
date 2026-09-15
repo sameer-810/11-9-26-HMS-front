@@ -1,5 +1,6 @@
 import React from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View, Platform } from "react-native";
+import { webAria } from "./a11y";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { palette, radius, layout } from "../designSystem";
 import { Text } from "./Text";
@@ -13,6 +14,12 @@ interface Props {
   onPageChange: (p: number) => void;
   onLimitChange?: (l: number) => void;
   label?: string;
+  /**
+   * The server stopped counting at `total` — a year's audit trail or stock
+   * ledger is counted only so far, because an exact count cost most of a
+   * second per page. Shown as "10,000+" rather than as an exact figure.
+   */
+  totalCapped?: boolean;
 }
 
 const LIMITS = [20, 50, 100];
@@ -25,6 +32,7 @@ export function Pagination({
   onPageChange,
   onLimitChange,
   label = "records",
+  totalCapped = false,
 }: Props) {
   const from = total === 0 ? 0 : (page - 1) * limit + 1;
   const to = Math.min(page * limit, total);
@@ -32,7 +40,8 @@ export function Pagination({
   return (
     <HStack gap={12} align="center" justify="space-between" wrap>
       <Text variant="body-sm" tone="tertiary" tabular>
-        {from}–{to} of {total.toLocaleString("en-IN")} {label}
+        {from}–{to} of {total.toLocaleString("en-IN")}
+        {totalCapped ? "+" : ""} {label}
       </Text>
 
       <HStack gap={8} align="center">
@@ -44,7 +53,8 @@ export function Pagination({
                 onPress={() => onLimitChange(l)}
                 accessibilityRole="button"
                 accessibilityLabel={`Show ${l} per page`}
-                accessibilityState={{ selected: l === limit }}
+                accessibilityState={Platform.OS === "web" ? undefined : { selected: l === limit }}
+                {...webAria({ pressed: l === limit })}
                 style={[styles.limit, l === limit && styles.limitActive]}
               >
                 <Text

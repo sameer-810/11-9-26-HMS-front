@@ -42,7 +42,9 @@ export default function LoginScreen({ navigation }: { navigation?: any }) {
       await login.mutateAsync({ ...values, hospitalId: hospitalId ?? undefined });
     } catch (err) {
       if (apiErrorCode(err) === "HOSPITAL_SELECTION_REQUIRED") {
-        const list = await lookupHospitals.mutateAsync(getValues("email")).catch(() => []);
+        const list = await lookupHospitals
+          .mutateAsync({ email: getValues("email"), password: getValues("password") })
+          .catch(() => []);
         setHospitals(list);
         setError("You have an account at more than one hospital. Choose which one.");
         return;
@@ -54,7 +56,7 @@ export default function LoginScreen({ navigation }: { navigation?: any }) {
   const busy = login.isPending || lookupHospitals.isPending;
 
   return (
-    <View style={styles.root}>
+    <View style={styles.root} role="main">
       {isWide ? (
         <LinearGradient colors={[...gradients.hero]} style={styles.hero}>
           <VStack gap={14} style={{ maxWidth: 400 }}>
@@ -90,7 +92,7 @@ export default function LoginScreen({ navigation }: { navigation?: any }) {
           ) : null}
 
           <VStack gap={4}>
-            <Text variant="display-sm" tone="primary">
+            <Text variant="display-sm" tone="primary" heading={1}>
               Sign in
             </Text>
             <Text variant="body-sm" tone="tertiary">

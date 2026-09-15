@@ -62,7 +62,7 @@ self.addEventListener("message", (event) => {
             (hit) =>
               hit ||
               fetch(u)
-                .then((response) => (response.ok ? cache.put(u, response) : undefined))
+                .then((response) => (storable(response) ? cache.put(u, response) : undefined))
                 .catch(() => undefined),
           ),
         ),
@@ -71,9 +71,21 @@ self.addEventListener("message", (event) => {
   );
 });
 
+/**
+ * A response the server marked as not for keeping is not kept, even from this
+ * origin. Today nothing same-origin carries patient data; this holds if that
+ * ever changes (a same-origin API proxy, a rewrite that serves JSON).
+ */
+function storable(response) {
+  const cacheControl = (response.headers.get("Cache-Control") || "").toLowerCase();
+  return response.ok && !/\b(no-store|private)\b/.test(cacheControl);
+}
+
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
+  // A request carrying credentials is a data request by definition.
+  if (request.headers.has("Authorization")) return;
 
   const url = new URL(request.url);
   // Other origins — the API, the socket, anything third-party — pass straight through.
@@ -84,7 +96,7 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (response.ok) {
+          if (storable(response)) {
             const copy = response.clone();
             caches.open(VERSION).then((cache) => cache.put("/index.html", copy));
           }
@@ -100,7 +112,7 @@ self.addEventListener("fetch", (event) => {
       (hit) =>
         hit ||
         fetch(request).then((response) => {
-          if (response.ok && response.type === "basic") {
+          if (storable(response) && response.type === "basic") {
             const copy = response.clone();
             caches.open(VERSION).then((cache) => cache.put(request, copy));
           }

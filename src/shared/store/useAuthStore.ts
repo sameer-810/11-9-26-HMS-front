@@ -146,20 +146,16 @@ export const useAuthStore = create<AuthState>()(
 
       logout: async () => {
         const { refreshToken } = get();
-        if (refreshToken) {
-          try {
-            await axios.post(`${environment.apiUrl}/auth/logout`, { refreshToken });
-          } catch {
-            // The session TTL reclaims the slot regardless.
-          }
-        }
-        await secureStorage.removeItem(STORAGE_KEY);
         // A shared ward tablet must not show the next person what the last one
         // read: the saved records go, and so does everything held in memory.
         // Queued vitals and notes are NOT dropped — they belong to the nurse
         // who charted them and send when that nurse signs in again.
-        await clearMirrors();
-        queryClient.clear();
+        //
+        // All of it happens BEFORE the server is told. On a ward whose uplink
+        // is down the revoke call can hang for as long as the connection takes
+        // to time out, and a sign-out that leaves the last nurse's patients on
+        // screen for that long is not a sign-out.
+        const wiping = clearMirrors();
         set({
           user: null,
           hospital: null,
@@ -167,6 +163,15 @@ export const useAuthStore = create<AuthState>()(
           refreshToken: null,
           isAuthenticated: false,
         });
+        queryClient.clear();
+        await Promise.all([secureStorage.removeItem(STORAGE_KEY), wiping]);
+        if (refreshToken) {
+          try {
+            await axios.post(`${environment.apiUrl}/auth/logout`, { refreshToken }, { timeout: 10_000 });
+          } catch {
+            // The session TTL reclaims the slot regardless.
+          }
+        }
       },
 
       hasPermission: (permission) => {

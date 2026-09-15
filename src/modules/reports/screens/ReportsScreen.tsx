@@ -247,7 +247,7 @@ export default function ReportsScreen() {
         <VStack gap={16}>
           <Banner tone="info" message="Reports are aggregate — counts, rates, times and amounts. No report names a patient." />
 
-          <HStack gap={8} wrap>
+          <HStack gap={8} wrap role="tablist" accessibilityLabel="Report">
             {reports.map((r) => (
               <FilterChip
                 key={r.key}
@@ -261,7 +261,7 @@ export default function ReportsScreen() {
 
           <Card>
             <VStack gap={12}>
-              <HStack gap={8} wrap>
+              <HStack gap={8} wrap role="tablist" accessibilityLabel="Date range">
                 {PRESETS.map((p) => (
                   <FilterChip
                     key={p.key}

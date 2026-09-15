@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { OctagonAlert, FlaskConical } from "lucide-react-native";
 
@@ -201,7 +201,7 @@ function ResultRow({ order, onOpen, children }: { order: LabOrder; onOpen: () =>
   const patient = order.patient as PatientBanner;
   const flagged = order.results.filter((r) => r.isAbnormal);
   return (
-    <Row onOpen={onOpen} testID={`inbox-result-${order.orderNumber}`}>
+    <Row onOpen={onOpen} testID={`inbox-result-${order.orderNumber}`} actions={children}>
       <VStack gap={2} style={{ flex: 1, minWidth: 200 }}>
         <HStack gap={8} align="center" wrap>
           <Text variant="label">{order.test.name}</Text>
@@ -226,16 +226,43 @@ function ResultRow({ order, onOpen, children }: { order: LabOrder; onOpen: () =>
           </Text>
         )}
       </VStack>
-      {children}
     </Row>
   );
 }
 
-function Row({ children, onOpen, testID }: { children: React.ReactNode; onOpen: () => void; testID?: string }) {
+function Row({
+  children,
+  actions,
+  onOpen,
+  testID,
+}: {
+  children: React.ReactNode;
+  /** Buttons beside the row — "Reviewed". Never inside the row's own press target. */
+  actions?: React.ReactNode;
+  onOpen: () => void;
+  testID?: string;
+}) {
+  if (!actions) {
+    return (
+      <Card compact onPress={onOpen} testID={testID}>
+        <HStack gap={10} align="center" wrap>
+          {children}
+        </HStack>
+      </Card>
+    );
+  }
+  // A row that opens AND carries its own button is two controls side by side.
+  // A button inside a button cannot be reached by a screen reader, and
+  // pressing it on the web also fires the row.
   return (
-    <Card compact onPress={onOpen} testID={testID}>
+    <Card compact>
       <HStack gap={10} align="center" wrap>
-        {children}
+        <Pressable onPress={onOpen} testID={testID} accessibilityRole="button" style={{ flex: 1, minWidth: 200 }}>
+          <HStack gap={10} align="center" wrap>
+            {children}
+          </HStack>
+        </Pressable>
+        {actions}
       </HStack>
     </Card>
   );

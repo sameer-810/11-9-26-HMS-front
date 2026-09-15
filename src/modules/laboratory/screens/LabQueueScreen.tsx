@@ -19,6 +19,8 @@ import {
   StatTile,
 } from "@shared/ui";
 import { useDebouncedValue } from "@shared/hooks/useDebouncedValue";
+import { useProgressiveList } from "@shared/hooks/useProgressiveList";
+import { ShowMoreButton } from "@shared/ui/ShowMoreButton";
 import { formatDuration, formatTimeOnly } from "@shared/format";
 import { useLabQueue } from "@modules/laboratory/hooks/useLaboratory";
 import type { LabQueueRow, LabStatus, LabUrgency } from "@modules/laboratory/types";
@@ -66,6 +68,7 @@ export default function LabQueueScreen() {
     search: debounced.trim() || undefined,
   });
 
+  const rows = useProgressiveList(data);
   const stat = data.filter((r) => r.urgency === "stat").length;
   const overdue = data.filter((r) => r.turnaround.overdue).length;
   const criticalToReport = data.filter((r) => r.status === "completed" && r.hasCritical).length;
@@ -114,13 +117,14 @@ export default function LabQueueScreen() {
           />
         ) : (
           <VStack gap={8} testID="lab-queue-rows">
-            {data.map((row) => (
+            {rows.visible.map((row) => (
               <QueueRow
                 key={row.id}
                 row={row}
                 onPress={() => navigation.navigate("LabOrder", { orderId: row.id })}
               />
             ))}
+            <ShowMoreButton hidden={rows.hidden} pageSize={rows.pageSize} onPress={rows.showMore} noun="tests" testID="lab-queue-show-more" />
           </VStack>
         )}
       </VStack>

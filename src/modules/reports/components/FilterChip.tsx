@@ -2,6 +2,7 @@ import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { palette, radius, layout } from "@shared/designSystem";
 import { Text } from "@shared/ui";
+import { checkable, webAria } from "@shared/ui/a11y";
 
 interface Props {
   label: string;
@@ -22,6 +23,8 @@ interface Props {
  * per-chip testID; the report picker, date presets and audit tabs all need one.
  * Rendered in a wrapping HStack rather than a horizontal scroll, so on a wide
  * screen every report is visible without swiping to find the ninth.
+ *
+ * A "tab" chip must sit inside a Stack with role="tablist".
  */
 export function FilterChip({ label, active, onPress, count, accentColor, role = "tab", testID }: Props) {
   return (
@@ -29,6 +32,7 @@ export function FilterChip({ label, active, onPress, count, accentColor, role = 
       onPress={onPress}
       accessibilityRole={role}
       accessibilityState={role === "switch" ? { checked: active } : { selected: active }}
+      {...(role === "switch" ? checkable(active, onPress) : webAria({ selected: active }))}
       accessibilityLabel={count !== undefined ? `${label}, ${count}` : label}
       testID={testID}
       style={[styles.chip, active && styles.chipActive, accentColor && !active ? { borderColor: accentColor } : null]}

@@ -2,11 +2,13 @@ import { useMemo } from "react";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { isCancel } from "axios";
 
 import { apiClient, apiErrorMessage } from "@api/apiClient";
 import { queryClient } from "@api/queryClient";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { useNetworkStore, isNetworkError } from "./network";
+import { belongsTo, ownerOf, sameOwner, type OutboxOwner } from "./outboxOwnership";
 
 /**
  * The offline write queue.
@@ -52,6 +54,8 @@ export interface OutboxOp {
   id: string;
   kind: OutboxKind;
   userId: string;
+  /** Optional only because ops queued before it was recorded lack it. */
+  hospitalId?: string;
   admissionId: string;
   /** Who and what, for the status strip and the failure list. */
   label: string;
@@ -113,13 +117,20 @@ export function newOpId(): string {
   });
 }
 
-const currentUserId = () => useAuthStore.getState().user?.id ?? null;
+const currentOwner = (): OutboxOwner | null => ownerOf(useAuthStore.getState().user);
+
+const pendingFor = (owner: OutboxOwner | null) =>
+  useOutbox.getState().ops.some((o) => o.status === "pending" && belongsTo(o, owner));
 
 /** The signed-in user's ops. Filtered in a memo — a selector returning a new array would re-render forever. */
 export function useMyOps(): OutboxOp[] {
   const ops = useOutbox((s) => s.ops);
   const userId = useAuthStore((s) => s.user?.id);
-  return useMemo(() => ops.filter((o) => o.userId === userId), [ops, userId]);
+  const hospitalId = useAuthStore((s) => s.user?.hospitalId);
+  return useMemo(() => {
+    const owner = ownerOf({ id: userId, hospitalId });
+    return ops.filter((o) => belongsTo(o, owner));
+  }, [ops, userId, hospitalId]);
 }
 
 export type SendResult<T> = { status: "sent"; data: T } | { status: "queued"; op: OutboxOp };
@@ -136,16 +147,17 @@ export async function sendOrQueue<B extends object, T>(
   body: B,
   send: (payload: B & { clientOpId: string; takenAt: string }) => Promise<T>,
 ): Promise<SendResult<T>> {
-  const userId = currentUserId();
+  const owner = currentOwner();
   const id = newOpId();
   const takenAt = new Date().toISOString();
   const payload = { ...body, clientOpId: id, takenAt };
 
-  const queue = (): SendResult<T> => {
+  const queue = (o: OutboxOwner): SendResult<T> => {
     const op: OutboxOp = {
       id,
       kind,
-      userId: userId ?? "",
+      userId: o.userId,
+      hospitalId: o.hospitalId,
       admissionId: meta.admissionId,
       label: meta.label,
       body: body as unknown as Record<string, unknown>,
@@ -159,13 +171,12 @@ export async function sendOrQueue<B extends object, T>(
     return { status: "queued", op };
   };
 
-  const waiting = useOutbox.getState().ops.some((o) => o.userId === userId && o.status === "pending");
-  if (userId && (!useNetworkStore.getState().online || waiting)) return queue();
+  if (owner && (!useNetworkStore.getState().online || pendingFor(owner))) return queue(owner);
 
   try {
     return { status: "sent", data: await send(payload) };
   } catch (err) {
-    if (userId && isNetworkError(err)) return queue();
+    if (owner && isNetworkError(err)) return queue(owner);
     throw err;
   }
 }
@@ -176,11 +187,11 @@ let draining: Promise<number> | null = null;
 export function drainOutbox(): Promise<number> {
   if (draining) return draining;
   draining = (async () => {
-    const userId = currentUserId();
-    if (!userId || !useNetworkStore.getState().online) return 0;
+    const owner = currentOwner();
+    if (!owner || !useNetworkStore.getState().online) return 0;
 
     const store = useOutbox.getState();
-    const batch = store.ops.filter((o) => o.userId === userId && o.status === "pending");
+    const batch = store.ops.filter((o) => o.status === "pending" && belongsTo(o, owner));
     if (batch.length === 0) return 0;
 
     store.setSyncing(true);
@@ -190,6 +201,13 @@ export function drainOutbox(): Promise<number> {
 
     try {
       for (const op of batch) {
+        // A batch can take minutes on a bad line. If its owner signed out
+        // meanwhile, the rest waits for them — it is not sent on the session
+        // of whoever signed in next.
+        if (!sameOwner(owner, currentOwner())) {
+          stopped = true;
+          break;
+        }
         useOutbox.getState().attempt(op.id);
         try {
           await apiClient.post(ENDPOINT[op.kind], { ...op.body, clientOpId: op.id, takenAt: op.takenAt });
@@ -198,9 +216,11 @@ export function drainOutbox(): Promise<number> {
           touched.add(op.admissionId);
         } catch (err) {
           const status = (err as { response?: { status?: number } })?.response?.status;
-          // No answer, or a session that needs signing in again: stop and keep
-          // everything, in order, for the next attempt.
-          if (isNetworkError(err) || status === 401) {
+          // No answer, a session that needs signing in again, or a request the
+          // client withdrew because the user changed: stop and keep
+          // everything, in order, for the next attempt. None of those is the
+          // server refusing the entry.
+          if (isNetworkError(err) || isCancel(err) || status === 401) {
             stopped = true;
             break;
           }
@@ -223,8 +243,7 @@ export function drainOutbox(): Promise<number> {
     }
 
     // Anything charted while this batch was sending goes out straight after.
-    const more = useOutbox.getState().ops.some((o) => o.userId === userId && o.status === "pending");
-    if (more && !stopped) setTimeout(() => void drainOutbox(), 0);
+    if (pendingFor(owner) && !stopped) setTimeout(() => void drainOutbox(), 0);
     return filed;
   })().finally(() => {
     draining = null;
@@ -239,9 +258,7 @@ export function startOutboxSync(): () => void {
   });
   const unsubscribeHydration = useOutbox.persist.onFinishHydration(() => void drainOutbox());
   const timer = setInterval(() => {
-    const userId = currentUserId();
-    const waiting = useOutbox.getState().ops.some((o) => o.userId === userId && o.status === "pending");
-    if (waiting && useNetworkStore.getState().online) void drainOutbox();
+    if (pendingFor(currentOwner()) && useNetworkStore.getState().online) void drainOutbox();
   }, 20_000);
   void drainOutbox();
 

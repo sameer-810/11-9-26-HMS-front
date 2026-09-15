@@ -1,5 +1,6 @@
 import React from "react";
 import { Modal, Pressable, StyleSheet } from "react-native";
+import { useReducedMotion } from "react-native-reanimated";
 import { palette, radius, shadows } from "../designSystem";
 import { Text } from "./Text";
 import { HStack } from "./Stack";
@@ -26,6 +27,9 @@ interface Props {
  *
  * For anything clinical, use ClinicalAlert instead. This is for ordinary
  * destructive actions like deactivating a user.
+ *
+ * Keyboard: focus moves into the dialog and stays there; Escape cancels, and
+ * focus returns to whatever opened it.
  */
 export function ConfirmDialog({
   visible,
@@ -38,11 +42,12 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: Props) {
+  const reduceMotion = useReducedMotion();
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
-      <Pressable style={styles.overlay} onPress={loading ? undefined : onCancel}>
-        <Pressable style={styles.card} onPress={() => {}} accessibilityViewIsModal>
-          <Text variant="h2" tone="primary">
+    <Modal visible={visible} transparent animationType={reduceMotion ? "none" : "fade"} onRequestClose={onCancel}>
+      <Pressable style={styles.overlay} onPress={loading ? undefined : onCancel} focusable={false}>
+        <Pressable style={styles.card} onPress={() => {}} accessibilityViewIsModal focusable={false}>
+          <Text variant="h2" tone="primary" heading={2}>
             {title}
           </Text>
           {message ? (

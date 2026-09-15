@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useId, useState } from "react";
 import {
   View,
   TextInput,
@@ -13,6 +13,7 @@ import { palette, radius, numeric } from "../designSystem";
 import { Text } from "./Text";
 import { HStack, VStack } from "./Stack";
 import { useControlHeight } from "./useBreakpoint";
+import { domId, webAria } from "./a11y";
 
 interface Props extends Omit<TextInputProps, "style"> {
   label?: string;
@@ -46,6 +47,7 @@ export function TextField({
   const [focused, setFocused] = useState(false);
   const [reveal, setReveal] = useState(false);
   const controlHeight = useControlHeight();
+  const messageId = domId(useId(), "message");
 
   const isPassword = Boolean(secureTextEntry);
 
@@ -57,7 +59,9 @@ export function TextField({
             {label}
           </Text>
           {required ? (
-            <Text variant="label" style={{ color: palette.danger.text }} accessibilityLabel="required">
+            // Decorative: "required" reaches assistive technology through
+            // aria-required on the input, not by reading an asterisk aloud.
+            <Text variant="label" style={{ color: palette.danger.text }} aria-hidden>
               *
             </Text>
           ) : null}
@@ -102,6 +106,9 @@ export function TextField({
           // Spoken by a screen reader on focus, so the error is not something
           // only sighted users learn about.
           accessibilityHint={error ?? hint}
+          // The web equivalent: the message is programmatically tied to the
+          // field, and the field says it is invalid or required.
+          {...webAria({ describedBy: error || hint ? messageId : undefined, invalid: Boolean(error), required })}
           style={[
             styles.input,
             numericField ? numeric : null,
@@ -135,11 +142,13 @@ export function TextField({
       </View>
 
       {error ? (
-        <Text variant="caption" tone="danger">
+        // An alert, so it is announced the moment it appears — after a submit
+        // the user's focus is on the button, not on the field that failed.
+        <Text variant="caption" tone="danger" nativeID={messageId} accessibilityRole="alert" accessibilityLiveRegion="polite">
           {error}
         </Text>
       ) : hint ? (
-        <Text variant="caption" tone="tertiary">
+        <Text variant="caption" tone="tertiary" nativeID={messageId}>
           {hint}
         </Text>
       ) : null}
@@ -159,7 +168,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: palette.text.primary,
     paddingVertical: 0,
-    // Web-only: the browser's default focus ring duplicates ours.
+    // Web-only: the browser's default focus ring duplicates ours — the field
+    // container's two-pixel focus-colour border above.
     outlineStyle: "none",
   } as never,
 });

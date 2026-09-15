@@ -12,6 +12,12 @@ interface StackProps {
   style?: StyleProp<ViewStyle>;
   testID?: string;
   accessibilityLabel?: string;
+  /**
+   * For a group whose children need a named parent: "tablist" around tab
+   * chips, "radiogroup" around radio chips. Without it a screen reader reads
+   * orphaned tabs with no position or count.
+   */
+  role?: "tablist" | "radiogroup" | "group" | "list";
 }
 
 export function Stack({
@@ -25,11 +31,13 @@ export function Stack({
   style,
   testID,
   accessibilityLabel,
+  role,
 }: StackProps) {
   return (
     <View
       testID={testID}
       accessibilityLabel={accessibilityLabel}
+      role={role}
       style={[
         {
           flexDirection: direction,

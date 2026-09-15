@@ -144,6 +144,12 @@ function printInHiddenFrame(job: PrintJob): Promise<PrintOutcome> {
       }
     };
 
+    // A srcdoc frame is same-origin with the app, so a script that slipped
+    // past escaping would run with the session in reach. No `allow-scripts`
+    // means nothing inside the document runs; `allow-same-origin` is only so
+    // this code can call print() on it, and `allow-modals` so that print()
+    // is not silently ignored.
+    frame.setAttribute("sandbox", "allow-same-origin allow-modals");
     frame.srcdoc = job.html;
     document.body.appendChild(frame);
   });

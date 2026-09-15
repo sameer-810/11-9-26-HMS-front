@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, Pressable, StyleSheet } from "react-native";
 import { useRoute } from "@react-navigation/native";
+import { checkable } from "@shared/ui/a11y";
 import { OctagonAlert, Phone, CircleCheck, Square, SquareCheck } from "lucide-react-native";
 
 import { palette, radius, signal } from "@shared/designSystem";
@@ -397,6 +398,7 @@ function CriticalPanel({ order, canCall, canAcknowledge }: { order: LabOrder; ca
               style={styles.checkbox}
               accessibilityRole="checkbox"
               accessibilityState={{ checked: readBack }}
+              {...checkable(readBack, () => setReadBack((v) => !v))}
               testID="critical-call-readback"
             >
               {readBack ? (

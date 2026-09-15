@@ -18,6 +18,7 @@ import {
   ErrorState,
   SignalBadge,
 } from "@shared/ui";
+import { checkable } from "@shared/ui/a11y";
 import { apiErrorMessage } from "@api/apiClient";
 import { formatDateTime, formatRupees } from "@shared/format";
 import { useDispenseContext, useDispense, useDispensings } from "@modules/pharmacy/hooks/usePharmacy";
@@ -335,6 +336,7 @@ function AllergyCheck({
           style={[styles.ack, ack ? styles.ackOn : null]}
           accessibilityRole="checkbox"
           accessibilityState={{ checked: ack }}
+          {...checkable(ack, () => onAck(!ack))}
           testID="dispense-ack"
         >
           {ack ? <SquareCheck size={22} color={palette.text.accent} /> : <Square size={22} color={palette.text.tertiary} />}
@@ -429,6 +431,7 @@ function LineCard({
               style={styles.include}
               accessibilityRole="checkbox"
               accessibilityState={{ checked: included }}
+              {...checkable(included, () => onInclude(!included))}
               testID={`dispense-include-${line.medicineName}`}
             >
               {included ? <SquareCheck size={20} color={palette.text.accent} /> : <Square size={20} color={palette.text.tertiary} />}

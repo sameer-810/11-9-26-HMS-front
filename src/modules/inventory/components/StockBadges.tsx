@@ -31,5 +31,7 @@ export function ExpiryBadge({ status, date, days }: { status: ExpiryStatus; date
       />
     );
   }
-  return <SignalBadge level="normal" label={formatExpiry(date)} size="sm" showIcon={false} />;
+  // With its shape. A green date alone says "fine" in colour only, which is
+  // exactly the reading the signal ramp exists to prevent.
+  return <SignalBadge level="normal" label={formatExpiry(date)} size="sm" />;
 }

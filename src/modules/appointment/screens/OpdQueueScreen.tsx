@@ -31,6 +31,8 @@ import {
   ConfirmDialog,
 } from "@shared/ui";
 import { apiErrorMessage } from "@api/apiClient";
+import { useProgressiveList } from "@shared/hooks/useProgressiveList";
+import { ShowMoreButton } from "@shared/ui/ShowMoreButton";
 import { formatWallTime, formatDuration, formatCalendarDate, todayCalendarDate } from "@shared/format";
 import { useDepartments } from "@modules/appointment/hooks/useDirectory";
 import {
@@ -79,6 +81,7 @@ export default function OpdQueueScreen() {
     if (filter === "done") return ["completed", "no_show", "cancelled"].includes(a.status);
     return true;
   });
+  const shown = useProgressiveList(visible);
 
   const arrive = async (a: Appointment) => {
     setError(null);
@@ -183,7 +186,7 @@ export default function OpdQueueScreen() {
           />
         ) : (
           <VStack gap={8}>
-            {visible.map((a) => (
+            {shown.visible.map((a) => (
               <QueueRow
                 key={a.id}
                 appointment={a}
@@ -198,6 +201,7 @@ export default function OpdQueueScreen() {
                 }}
               />
             ))}
+            <ShowMoreButton hidden={shown.hidden} pageSize={shown.pageSize} onPress={shown.showMore} noun="patients" testID="opd-queue-show-more" />
           </VStack>
         )}
       </VStack>

@@ -18,6 +18,8 @@ import {
   StatTile,
 } from "@shared/ui";
 import { useDebouncedValue } from "@shared/hooks/useDebouncedValue";
+import { useProgressiveList } from "@shared/hooks/useProgressiveList";
+import { ShowMoreButton } from "@shared/ui/ShowMoreButton";
 import { formatDateTime } from "@shared/format";
 import { usePharmacyQueue } from "@modules/pharmacy/hooks/usePharmacy";
 import { StockStatusBadge } from "@modules/inventory/components/StockBadges";
@@ -43,6 +45,7 @@ export default function PharmacyQueueScreen() {
     search: debounced.trim() || undefined,
   });
 
+  const rows = useProgressiveList(data);
   const changed = data.filter((r) => r.allergiesChangedSinceWritten).length;
   const out = data.filter((r) => r.stockStatus === "out_of_stock").length;
 
@@ -85,9 +88,10 @@ export default function PharmacyQueueScreen() {
           <EmptyState icon={Pill} title="Nothing to dispense" message="Prescriptions appear here as soon as a doctor saves them." />
         ) : (
           <VStack gap={8} testID="pharmacy-queue-rows">
-            {data.map((row) => (
+            {rows.visible.map((row) => (
               <QueueRow key={row.id} row={row} onPress={() => navigation.navigate("Dispense", { prescriptionId: row.id })} />
             ))}
+            <ShowMoreButton hidden={rows.hidden} pageSize={rows.pageSize} onPress={rows.showMore} noun="prescriptions" testID="pharmacy-queue-show-more" />
           </VStack>
         )}
       </VStack>

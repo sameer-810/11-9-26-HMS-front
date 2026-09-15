@@ -4,6 +4,7 @@ import { Trash2 } from "lucide-react-native";
 
 import { palette, radius, signal, layout } from "@shared/designSystem";
 import { Screen, Text, VStack, HStack, Card, SectionHeader, Button, TextField, Select, Banner } from "@shared/ui";
+import { checkable } from "@shared/ui/a11y";
 import { apiErrorMessage } from "@api/apiClient";
 import { useDepartments } from "@modules/appointment/hooks/useDirectory";
 import { useInventoryItems, useInventoryItem, useIssueStock } from "@modules/inventory/hooks/useInventory";
@@ -115,7 +116,8 @@ export default function IssueStockScreen() {
                     onPress={() => setDestination(d)}
                     style={[styles.choice, active ? styles.choiceOn : null, disabled ? { opacity: 0.5 } : null]}
                     accessibilityRole="radio"
-                    accessibilityState={{ selected: active, disabled }}
+                    accessibilityState={{ checked: active, disabled }}
+                    {...checkable(active, () => setDestination(d), disabled)}
                     testID={`issue-to-${d}`}
                   >
                     <Text variant="label">{d === "department" ? "A department" : "Transfer to the pharmacy"}</Text>

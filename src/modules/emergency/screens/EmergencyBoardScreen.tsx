@@ -236,7 +236,10 @@ function ActiveRow({ visit: v, wide, onOpen }: { visit: EdVisit; wide: boolean; 
   const arrival = (
     <HStack gap={5} align="center">
       {v.arrivalMode === "ambulance" ? (
-        <Ambulance size={14} color={palette.clinical[700]} strokeWidth={2.1} accessibilityLabel="Arrived by ambulance" />
+        // Decorative: the words beside it already say "Ambulance". A label
+        // passed to the icon lands on every <path> inside the SVG, where it is
+        // not allowed and gets read out once per stroke.
+        <Ambulance size={14} color={palette.clinical[700]} strokeWidth={2.1} aria-hidden />
       ) : null}
       <Text variant="caption" tone="secondary" tabular numberOfLines={1}>
         {ARRIVAL_MODE_LABELS[v.arrivalMode]} · {formatTimeOnly(v.arrivedAt)}

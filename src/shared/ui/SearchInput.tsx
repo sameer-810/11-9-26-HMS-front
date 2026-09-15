@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, TextInput, StyleSheet, Pressable, ViewStyle, StyleProp } from "react-native";
 import { Search, X } from "lucide-react-native";
 import { palette, radius } from "../designSystem";
@@ -31,9 +31,19 @@ export function SearchInput({
   testID,
 }: Props) {
   const height = useControlHeight();
+  const [focused, setFocused] = useState(false);
 
   return (
-    <View style={[styles.wrap, { minHeight: height }, style]}>
+    <View
+      style={[
+        styles.wrap,
+        { minHeight: height },
+        // The same two-pixel focus ring as TextField: a keyboard user tabbing
+        // into the patient search must see that they have arrived.
+        focused ? { borderColor: palette.border.focus, borderWidth: 2, paddingHorizontal: 9 } : null,
+        style,
+      ]}
+    >
       <Search size={16} color={palette.text.tertiary} strokeWidth={2} />
       <TextInput
         value={value}
@@ -45,6 +55,8 @@ export function SearchInput({
         autoCapitalize="none"
         returnKeyType="search"
         onSubmitEditing={onSubmitEditing}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         accessibilityLabel={placeholder}
         testID={testID}
         style={styles.input}

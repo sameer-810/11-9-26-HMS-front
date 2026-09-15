@@ -92,16 +92,20 @@ function ActivityTab() {
       <Card compact>
         <VStack gap={10}>
           <HStack gap={8} wrap>
-            <FilterChip label="All outcomes" active={outcome === "all"} onPress={() => refilter(setOutcome)("all")} testID="audit-outcome-all" />
-            {OUTCOMES.map((o) => (
-              <FilterChip
-                key={o}
-                label={OUTCOME_LABELS[o]}
-                active={outcome === o}
-                onPress={() => refilter(setOutcome)(o)}
-                testID={`audit-outcome-${o}`}
-              />
-            ))}
+            {/* The outcome tabs are their own tablist; the switch beside them is
+                not a tab, and must not be inside it. */}
+            <HStack gap={8} wrap role="tablist" accessibilityLabel="Outcome">
+              <FilterChip label="All outcomes" active={outcome === "all"} onPress={() => refilter(setOutcome)("all")} testID="audit-outcome-all" />
+              {OUTCOMES.map((o) => (
+                <FilterChip
+                  key={o}
+                  label={OUTCOME_LABELS[o]}
+                  active={outcome === o}
+                  onPress={() => refilter(setOutcome)(o)}
+                  testID={`audit-outcome-${o}`}
+                />
+              ))}
+            </HStack>
             <FilterChip
               label="Emergency access only"
               role="switch"
@@ -169,6 +173,7 @@ function ActivityTab() {
           page={page}
           totalPages={data.meta.pages}
           total={data.meta.total}
+          totalCapped={data.meta.totalCapped}
           limit={AUDIT_PAGE_SIZE}
           onPageChange={setPage}
           label="entries"
@@ -190,7 +195,7 @@ function GrantsTab() {
         Every emergency access to a restricted record waits here until someone other than the person who used it
         decides whether it was appropriate.
       </Text>
-      <HStack gap={8} wrap>
+      <HStack gap={8} wrap role="tablist" accessibilityLabel="Review status">
         {GRANT_STATUSES.map((s) => (
           <FilterChip
             key={s.key}
@@ -263,7 +268,7 @@ export default function AuditTrailScreen() {
       testID="audit-screen"
     >
       <VStack gap={14}>
-        <HStack gap={8} wrap>
+        <HStack gap={8} wrap role="tablist" accessibilityLabel="Audit views">
           <FilterChip label="Activity" active={tab === "activity"} onPress={() => setTab("activity")} testID="audit-tab-activity" />
           <FilterChip
             label="Emergency access"

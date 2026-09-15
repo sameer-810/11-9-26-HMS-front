@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Modal, ScrollView, StyleSheet, View } from "react-native";
+import { useReducedMotion } from "react-native-reanimated";
 
 import { palette, radius } from "@shared/designSystem";
 import { Banner, Button, HStack, Text, VStack } from "@shared/ui";
@@ -91,13 +92,16 @@ function FailedEntries({ visible, ops, onClose }: { visible: boolean; ops: Outbo
   const retry = useOutbox((s) => s.retry);
   const discard = useOutbox((s) => s.discard);
   const [confirming, setConfirming] = useState<string | null>(null);
+  const reduceMotion = useReducedMotion();
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType={reduceMotion ? "none" : "fade"} onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.sheet}>
           <VStack gap={12}>
-            <Text variant="h3">Entries not filed</Text>
+            <Text variant="h3" heading={2}>
+              Entries not filed
+            </Text>
             <Text variant="body-sm" tone="secondary">
               Each was charted on this device and refused by the server. The values are shown so they can be
               re-entered where they still apply.

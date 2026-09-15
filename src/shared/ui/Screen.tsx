@@ -79,14 +79,16 @@ export function Screen({
         wrap={!isWide}
         style={{ marginBottom: title || subtitle ? 16 : 0 }}
       >
-        <VStack gap={2} flex={isWide ? 1 : undefined}>
+        {/* Shrinks on narrow screens, so a long subtitle wraps at 320 px
+            instead of running off the right edge (WCAG 1.4.10). */}
+        <VStack gap={2} flex={isWide ? 1 : undefined} style={isWide ? undefined : { flexShrink: 1, minWidth: 0 }}>
           {overline ? (
             <Text variant="overline" tone="tertiary">
               {overline}
             </Text>
           ) : null}
           {title ? (
-            <Text variant={isWide ? "display-sm" : "h1"} tone="primary">
+            <Text variant={isWide ? "display-sm" : "h1"} tone="primary" heading={1}>
               {title}
             </Text>
           ) : null}
@@ -143,7 +145,9 @@ export function Screen({
   );
 
   return (
-    <View style={styles.root} testID={testID}>
+    // The main landmark. Everything a screen draws — the identity band, its
+    // banners, its footer — belongs to the screen, so it all sits inside.
+    <View style={styles.root} testID={testID} role="main">
       {patient ? (
         <PatientBanner patient={patient} right={patientRight} onPress={onPatientPress} />
       ) : null}

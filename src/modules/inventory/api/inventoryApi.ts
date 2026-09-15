@@ -101,7 +101,7 @@ export const inventoryApi = {
   },
 
   movements: async (params: { itemId?: string; type?: MovementType; reference?: string; page?: number; limit?: number } = {}) => {
-    const res = await apiClient.get<{ data: StockMovement[]; meta: { total: number; page: number; totalPages: number } }>(
+    const res = await apiClient.get<{ data: StockMovement[]; meta: { total: number; totalCapped?: boolean; page: number; totalPages: number } }>(
       "/inventory/movements",
       { params },
     );

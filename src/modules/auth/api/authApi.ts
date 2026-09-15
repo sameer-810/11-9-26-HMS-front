@@ -28,11 +28,16 @@ export interface SessionSummary {
 }
 
 export const authApi = {
-  /** Which hospitals this email has an account at, for the picker. */
-  hospitalsForEmail: async (email: string) => {
+  /**
+   * Which hospitals these credentials open, for the picker.
+   *
+   * The password is required by the server: an email alone used to be enough,
+   * which let anyone look up where a named member of staff works.
+   */
+  hospitalsForEmail: async (params: { email: string; password: string }) => {
     const res = await apiClient.post<{ data: { hospitals: HospitalChoice[] } }>(
       "/auth/hospitals",
-      { email },
+      params,
     );
     return res.data.data.hospitals;
   },

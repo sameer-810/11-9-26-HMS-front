@@ -4,6 +4,7 @@ import { Check, Lock } from "lucide-react-native";
 
 import { palette, radius, layout } from "@shared/designSystem";
 import { Text, VStack } from "@shared/ui";
+import { checkable } from "@shared/ui/a11y";
 
 interface Props {
   label: string;
@@ -44,6 +45,7 @@ export function ToggleRow({
       accessibilityLabel={label}
       accessibilityHint={description}
       accessibilityState={{ checked, disabled: Boolean(disabled) }}
+      {...checkable(checked, () => onChange(!checked), disabled)}
       testID={testID}
       style={({ pressed }) => [styles.row, pressed && !disabled ? styles.pressed : null]}
     >

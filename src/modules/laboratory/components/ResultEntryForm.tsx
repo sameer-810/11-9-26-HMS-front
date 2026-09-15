@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, Pressable, StyleSheet } from "react-native";
 import { palette, radius, signal, layout } from "@shared/designSystem";
 import { Text, HStack, VStack, Card, SectionHeader, TextField, Button, Banner } from "@shared/ui";
+import { checkable } from "@shared/ui/a11y";
 import { apiErrorMessage } from "@api/apiClient";
 import { useSaveResults } from "@modules/laboratory/hooks/useLaboratory";
 import { LabFlagGlyph, previewFlag, flagPresentation } from "./LabFlag";
@@ -149,7 +150,8 @@ function ParameterField({
                 onPress={() => onChange(selected ? "" : choice)}
                 style={[styles.choice, selected ? { backgroundColor: tier.bg, borderColor: tier.border } : null]}
                 accessibilityRole="radio"
-                accessibilityState={{ selected }}
+                accessibilityState={{ checked: selected }}
+                {...checkable(selected, () => onChange(selected ? "" : choice))}
                 testID={`param-${p.code}-${choice}`}
               >
                 <Text variant="label-sm" style={selected ? { color: tier.text } : undefined}>

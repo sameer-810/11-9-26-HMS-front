@@ -13,6 +13,7 @@ import {
   SearchInput,
   Banner,
 } from "@shared/ui";
+import { checkable } from "@shared/ui/a11y";
 import { apiErrorMessage } from "@api/apiClient";
 import { useLabTests, useOrderTests } from "@modules/laboratory/hooks/useLaboratory";
 import type { DuplicateOrder, LabTest, LabUrgency } from "@modules/laboratory/types";
@@ -206,7 +207,8 @@ export function OrderTestsPanel({ patientId, consultationId, admissionId, disabl
                           : null,
                       ]}
                       accessibilityRole="radio"
-                      accessibilityState={{ selected: active }}
+                      accessibilityState={{ checked: active }}
+                      {...checkable(active, () => setUrgency(u.key))}
                       testID={`lab-urgency-${u.key}`}
                     >
                       <Text variant="label" style={active && s ? { color: s.text } : undefined}>

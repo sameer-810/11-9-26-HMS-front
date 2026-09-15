@@ -2,6 +2,7 @@ import React from "react";
 import { ScrollView, Pressable, StyleSheet, View } from "react-native";
 import { palette, radius, layout } from "../designSystem";
 import { Text } from "./Text";
+import { webAria } from "./a11y";
 
 export interface Chip {
   key: string;
@@ -19,8 +20,11 @@ interface Props {
 
 export function ChipsRow({ chips, active, onChange }: Props) {
   return (
+    // A tab is only a tab inside a tablist; without the parent a screen reader
+    // announces orphaned tabs with no count and no "1 of 4".
     <ScrollView
       horizontal
+      accessibilityRole="tablist"
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{ gap: 8, paddingVertical: 2 }}
     >
@@ -32,6 +36,7 @@ export function ChipsRow({ chips, active, onChange }: Props) {
             onPress={() => onChange(c.key)}
             accessibilityRole="tab"
             accessibilityState={{ selected: isActive }}
+            {...webAria({ selected: isActive })}
             accessibilityLabel={c.count !== undefined ? `${c.label}, ${c.count}` : c.label}
             style={[
               styles.chip,

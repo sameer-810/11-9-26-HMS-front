@@ -79,14 +79,14 @@ export default function ForgotPasswordScreen({ navigation }: { navigation?: any 
   });
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.root} contentContainerStyle={styles.content} role="main">
       <VStack gap={20} style={{ width: "100%", maxWidth: 400 }}>
         <HStack gap={12} align="center">
           <View style={styles.mark}>
             <Mail size={20} color={palette.clinical[700]} strokeWidth={2.2} />
           </View>
           <VStack gap={2} flex={1}>
-            <Text variant="h1" tone="primary">
+            <Text variant="h1" tone="primary" heading={1}>
               {stage === "request" ? "Reset your password" : "Enter your code"}
             </Text>
             <Text variant="body-sm" tone="tertiary">

@@ -217,6 +217,8 @@ export interface RecordAccess {
 
 /** What the server says when a restricted record refuses a read. */
 export interface RestrictedDetails {
+  /** Whose record — a ward screen asks by admission and needs to be told. */
+  patientId?: string;
   canBreakGlass: boolean;
   categories: Record<string, string>;
   minutes: number;
@@ -265,4 +267,10 @@ export interface MedicalRecord {
   /** Reported only. Empty (not absent) for the pharmacy scope. */
   labResults: RecordLabResult[];
   pendingLabOrders: PendingLabOrder[];
+  /**
+   * Per section, true when the patient has older history than the record
+   * carries (the newest 100 consultations, prescriptions and results, 50 visits
+   * and pending tests). Absent from servers that predate it.
+   */
+  truncated?: Partial<Record<"consultations" | "prescriptions" | "visits" | "labResults" | "pendingLabOrders", boolean>>;
 }

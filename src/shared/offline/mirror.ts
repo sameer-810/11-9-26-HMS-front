@@ -2,6 +2,8 @@ import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Query, QueryClient, QueryKey } from "@tanstack/react-query";
 
+import { collectBreakGlassIds, isTainted, readViaBreakGlass } from "./mirrorPolicy";
+
 /**
  * The read-only record mirror.
  *
@@ -66,9 +68,16 @@ const isMirroredKey = (key: QueryKey) => typeof key[0] === "string" && (MIRRORED
 function keepable(query: Query): boolean {
   if (!isMirroredKey(query.queryKey)) return false;
   if (query.state.status !== "success" || query.state.data === undefined) return false;
-  const access = (query.state.data as { access?: { viaBreakGlass?: boolean } } | null)?.access;
-  return !access?.viaBreakGlass;
+  return !readViaBreakGlass(query.state.data);
 }
+
+/**
+ * Bumped by every sign-out. A mirror remembers the generation it started in
+ * and never writes once it has moved on: a save already waiting on its debounce
+ * or on storage when someone signs out would otherwise put the last user's
+ * records back on disk straight after they were deleted.
+ */
+let generation = 0;
 
 const hash = (key: QueryKey) => JSON.stringify(key);
 
@@ -89,8 +98,12 @@ async function read(storageKey: string): Promise<{ savedAt: number; entries: Mir
  */
 export function startMirror(qc: QueryClient, userId: string): () => void {
   const storageKey = `${PREFIX}${userId}`;
+  const startedIn = generation;
   let stopped = false;
   let timer: ReturnType<typeof setTimeout> | null = null;
+  const current = () => !stopped && startedIn === generation;
+  /** Patients read under break-the-glass this session — see mirrorPolicy. */
+  const tainted = new Set<string>();
 
   // Kept in memory as long as the mirror would keep them on disk, so a record
   // opened this morning is still in the cache when the WiFi drops this
@@ -104,23 +117,25 @@ export function startMirror(qc: QueryClient, userId: string): () => void {
     // Entries already on disk survive even if their query left the cache.
     for (const entry of stored?.entries ?? []) merged.set(hash(entry.key), entry);
 
-    for (const query of qc.getQueryCache().getAll()) {
-      if (!isMirroredKey(query.queryKey)) continue;
+    const mirrored = qc.getQueryCache().getAll().filter((q) => isMirroredKey(q.queryKey));
+    collectBreakGlassIds(
+      mirrored.map((q) => ({ key: q.queryKey, data: q.state.data })),
+      tainted,
+    );
+    for (const query of mirrored) {
       if (keepable(query)) {
         merged.set(query.queryHash, { key: query.queryKey, data: query.state.data, updatedAt: query.state.dataUpdatedAt });
-      } else if ((query.state.data as { access?: { viaBreakGlass?: boolean } } | undefined)?.access?.viaBreakGlass) {
-        // A record that is now being read under emergency access loses any
-        // earlier copy too.
-        merged.delete(query.queryHash);
       }
     }
 
+    // A patient now being read under emergency access loses every copy —
+    // their other families, and anything saved before the access began.
     const entries = [...merged.values()]
-      .filter((e) => now - e.updatedAt < MIRROR_MAX_AGE_MS)
+      .filter((e) => now - e.updatedAt < MIRROR_MAX_AGE_MS && !isTainted(e, tainted))
       .sort((a, b) => b.updatedAt - a.updatedAt)
       .slice(0, MAX_ENTRIES);
 
-    if (stopped) return;
+    if (!current()) return;
     try {
       await AsyncStorage.setItem(storageKey, JSON.stringify({ v: 1, savedAt: now, entries }));
       useMirrorStore.getState().setSavedAt(now);
@@ -132,7 +147,7 @@ export function startMirror(qc: QueryClient, userId: string): () => void {
 
   void (async () => {
     const stored = await read(storageKey);
-    if (!stored || stopped) return;
+    if (!stored || !current()) return;
     const now = Date.now();
     for (const entry of stored.entries) {
       if (now - entry.updatedAt >= MIRROR_MAX_AGE_MS) continue;
@@ -162,6 +177,9 @@ export function startMirror(qc: QueryClient, userId: string): () => void {
 
 /** Removes every user's mirror from this device. Called at sign-out. */
 export async function clearMirrors(): Promise<void> {
+  // Synchronously, before the first await, so no save that is already under
+  // way can land after the delete below.
+  generation += 1;
   try {
     const keys = await AsyncStorage.getAllKeys();
     const mine = keys.filter((k) => k.startsWith(PREFIX));

@@ -1,6 +1,7 @@
 import React from "react";
 import { Text as RNText, TextProps, StyleProp, TextStyle } from "react-native";
 import { typography, palette, numeric } from "../designSystem";
+import { webAria } from "./a11y";
 
 type Variant =
   | "display-lg"
@@ -95,6 +96,13 @@ interface Props extends TextProps {
   /** Tabular figures. Automatic on metric variants; opt in for table cells. */
   tabular?: boolean;
   center?: boolean;
+  /**
+   * Makes this text a heading at that outline level. Deliberately separate from
+   * `variant`: how big a line is and where it sits in the document outline are
+   * different questions, and a screen reader user navigating by heading needs
+   * the second answered correctly.
+   */
+  heading?: 1 | 2 | 3 | 4;
   style?: StyleProp<TextStyle>;
   children?: React.ReactNode;
 }
@@ -105,6 +113,7 @@ export function Text({
   weight,
   tabular,
   center,
+  heading,
   style,
   children,
   ...rest
@@ -124,6 +133,7 @@ export function Text({
         style,
       ]}
       {...rest}
+      {...(heading ? { accessibilityRole: "header" as const, ...webAria({ level: heading }) } : null)}
     >
       {children}
     </RNText>

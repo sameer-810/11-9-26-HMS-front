@@ -32,8 +32,26 @@ export interface SafeHtml {
   readonly __html: string;
 }
 
+/**
+ * Only markup made by `raw()` or `html` is trusted — not anything shaped like
+ * it. Record fields arrive as parsed JSON, and a field that came back as
+ * `{ "__html": "<img onerror=…>" }` must be escaped like any other value rather
+ * than waved through because it has the right key.
+ */
+const minted = new WeakSet<object>();
+
+function mint(markup: string): SafeHtml {
+  const safe = Object.freeze({ __html: markup });
+  minted.add(safe);
+  return safe;
+}
+
+export function isSafeHtml(v: unknown): v is SafeHtml {
+  return typeof v === "object" && v !== null && minted.has(v);
+}
+
 export function raw(markup: string): SafeHtml {
-  return { __html: markup };
+  return mint(markup);
 }
 
 export function html(strings: TemplateStringsArray, ...values: unknown[]): SafeHtml {
@@ -41,12 +59,12 @@ export function html(strings: TemplateStringsArray, ...values: unknown[]): SafeH
   values.forEach((v, i) => {
     out += renderValue(v) + strings[i + 1];
   });
-  return { __html: out };
+  return mint(out);
 }
 
 function renderValue(v: unknown): string {
   if (Array.isArray(v)) return v.map(renderValue).join("");
-  if (v && typeof v === "object" && "__html" in v) return (v as SafeHtml).__html;
+  if (isSafeHtml(v)) return v.__html;
   if (v === false) return "";
   return escapeHtml(v);
 }

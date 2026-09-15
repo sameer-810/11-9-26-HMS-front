@@ -135,6 +135,11 @@ export const useBreakGlass = (patientId: string) => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["medical-record", patientId] });
       qc.invalidateQueries({ queryKey: ["clinical-context", patientId] });
+      // The ward screens are closed by the same restriction, and ask by
+      // admission rather than patient — so every ward family reloads.
+      for (const key of ["bedside", "observations", "nursing-notes", "drug-round", "handovers", "admission"]) {
+        qc.invalidateQueries({ queryKey: [key] });
+      }
     },
   });
 };

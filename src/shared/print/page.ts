@@ -2,6 +2,16 @@ import { mm } from "./sizing";
 import { escapeHtml } from "./escapeHtml";
 
 /**
+ * The printed document's own policy: it is data, not a program. No script, no
+ * network fetch, nothing but its inline styles and inline SVG. It travels with
+ * the document — the browser's print frame, the phone's print WebView, the
+ * desktop shell's print window — so an escaping mistake anywhere upstream is
+ * inert markup rather than code running with the app's origin and session.
+ */
+export const PRINT_CSP =
+  "default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; base-uri 'none'; form-action 'none'";
+
+/**
  * A complete HTML document whose page is exactly `widthMm` × `heightMm`.
  *
  * `@page { size }` tells the print pipeline the paper size. For a label the
@@ -49,6 +59,7 @@ export function pageDocument({
 <html lang="en">
 <head>
 <meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy" content="${PRINT_CSP}" />
 <title>${escapeHtml(title)}</title>
 <style>
 @page { size: ${mm(widthMm)} ${mm(heightMm)}; margin: ${layout === "label" ? "0" : mm(marginMm)}; }

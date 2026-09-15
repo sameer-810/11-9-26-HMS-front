@@ -30,6 +30,9 @@ import { SbarPanel } from "@modules/inpatient/components/SbarPanel";
 import type { PatientBanner } from "@modules/patient/types";
 import type { News2Result, Observation } from "@modules/inpatient/types";
 import { calculateNews2, type News2Input } from "@shared/clinical/news2";
+import { apiErrorCode, apiErrorDetails } from "@api/apiClient";
+import { BreakGlassPrompt, EmergencyAccessBanner } from "@modules/consultation/components/BreakGlassPrompt";
+import type { RecordAccess, RestrictedDetails } from "@modules/consultation/types";
 
 /**
  * The bedside chart — IP-04.
@@ -90,6 +93,7 @@ export default function BedsideScreen() {
 
   const admission = data?.admission;
   const patient = admission?.patient as PatientBanner | undefined;
+  const access = (data as { access?: RecordAccess } | undefined)?.access;
 
   // Offline, and this chart was never opened on this device while online.
   // Said plainly — a spinner here would read as "loading", and nothing is coming.
@@ -119,9 +123,17 @@ export default function BedsideScreen() {
   }
 
   if (isError || !admission) {
+    // A restricted patient's chart, and this clinician is not on the treating
+    // team: the break-the-glass prompt the record offers, not a dead end.
+    const restricted =
+      apiErrorCode(error) === "RECORD_RESTRICTED" ? apiErrorDetails<RestrictedDetails>(error) : undefined;
     return (
       <Screen title="Bedside">
-        <ErrorState error={error} onRetry={() => refetch()} />
+        {restricted?.patientId ? (
+          <BreakGlassPrompt patientId={restricted.patientId} details={restricted} />
+        ) : (
+          <ErrorState error={error} onRetry={() => refetch()} />
+        )}
       </Screen>
     );
   }
@@ -181,6 +193,10 @@ export default function BedsideScreen() {
          * Pinned above the tabs. The current score and its escalation policy
          * are not a tab you can be on the wrong side of.
          */}
+        {access?.viaBreakGlass && access.expiresAt ? (
+          <EmergencyAccessBanner expiresAt={access.expiresAt} onExpired={() => refetch()} />
+        ) : null}
+
         {pendingScore ? (
           <View testID="bedside-pending-score">
             <VStack gap={6}>

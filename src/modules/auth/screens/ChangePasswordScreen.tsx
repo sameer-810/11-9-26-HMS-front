@@ -54,14 +54,14 @@ export default function ChangePasswordScreen({ forced }: Props) {
   });
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.root} contentContainerStyle={styles.content} role="main">
       <VStack gap={20} style={{ width: "100%", maxWidth: 420 }}>
         <HStack gap={12} align="center">
           <View style={styles.mark}>
             <KeyRound size={20} color={palette.clinical[700]} strokeWidth={2.2} />
           </View>
           <VStack gap={2} flex={1}>
-            <Text variant="h1" tone="primary">
+            <Text variant="h1" tone="primary" heading={1}>
               {forced ? "Set your password" : "Change your password"}
             </Text>
             <Text variant="body-sm" tone="tertiary">

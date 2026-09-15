@@ -72,6 +72,7 @@ export default function StockLedgerScreen() {
             page={page}
             totalPages={data.meta.totalPages}
             total={data.meta.total}
+            totalCapped={data.meta.totalCapped}
             limit={50}
             onPageChange={setPage}
             label="movements"

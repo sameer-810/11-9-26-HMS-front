@@ -1,4 +1,4 @@
-import axios, { InternalAxiosRequestConfig } from "axios";
+import axios, { CanceledError, InternalAxiosRequestConfig } from "axios";
 import { environment } from "@config/env";
 import { useAuthStore } from "../store/useAuthStore";
 import { getDeviceId } from "./deviceId";
@@ -6,6 +6,8 @@ import { useNetworkStore, isNetworkError } from "../offline/network";
 
 interface RetryableConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
+  /** Who was signed in when this request was first sent. */
+  _userId?: string | null;
 }
 
 export const apiClient = axios.create({
@@ -14,7 +16,21 @@ export const apiClient = axios.create({
   timeout: 30_000,
 });
 
+/**
+ * A request belongs to the person who made it. On a shared ward tablet the
+ * next nurse can sign in while the last one's request is still waiting on a bad
+ * connection; its 401-and-retry must not go out again carrying the new
+ * session's token, which would file the first nurse's vitals under the second
+ * nurse's name.
+ */
+const signedInAs = () => useAuthStore.getState().user?.id ?? null;
+
 apiClient.interceptors.request.use(async (config) => {
+  const pinned = config as RetryableConfig;
+  if (pinned._userId === undefined) pinned._userId = signedInAs();
+  else if (pinned._userId !== signedInAs()) {
+    throw new CanceledError("The signed-in user changed before this request was sent", undefined, config);
+  }
   // Read from the store directly rather than through React, so this works
   // outside a component tree (background sync, the offline outbox).
   const token = useAuthStore.getState().token;
@@ -44,6 +60,8 @@ apiClient.interceptors.response.use(
 
     const { token, refreshToken } = useAuthStore.getState();
     if (!token && !refreshToken) return Promise.reject(error);
+    // Someone else's session now: nothing of theirs to refresh for this request.
+    if (originalRequest._userId && originalRequest._userId !== signedInAs()) return Promise.reject(error);
 
     if (error.response?.status === 401) {
       originalRequest._retry = true;

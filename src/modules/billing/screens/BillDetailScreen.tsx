@@ -21,6 +21,7 @@ import {
   ErrorState,
   ConfirmDialog,
 } from "@shared/ui";
+import { checkable } from "@shared/ui/a11y";
 import { apiErrorMessage } from "@api/apiClient";
 import { formatDateTime, formatRupees } from "@shared/format";
 import {
@@ -342,7 +343,8 @@ function PaymentForm({ bill }: { bill: Bill }) {
               onPress={() => setMethod(m)}
               style={[styles.method, method === m ? styles.methodOn : null]}
               accessibilityRole="radio"
-              accessibilityState={{ selected: method === m }}
+              accessibilityState={{ checked: method === m }}
+              {...checkable(method === m, () => setMethod(m))}
               testID={`pay-method-${m}`}
             >
               <Text variant="label-sm">{PAYMENT_METHOD_LABELS[m]}</Text>
