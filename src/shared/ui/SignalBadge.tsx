@@ -10,7 +10,6 @@ import {
 import { signal, radius, type SignalLevel } from "../designSystem";
 import { Text } from "./Text";
 
-
 /**
  * Clinical signal badge. Each level has a distinct icon shape so meaning survives greyscale and
  * colour blindness. No `color` prop on purpose; use a Chip for custom colours.
@@ -61,7 +60,11 @@ export function SignalBadge({
       ]}
     >
       {showIcon ? (
-        <Icon size={iconSize} color={solid ? s.onColor : s.text} strokeWidth={2.2} />
+        <Icon
+          size={iconSize}
+          color={solid ? s.onColor : s.text}
+          strokeWidth={2.2}
+        />
       ) : null}
       <Text
         variant={size === "sm" ? "label-sm" : "label"}

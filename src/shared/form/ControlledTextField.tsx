@@ -1,11 +1,18 @@
 import React, { ComponentProps } from "react";
-import { useController, Control, FieldValues, FieldPath } from "react-hook-form";
+import {
+  useController,
+  Control,
+  FieldValues,
+  FieldPath,
+} from "react-hook-form";
 import { TextField } from "@shared/ui";
 
 type TextFieldProps = ComponentProps<typeof TextField>;
 
-interface Props<T extends FieldValues>
-  extends Omit<TextFieldProps, "value" | "onChangeText" | "onBlur" | "error"> {
+interface Props<T extends FieldValues> extends Omit<
+  TextFieldProps,
+  "value" | "onChangeText" | "onBlur" | "error"
+> {
   control: Control<T>;
   name: FieldPath<T>;
 }

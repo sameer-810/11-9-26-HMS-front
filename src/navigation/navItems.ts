@@ -175,7 +175,10 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Admitted patients",
     icon: BedDouble,
     section: "Wards",
-    permissionAny: [PERMISSIONS.ADMISSION_MANAGE, PERMISSIONS.NURSING_PATIENTS_VIEW],
+    permissionAny: [
+      PERMISSIONS.ADMISSION_MANAGE,
+      PERMISSIONS.NURSING_PATIENTS_VIEW,
+    ],
   },
   {
     name: "Beds",
@@ -307,7 +310,8 @@ function itemVisible(
   isAdmin: () => boolean,
 ): boolean {
   if (item.adminOnly) return isAdmin();
-  if (item.permissionAny?.length) return item.permissionAny.some((p) => hasPermission(p));
+  if (item.permissionAny?.length)
+    return item.permissionAny.some((p) => hasPermission(p));
   if (item.permission) return hasPermission(item.permission);
   return true;
 }

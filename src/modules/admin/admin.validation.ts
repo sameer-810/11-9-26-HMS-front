@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { ROLES } from "@shared/permissions";
 
-
 // client-side mirrors of user.validation.js; the server re-validates everything
 // and its refusals (clashing employee ID, taken email) are shown as worded.
 const phone = z
@@ -13,16 +12,32 @@ const roleValues = Object.values(ROLES) as [string, ...string[]];
 
 const clinicalFields = {
   designation: z.string().trim().max(80, "At most 80 characters").optional(),
-  registrationNumber: z.string().trim().max(40, "At most 40 characters").optional(),
+  registrationNumber: z
+    .string()
+    .trim()
+    .max(40, "At most 40 characters")
+    .optional(),
   specialization: z.string().trim().max(80, "At most 80 characters").optional(),
-  qualifications: z.string().trim().max(160, "At most 160 characters").optional(),
+  qualifications: z
+    .string()
+    .trim()
+    .max(160, "At most 160 characters")
+    .optional(),
 };
 
 export const createUserSchema = z.object({
-  employeeId: z.string().trim().min(1, "Enter the employee ID").max(24, "At most 24 characters"),
+  employeeId: z
+    .string()
+    .trim()
+    .min(1, "Enter the employee ID")
+    .max(24, "At most 24 characters"),
   firstName: z.string().trim().min(1, "Enter their first name").max(60),
   lastName: z.string().trim().max(60).optional(),
-  email: z.string().trim().min(1, "Enter their work email").email("Enter a valid email address"),
+  email: z
+    .string()
+    .trim()
+    .min(1, "Enter their work email")
+    .email("Enter a valid email address"),
   phone: z.union([phone, z.literal("")]).optional(),
   role: z.enum(roleValues, { message: "Choose a role" }),
   departmentId: z.string().optional(),
@@ -34,7 +49,11 @@ export type CreateUserForm = z.infer<typeof createUserSchema>;
 export const editUserSchema = z.object({
   firstName: z.string().trim().min(1, "Enter their first name").max(60),
   lastName: z.string().trim().max(60).optional(),
-  email: z.string().trim().min(1, "Enter their work email").email("Enter a valid email address"),
+  email: z
+    .string()
+    .trim()
+    .min(1, "Enter their work email")
+    .email("Enter a valid email address"),
   phone: z.union([phone, z.literal("")]).optional(),
   ...clinicalFields,
 });

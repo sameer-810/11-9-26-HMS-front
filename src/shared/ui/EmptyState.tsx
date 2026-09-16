@@ -24,7 +24,12 @@ export function EmptyState({ icon, title, message, action }: Props) {
           {title}
         </Text>
         {message ? (
-          <Text variant="body-sm" tone="tertiary" center style={{ maxWidth: 380 }}>
+          <Text
+            variant="body-sm"
+            tone="tertiary"
+            center
+            style={{ maxWidth: 380 }}
+          >
             {message}
           </Text>
         ) : null}

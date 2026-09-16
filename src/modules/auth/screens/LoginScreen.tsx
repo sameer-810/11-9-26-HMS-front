@@ -1,5 +1,10 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, useWindowDimensions } from "react-native";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  useWindowDimensions,
+} from "react-native";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LinearGradient } from "expo-linear-gradient";
@@ -41,14 +46,22 @@ export default function LoginScreen({ navigation }: { navigation?: any }) {
     setError(null);
     clearNotice(null);
     try {
-      await login.mutateAsync({ ...values, hospitalId: hospitalId ?? undefined });
+      await login.mutateAsync({
+        ...values,
+        hospitalId: hospitalId ?? undefined,
+      });
     } catch (err) {
       if (apiErrorCode(err) === "HOSPITAL_SELECTION_REQUIRED") {
         const list = await lookupHospitals
-          .mutateAsync({ identifier: getValues("identifier"), password: getValues("password") })
+          .mutateAsync({
+            identifier: getValues("identifier"),
+            password: getValues("password"),
+          })
           .catch(() => []);
         setHospitals(list);
-        setError("You have an account at more than one hospital. Choose which one.");
+        setError(
+          "You have an account at more than one hospital. Choose which one.",
+        );
         return;
       }
       setError(apiErrorMessage(err, "Could not sign you in"));
@@ -69,8 +82,8 @@ export default function LoginScreen({ navigation }: { navigation?: any }) {
               One patient, one record
             </Text>
             <Text variant="body-lg" style={{ color: "rgba(255,255,255,0.85)" }}>
-              Reception, consultation, wards, laboratory, pharmacy and billing on one connected
-              platform.
+              Reception, consultation, wards, laboratory, pharmacy and billing
+              on one connected platform.
             </Text>
           </VStack>
         </LinearGradient>
@@ -85,7 +98,11 @@ export default function LoginScreen({ navigation }: { navigation?: any }) {
           {!isWide ? (
             <HStack gap={10} align="center">
               <View style={styles.mark}>
-                <Hospital size={20} color={palette.clinical[700]} strokeWidth={2.2} />
+                <Hospital
+                  size={20}
+                  color={palette.clinical[700]}
+                  strokeWidth={2.2}
+                />
               </View>
               <Text variant="h1" tone="primary">
                 HMS
@@ -104,10 +121,21 @@ export default function LoginScreen({ navigation }: { navigation?: any }) {
 
           {notice ? (
             <View testID="login-session-notice">
-              <Banner tone="info" title="Signed out" message={notice} onDismiss={() => clearNotice(null)} />
+              <Banner
+                tone="info"
+                title="Signed out"
+                message={notice}
+                onDismiss={() => clearNotice(null)}
+              />
             </View>
           ) : null}
-          {error ? <Banner tone="danger" message={error} onDismiss={() => setError(null)} /> : null}
+          {error ? (
+            <Banner
+              tone="danger"
+              message={error}
+              onDismiss={() => setError(null)}
+            />
+          ) : null}
 
           <VStack gap={14}>
             <ControlledTextField
@@ -119,7 +147,13 @@ export default function LoginScreen({ navigation }: { navigation?: any }) {
               autoCorrect={false}
               autoComplete="username"
               testID="login-email"
-              leading={<UserRound size={16} color={palette.text.tertiary} strokeWidth={1.9} />}
+              leading={
+                <UserRound
+                  size={16}
+                  color={palette.text.tertiary}
+                  strokeWidth={1.9}
+                />
+              }
             />
             <ControlledTextField
               control={control}
@@ -131,7 +165,13 @@ export default function LoginScreen({ navigation }: { navigation?: any }) {
               testID="login-password"
               onSubmitEditing={submit}
               returnKeyType="go"
-              leading={<Lock size={16} color={palette.text.tertiary} strokeWidth={1.9} />}
+              leading={
+                <Lock
+                  size={16}
+                  color={palette.text.tertiary}
+                  strokeWidth={1.9}
+                />
+              }
             />
 
             {hospitals && hospitals.length > 1 ? (
@@ -149,7 +189,12 @@ export default function LoginScreen({ navigation }: { navigation?: any }) {
               />
             ) : null}
 
-            <Button label="Sign in" onPress={submit} loading={busy} testID="login-submit" />
+            <Button
+              label="Sign in"
+              onPress={submit}
+              loading={busy}
+              testID="login-submit"
+            />
 
             <Button
               label="Forgot your password?"
@@ -161,8 +206,8 @@ export default function LoginScreen({ navigation }: { navigation?: any }) {
 
           <Card compact>
             <Text variant="caption" tone="tertiary">
-              Everything you do is recorded against your account. Do not share it, and do not sign
-              in on behalf of a colleague.
+              Everything you do is recorded against your account. Do not share
+              it, and do not sign in on behalf of a colleague.
             </Text>
           </Card>
         </VStack>
@@ -172,7 +217,11 @@ export default function LoginScreen({ navigation }: { navigation?: any }) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, flexDirection: "row", backgroundColor: palette.surface.secondary },
+  root: {
+    flex: 1,
+    flexDirection: "row",
+    backgroundColor: palette.surface.secondary,
+  },
   hero: { flex: 1, padding: 48, justifyContent: "center" },
   heroMark: {
     width: 52,
@@ -183,7 +232,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   pane: { flex: 1, backgroundColor: palette.surface.primary },
-  paneContent: { flexGrow: 1, alignItems: "center", justifyContent: "center", padding: 28 },
+  paneContent: {
+    flexGrow: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 28,
+  },
   mark: {
     width: 38,
     height: 38,

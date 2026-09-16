@@ -7,7 +7,6 @@
 // Palette
 // ---------------------------------------------------------------------------
 
-
 export const palette = {
   /** Cool slate. The interface is built almost entirely out of this ramp. */
   ink: {
@@ -101,7 +100,6 @@ export const palette = {
   info: { bg: "#E9F1FB", text: "#104E82", border: "#C3DBF2" }, // 7.12:1
 } as const;
 
-
 // ---------------------------------------------------------------------------
 // Clinical signal — the sacred ramp
 // ---------------------------------------------------------------------------
@@ -164,7 +162,11 @@ export type SignalLevel = keyof typeof signal;
  * Only critical overrides require a typed reason, so routine alerts do not breed junk reasons.
  */
 export const alertTier = {
-  critical: { presentation: "blocking", requireReason: true, dismissible: false },
+  critical: {
+    presentation: "blocking",
+    requireReason: true,
+    dismissible: false,
+  },
   urgent: { presentation: "confirm", requireReason: false, dismissible: true },
   caution: { presentation: "inline", requireReason: false, dismissible: true },
   normal: { presentation: "passive", requireReason: false, dismissible: true },
@@ -172,32 +174,84 @@ export const alertTier = {
 
 /** Result flags against the reference range; critical ones are panic values that escalate. */
 export const valueFlag = {
-  criticalLow: { signal: "critical" as SignalLevel, glyph: "LL", label: "Critically low" },
+  criticalLow: {
+    signal: "critical" as SignalLevel,
+    glyph: "LL",
+    label: "Critically low",
+  },
   low: { signal: "urgent" as SignalLevel, glyph: "L", label: "Low" },
   normal: { signal: "normal" as SignalLevel, glyph: "", label: "Normal" },
   high: { signal: "urgent" as SignalLevel, glyph: "H", label: "High" },
-  criticalHigh: { signal: "critical" as SignalLevel, glyph: "HH", label: "Critically high" },
+  criticalHigh: {
+    signal: "critical" as SignalLevel,
+    glyph: "HH",
+    label: "Critically high",
+  },
 } as const;
 
 export type ValueFlag = keyof typeof valueFlag;
 
 /** Emergency Severity Index, the ED triage scale. 1 is resuscitation. */
 export const triageLevel = {
-  1: { label: "Resuscitation", signal: "critical" as SignalLevel, color: "#B3261E", targetMinutes: 0 },
-  2: { label: "Emergent", signal: "critical" as SignalLevel, color: "#D9480F", targetMinutes: 10 },
-  3: { label: "Urgent", signal: "urgent" as SignalLevel, color: "#B25000", targetMinutes: 30 },
-  4: { label: "Less urgent", signal: "caution" as SignalLevel, color: "#8A5304", targetMinutes: 60 },
-  5: { label: "Non-urgent", signal: "normal" as SignalLevel, color: "#0B6B3F", targetMinutes: 120 },
+  1: {
+    label: "Resuscitation",
+    signal: "critical" as SignalLevel,
+    color: "#B3261E",
+    targetMinutes: 0,
+  },
+  2: {
+    label: "Emergent",
+    signal: "critical" as SignalLevel,
+    color: "#D9480F",
+    targetMinutes: 10,
+  },
+  3: {
+    label: "Urgent",
+    signal: "urgent" as SignalLevel,
+    color: "#B25000",
+    targetMinutes: 30,
+  },
+  4: {
+    label: "Less urgent",
+    signal: "caution" as SignalLevel,
+    color: "#8A5304",
+    targetMinutes: 60,
+  },
+  5: {
+    label: "Non-urgent",
+    signal: "normal" as SignalLevel,
+    color: "#0B6B3F",
+    targetMinutes: 120,
+  },
 } as const;
 
 /** Bed states, from the spec's state table. Colour carries the meaning here. */
 export const bedState = {
-  available: { label: "Available", color: "#0B6B3F", bg: "#E6F4EC", border: "#AFDCC4" },
-  occupied: { label: "Occupied", color: "#1463A6", bg: "#E9F1FB", border: "#C3DBF2" },
-  reserved: { label: "Reserved", color: "#8A5304", bg: "#FDF2DC", border: "#F0D49A" },
-  maintenance: { label: "Under maintenance", color: "#5B6779", bg: "#EDF0F4", border: "#DCE1E7" },
+  available: {
+    label: "Available",
+    color: "#0B6B3F",
+    bg: "#E6F4EC",
+    border: "#AFDCC4",
+  },
+  occupied: {
+    label: "Occupied",
+    color: "#1463A6",
+    bg: "#E9F1FB",
+    border: "#C3DBF2",
+  },
+  reserved: {
+    label: "Reserved",
+    color: "#8A5304",
+    bg: "#FDF2DC",
+    border: "#F0D49A",
+  },
+  maintenance: {
+    label: "Under maintenance",
+    color: "#5B6779",
+    bg: "#EDF0F4",
+    border: "#DCE1E7",
+  },
 } as const;
-
 
 // ---------------------------------------------------------------------------
 // Dark theme
@@ -280,7 +334,6 @@ export const darkSignal = {
   },
 } as const;
 
-
 // ---------------------------------------------------------------------------
 // Status accents — KPI tiles and chart series
 // ---------------------------------------------------------------------------
@@ -305,7 +358,6 @@ export const chartSeries = [
   "#5B6779",
   "#4A9BDA",
 ] as const;
-
 
 // ---------------------------------------------------------------------------
 // Spacing, radius, elevation
@@ -374,7 +426,6 @@ export const motion = {
   },
 } as const;
 
-
 // ---------------------------------------------------------------------------
 // Typography
 // ---------------------------------------------------------------------------
@@ -428,15 +479,30 @@ export const typography = {
     textTransform: "uppercase" as const,
   },
   /** Large, unmissable — the vitals tile, the value on a result card. */
-  metric: { fontSize: 24, lineHeight: 28, fontFamily: fonts.display, ...numeric },
-  metricSmall: { fontSize: 18, lineHeight: 22, fontFamily: fonts.display, ...numeric },
+  metric: {
+    fontSize: 24,
+    lineHeight: 28,
+    fontFamily: fonts.display,
+    ...numeric,
+  },
+  metricSmall: {
+    fontSize: 18,
+    lineHeight: 22,
+    fontFamily: fonts.display,
+    ...numeric,
+  },
 } as const;
-
 
 // ---------------------------------------------------------------------------
 // Layout
 // ---------------------------------------------------------------------------
-export const breakpoints = { sm: 640, md: 760, lg: 900, xl: 1100, xxl: 1280 } as const;
+export const breakpoints = {
+  sm: 640,
+  md: 760,
+  lg: 900,
+  xl: 1100,
+  xxl: 1280,
+} as const;
 
 /** Table density presets; screens read these rather than hard-coding row heights. */
 export const density = {

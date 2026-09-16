@@ -20,21 +20,39 @@ interface Props {
  * A single ChipsRow-style chip with its own testID (ChipsRow cannot take one per chip).
  * A "tab" chip must sit inside a Stack with role="tablist".
  */
-export function FilterChip({ label, active, onPress, count, accentColor, role = "tab", testID }: Props) {
+export function FilterChip({
+  label,
+  active,
+  onPress,
+  count,
+  accentColor,
+  role = "tab",
+  testID,
+}: Props) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole={role}
-      accessibilityState={role === "switch" ? { checked: active } : { selected: active }}
-      {...(role === "switch" ? checkable(active, onPress) : webAria({ selected: active }))}
+      accessibilityState={
+        role === "switch" ? { checked: active } : { selected: active }
+      }
+      {...(role === "switch"
+        ? checkable(active, onPress)
+        : webAria({ selected: active }))}
       accessibilityLabel={count !== undefined ? `${label}, ${count}` : label}
       testID={testID}
-      style={[styles.chip, active && styles.chipActive, accentColor && !active ? { borderColor: accentColor } : null]}
+      style={[
+        styles.chip,
+        active && styles.chipActive,
+        accentColor && !active ? { borderColor: accentColor } : null,
+      ]}
     >
       <Text
         variant="label"
         weight={active ? "600" : "500"}
-        style={{ color: active ? palette.clinical[700] : palette.text.secondary }}
+        style={{
+          color: active ? palette.clinical[700] : palette.text.secondary,
+        }}
       >
         {label}
       </Text>
@@ -42,14 +60,24 @@ export function FilterChip({ label, active, onPress, count, accentColor, role = 
         <View
           style={[
             styles.count,
-            { backgroundColor: accentColor ?? (active ? palette.clinical[100] : palette.ink[100]) },
+            {
+              backgroundColor:
+                accentColor ??
+                (active ? palette.clinical[100] : palette.ink[100]),
+            },
           ]}
         >
           <Text
             variant="label-sm"
             weight="600"
             tabular
-            style={{ color: accentColor ? "#FFFFFF" : active ? palette.clinical[700] : palette.text.secondary }}
+            style={{
+              color: accentColor
+                ? "#FFFFFF"
+                : active
+                  ? palette.clinical[700]
+                  : palette.text.secondary,
+            }}
           >
             {count}
           </Text>

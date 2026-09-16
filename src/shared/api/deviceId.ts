@@ -18,13 +18,15 @@ export async function getDeviceId(): Promise<string> {
   if (cached) return cached;
   try {
     const existing =
-      Platform.OS === "web" ? localStorage.getItem(KEY) : await SecureStore.getItemAsync(KEY);
+      Platform.OS === "web"
+        ? localStorage.getItem(KEY)
+        : await SecureStore.getItemAsync(KEY);
     if (existing) {
       cached = existing;
       return existing;
     }
   } catch {
-  // fall through and mint a fresh one for this session.
+    // fall through and mint a fresh one for this session.
   }
 
   const fresh = uuid();
@@ -33,7 +35,7 @@ export async function getDeviceId(): Promise<string> {
     if (Platform.OS === "web") localStorage.setItem(KEY, fresh);
     else await SecureStore.setItemAsync(KEY, fresh);
   } catch {
-  // not persistable here; the cap will see this as a new device next launch.
+    // not persistable here; the cap will see this as a new device next launch.
   }
   return fresh;
 }

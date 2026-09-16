@@ -1,5 +1,8 @@
 import type { PatientBanner } from "@modules/patient/types";
-import type { DoctorSummary, DepartmentSummary } from "@modules/appointment/types";
+import type {
+  DoctorSummary,
+  DepartmentSummary,
+} from "@modules/appointment/types";
 
 export type AlertTier = "critical" | "urgent" | "caution" | "normal";
 
@@ -19,7 +22,8 @@ export interface AdmissionRequest {
   department: { id: string; name: string } | null;
 }
 
-export type RequestClosureOutcome = "patient_declined" | "referred_elsewhere" | "no_longer_needed" | "duplicate";
+export type RequestClosureOutcome =
+  "patient_declined" | "referred_elsewhere" | "no_longer_needed" | "duplicate";
 
 export const REQUEST_CLOSURE_LABELS: Record<RequestClosureOutcome, string> = {
   patient_declined: "Patient declined admission",
@@ -75,11 +79,7 @@ export interface BedMovement {
 }
 
 export type AdmissionStatus =
-  | "admitted"
-  | "discharged"
-  | "transferred_out"
-  | "lama"
-  | "deceased";
+  "admitted" | "discharged" | "transferred_out" | "lama" | "deceased";
 
 export interface AdmissionRow {
   id: string;
@@ -114,7 +114,8 @@ export interface Admission extends AdmissionRow {
   dischargedBy: string;
 }
 
-export type Consciousness = "alert" | "confusion" | "voice" | "pain" | "unresponsive";
+export type Consciousness =
+  "alert" | "confusion" | "voice" | "pain" | "unresponsive";
 
 export interface ObservationVitals {
   respiratoryRate: number | null;
@@ -182,7 +183,13 @@ export interface EscalationRow extends Observation {
 export interface NursingNote {
   id: string;
   admissionId: string;
-  category: "general" | "assessment" | "intervention" | "incident" | "family" | "escalation";
+  category:
+    | "general"
+    | "assessment"
+    | "intervention"
+    | "incident"
+    | "family"
+    | "escalation";
   note: string;
   correctsNoteId: string | null;
   shift: "" | "morning" | "evening" | "night";
@@ -193,11 +200,7 @@ export interface NursingNote {
 }
 
 export type AdministrationStatus =
-  | "given"
-  | "omitted"
-  | "refused"
-  | "withheld"
-  | "self_administered";
+  "given" | "omitted" | "refused" | "withheld" | "self_administered";
 
 export interface Administration {
   id: string;
@@ -231,7 +234,13 @@ export interface DrugRoundSlot {
   asNeeded: boolean;
   administration: Pick<
     Administration,
-    "id" | "status" | "reason" | "administeredAt" | "administeredBy" | "witnessedBy" | "note"
+    | "id"
+    | "status"
+    | "reason"
+    | "administeredAt"
+    | "administeredBy"
+    | "witnessedBy"
+    | "note"
   > | null;
   overdue: boolean;
   minutesLate: number;

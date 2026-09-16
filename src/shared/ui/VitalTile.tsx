@@ -1,10 +1,15 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
 import { ArrowUp, ArrowDown, Minus } from "lucide-react-native";
-import { palette, radius, signal, valueFlag, type ValueFlag } from "../designSystem";
+import {
+  palette,
+  radius,
+  signal,
+  valueFlag,
+  type ValueFlag,
+} from "../designSystem";
 import { Text } from "./Text";
 import { HStack, VStack } from "./Stack";
-
 
 /**
  * A measured value against its reference range. Abnormality shows as colour, an H/L glyph
@@ -38,7 +43,8 @@ export function VitalTile({
   const abnormal = flag !== "normal";
   const missing = value === null || value === undefined || value === "";
 
-  const TrendIcon = trend === "up" ? ArrowUp : trend === "down" ? ArrowDown : Minus;
+  const TrendIcon =
+    trend === "up" ? ArrowUp : trend === "down" ? ArrowDown : Minus;
 
   return (
     <View
@@ -56,11 +62,20 @@ export function VitalTile({
     >
       <VStack gap={compact ? 2 : 4}>
         <HStack gap={4} align="center" justify="space-between">
-          <Text variant="label-sm" tone="tertiary" numberOfLines={1} style={{ flex: 1 }}>
+          <Text
+            variant="label-sm"
+            tone="tertiary"
+            numberOfLines={1}
+            style={{ flex: 1 }}
+          >
             {label}
           </Text>
           {trend && !missing ? (
-            <TrendIcon size={12} color={palette.text.tertiary} strokeWidth={2.4} />
+            <TrendIcon
+              size={12}
+              color={palette.text.tertiary}
+              strokeWidth={2.4}
+            />
           ) : null}
         </HStack>
 
@@ -85,7 +100,11 @@ export function VitalTile({
               ) : null}
               {f.glyph ? (
                 <View style={[styles.glyph, { backgroundColor: s.color }]}>
-                  <Text variant="label-sm" weight="600" style={{ color: s.onColor, fontSize: 10 }}>
+                  <Text
+                    variant="label-sm"
+                    weight="600"
+                    style={{ color: s.onColor, fontSize: 10 }}
+                  >
                     {f.glyph}
                   </Text>
                 </View>

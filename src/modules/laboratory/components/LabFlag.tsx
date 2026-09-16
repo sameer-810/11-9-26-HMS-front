@@ -1,8 +1,16 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
-import { palette, radius, signal, type SignalLevel } from "@shared/designSystem";
+import {
+  palette,
+  radius,
+  signal,
+  type SignalLevel,
+} from "@shared/designSystem";
 import { Text } from "@shared/ui";
-import type { LabFlag as Flag, LabEntryParameter } from "@modules/laboratory/types";
+import type {
+  LabFlag as Flag,
+  LabEntryParameter,
+} from "@modules/laboratory/types";
 
 /**
  * paper-report glyphs (L, H, LL, HH), so a flag survives greyscale printing and colour blindness.
@@ -29,7 +37,11 @@ export function flagPresentation(flag: Flag): FlagPresentation {
     case "abnormal":
       return { glyph: "A", label: "Abnormal", level: "urgent" };
     case "indeterminate":
-      return { glyph: "?", label: "Cannot be flagged — check", level: "caution" };
+      return {
+        glyph: "?",
+        label: "Cannot be flagged — check",
+        level: "caution",
+      };
     case "none":
       return { glyph: "–", label: "No range for this patient", level: null };
     default:
@@ -37,7 +49,13 @@ export function flagPresentation(flag: Flag): FlagPresentation {
   }
 }
 
-export function LabFlagGlyph({ flag, testID }: { flag: Flag; testID?: string }) {
+export function LabFlagGlyph({
+  flag,
+  testID,
+}: {
+  flag: Flag;
+  testID?: string;
+}) {
   const p = flagPresentation(flag);
   if (flag === "normal") return null;
   const s = p.level ? signal[p.level] : null;
@@ -50,10 +68,16 @@ export function LabFlagGlyph({ flag, testID }: { flag: Flag; testID?: string }) 
         styles.glyph,
         s
           ? { backgroundColor: s.bg, borderColor: s.border }
-          : { backgroundColor: palette.surface.sunken, borderColor: palette.border.default },
+          : {
+              backgroundColor: palette.surface.sunken,
+              borderColor: palette.border.default,
+            },
       ]}
     >
-      <Text variant="label-sm" style={{ color: s ? s.text : palette.text.secondary }}>
+      <Text
+        variant="label-sm"
+        style={{ color: s ? s.text : palette.text.secondary }}
+      >
         {p.glyph}
       </Text>
     </View>
@@ -64,15 +88,23 @@ export function LabFlagGlyph({ flag, testID }: { flag: Flag; testID?: string }) 
  * flag previewed while typing, exact numbers only; the saved flag is always the server's.
  * a censored or unreadable value gets no preview rather than a guess.
  */
-export function previewFlag(parameter: LabEntryParameter, text: string): Flag | "invalid" | null {
+export function previewFlag(
+  parameter: LabEntryParameter,
+  text: string,
+): Flag | "invalid" | null {
   const raw = text.trim();
   if (raw === "") return null;
 
   if (parameter.type !== "numeric") {
     const lower = raw.toLowerCase();
-    if (parameter.criticalValues.some((v) => v.toLowerCase() === lower)) return "critical";
-    if (parameter.abnormalValues.some((v) => v.toLowerCase() === lower)) return "abnormal";
-    if (parameter.choices.length && !parameter.choices.some((v) => v.toLowerCase() === lower)) {
+    if (parameter.criticalValues.some((v) => v.toLowerCase() === lower))
+      return "critical";
+    if (parameter.abnormalValues.some((v) => v.toLowerCase() === lower))
+      return "abnormal";
+    if (
+      parameter.choices.length &&
+      !parameter.choices.some((v) => v.toLowerCase() === lower)
+    ) {
       return "invalid";
     }
     return parameter.choices.length ? "normal" : null;
@@ -82,8 +114,10 @@ export function previewFlag(parameter: LabEntryParameter, text: string): Flag | 
   if (!/^-?(\d+\.?\d*|\.\d+)$/.test(raw)) return "invalid";
   const v = Number(raw);
 
-  if (parameter.criticalLow !== null && v <= parameter.criticalLow) return "criticalLow";
-  if (parameter.criticalHigh !== null && v >= parameter.criticalHigh) return "criticalHigh";
+  if (parameter.criticalLow !== null && v <= parameter.criticalLow)
+    return "criticalLow";
+  if (parameter.criticalHigh !== null && v >= parameter.criticalHigh)
+    return "criticalHigh";
   const low = parameter.range?.low ?? null;
   const high = parameter.range?.high ?? null;
   if (low === null && high === null) return "none";

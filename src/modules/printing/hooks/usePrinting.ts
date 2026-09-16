@@ -2,9 +2,13 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { printingApi } from "@modules/printing/api/printingApi";
 
 /** Scan lookup as a mutation: fires on Enter, and repeat scans are never cached (each is audited). */
-export const useScanCode = () => useMutation({ mutationFn: (code: string) => printingApi.scan(code) });
+export const useScanCode = () =>
+  useMutation({ mutationFn: (code: string) => printingApi.scan(code) });
 
-export const useCurrentAdmission = (patientId: string | undefined, enabled: boolean) =>
+export const useCurrentAdmission = (
+  patientId: string | undefined,
+  enabled: boolean,
+) =>
   useQuery({
     queryKey: ["patient-current-admission", patientId],
     queryFn: () => printingApi.currentAdmission(patientId!),

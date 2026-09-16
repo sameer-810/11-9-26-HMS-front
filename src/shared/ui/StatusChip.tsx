@@ -3,7 +3,6 @@ import { View, StyleSheet, ViewStyle, StyleProp } from "react-native";
 import { palette, radius, bedState } from "../designSystem";
 import { Text } from "./Text";
 
-
 /** Workflow state chip, not clinical severity (see SignalBadge); neutral unless attention is needed. */
 type Palette = { bg: string; text: string; border: string };
 
@@ -12,7 +11,11 @@ const NEUTRAL: Palette = {
   text: palette.text.secondary,
   border: palette.border.default,
 };
-const BLUE: Palette = { bg: palette.info.bg, text: palette.info.text, border: palette.info.border };
+const BLUE: Palette = {
+  bg: palette.info.bg,
+  text: palette.info.text,
+  border: palette.info.border,
+};
 const GREEN: Palette = {
   bg: palette.success.bg,
   text: palette.success.text,
@@ -88,7 +91,9 @@ interface Props {
 }
 
 export function StatusChip({ status, size = "md", style }: Props) {
-  const key = String(status || "").toLowerCase().trim();
+  const key = String(status || "")
+    .toLowerCase()
+    .trim();
   const c = STATE_COLORS[key] ?? NEUTRAL;
   const label = status.charAt(0).toUpperCase() + status.slice(1);
 
@@ -117,7 +122,13 @@ export function StatusChip({ status, size = "md", style }: Props) {
 export function BedStatusChip({ state }: { state: keyof typeof bedState }) {
   const c = bedState[state];
   return (
-    <View style={[styles.base, styles.md, { backgroundColor: c.bg, borderColor: c.border }]}>
+    <View
+      style={[
+        styles.base,
+        styles.md,
+        { backgroundColor: c.bg, borderColor: c.border },
+      ]}
+    >
       <Text variant="label" weight="500" style={{ color: c.color }}>
         {c.label}
       </Text>

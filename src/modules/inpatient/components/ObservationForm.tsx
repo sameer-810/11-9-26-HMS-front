@@ -1,13 +1,24 @@
 import React, { useMemo, useState } from "react";
 import { View, Pressable, StyleSheet } from "react-native";
 import { palette, radius, signal, layout } from "@shared/designSystem";
-import { Text, HStack, VStack, TextField, Button, Card, Banner } from "@shared/ui";
+import {
+  Text,
+  HStack,
+  VStack,
+  TextField,
+  Button,
+  Card,
+  Banner,
+} from "@shared/ui";
 import { checkable } from "@shared/ui/a11y";
 import { News2Score } from "./News2Score";
 import { useRecordObservation } from "@modules/inpatient/hooks/useInpatient";
-import type { Consciousness, News2Result, Observation } from "@modules/inpatient/types";
+import type {
+  Consciousness,
+  News2Result,
+  Observation,
+} from "@modules/inpatient/types";
 import { calculateNews2, type LocalNews2Result } from "@shared/clinical/news2";
-
 
 /**
  * NU-02 observation set. No escalate checkbox or Scale 2 toggle by design: the server
@@ -38,17 +49,26 @@ function num(v: string | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export function ObservationForm({ admissionId, patientName, useScale2, onRecorded }: Props) {
+export function ObservationForm({
+  admissionId,
+  patientName,
+  useScale2,
+  onRecorded,
+}: Props) {
   const [draft, setDraft] = useState<Draft>({});
   const [consciousness, setConsciousness] = useState<Consciousness | "">("");
   const [onOxygen, setOnOxygen] = useState<boolean | null>(null);
   const [concern, setConcern] = useState("");
   const [result, setResult] = useState<Observation | null>(null);
   /** A set kept on this device, scored here, not yet seen by the server. */
-  const [queued, setQueued] = useState<{ local: LocalNews2Result; concern: boolean } | null>(null);
+  const [queued, setQueued] = useState<{
+    local: LocalNews2Result;
+    concern: boolean;
+  } | null>(null);
 
   const record = useRecordObservation();
-  const set = (key: string) => (v: string) => setDraft((d) => ({ ...d, [key]: v }));
+  const set = (key: string) => (v: string) =>
+    setDraft((d) => ({ ...d, [key]: v }));
 
   /** Missing NEWS2 parameters, shown while typing so the nurse can complete the set. */
   const missing = useMemo(() => {
@@ -92,7 +112,10 @@ export function ObservationForm({ admissionId, patientName, useScale2, onRecorde
       onRecorded?.(outcome.data);
     } else {
       setResult(null);
-      setQueued({ local: calculateNews2({ ...body, useScale2 }), concern: Boolean(body.clinicalConcern) });
+      setQueued({
+        local: calculateNews2({ ...body, useScale2 }),
+        concern: Boolean(body.clinicalConcern),
+      });
     }
     setDraft({});
     setConsciousness("");
@@ -103,11 +126,13 @@ export function ObservationForm({ admissionId, patientName, useScale2, onRecorde
   const queuedWorrying =
     queued &&
     (queued.concern ||
-      (queued.local.complete && (queued.local.band?.tier === "urgent" || queued.local.band?.tier === "critical")));
+      (queued.local.complete &&
+        (queued.local.band?.tier === "urgent" ||
+          queued.local.band?.tier === "critical")));
 
   return (
     <VStack gap={16}>
-      { /* Queued offline: say it is unsent, show the local score, and if worrying, escalate in person. */ }
+      {/* Queued offline: say it is unsent, show the local score, and if worrying, escalate in person. */}
       {queued ? (
         <VStack gap={8} testID="observation-queued">
           <Banner
@@ -115,9 +140,20 @@ export function ObservationForm({ admissionId, patientName, useScale2, onRecorde
             title="Saved on this device — not yet sent"
             message="There is no connection to the hospital server. These observations will be sent automatically, in the order they were charted, when it returns."
           />
-          <News2Score result={{ ...queued.local, delta: null, significantRise: false } as News2Result} size="lg" showResponse />
+          <News2Score
+            result={
+              {
+                ...queued.local,
+                delta: null,
+                significantRise: false,
+              } as News2Result
+            }
+            size="lg"
+            showResponse
+          />
           <Text variant="caption" tone="tertiary">
-            Score worked out on this device. The server scores the set again when it arrives, and that is the score filed.
+            Score worked out on this device. The server scores the set again
+            when it arrives, and that is the score filed.
           </Text>
           {queuedWorrying ? (
             <View testID="observation-queued-escalate">
@@ -125,7 +161,10 @@ export function ObservationForm({ admissionId, patientName, useScale2, onRecorde
                 tone="danger"
                 title="Escalate in person now"
                 message={
-                  queued.local.complete && queued.local.band && queued.local.band.tier !== "normal" && queued.local.band.tier !== "caution"
+                  queued.local.complete &&
+                  queued.local.band &&
+                  queued.local.band.tier !== "normal" &&
+                  queued.local.band.tier !== "caution"
                     ? `NEWS2 ${queued.local.total} — ${queued.local.band.label}. The escalation board will not see this until the connection returns. ${queued.local.band.response}`
                     : "You recorded a concern. The escalation board will not see it until the connection returns — tell the nurse in charge or the doctor directly."
                 }
@@ -206,7 +245,7 @@ export function ObservationForm({ admissionId, patientName, useScale2, onRecorde
             />
           </View>
 
-          { /* Air/oxygen starts unanswered: defaulting to air would under-score oxygen patients. */ }
+          {/* Air/oxygen starts unanswered: defaulting to air would under-score oxygen patients. */}
           <VStack gap={6}>
             <Text variant="label">Air or oxygen</Text>
             <HStack gap={8}>
@@ -303,8 +342,8 @@ export function ObservationForm({ admissionId, patientName, useScale2, onRecorde
                   : `Still needed for a NEWS2 score: ${missing.join(", ")}.`}
               </Text>
               <Text variant="caption" tone="secondary">
-                An incomplete set is still recorded — it just will not be given a
-                score, because a partial score would be read as a whole one.
+                An incomplete set is still recorded — it just will not be given
+                a score, because a partial score would be read as a whole one.
               </Text>
             </View>
           ) : null}
@@ -314,8 +353,12 @@ export function ObservationForm({ admissionId, patientName, useScale2, onRecorde
               tone="danger"
               title="Not recorded"
               message={
-                (record.error as { response?: { data?: { error?: { message?: string } } } })
-                  ?.response?.data?.error?.message ?? "Something went wrong. Try again."
+                (
+                  record.error as {
+                    response?: { data?: { error?: { message?: string } } };
+                  }
+                )?.response?.data?.error?.message ??
+                "Something went wrong. Try again."
               }
             />
           ) : null}

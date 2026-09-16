@@ -1,6 +1,12 @@
 import type { PatientBanner, Allergy } from "@modules/patient/types";
-import type { RecordLabResult, PendingLabOrder } from "@modules/laboratory/types";
-import type { DoctorSummary, DepartmentSummary } from "@modules/appointment/types";
+import type {
+  RecordLabResult,
+  PendingLabOrder,
+} from "@modules/laboratory/types";
+import type {
+  DoctorSummary,
+  DepartmentSummary,
+} from "@modules/appointment/types";
 
 export interface Vitals {
   temperatureC?: number | null;
@@ -92,7 +98,6 @@ export interface ConsultationDraft {
   startedAt: string;
 }
 
-
 // ---- Prescribing ------------------------------------------------------------
 export interface Medicine {
   id: string;
@@ -174,12 +179,22 @@ export interface Prescription {
   id: string;
   prescriptionNumber: string;
   patient: PatientBanner | { id: string };
-  doctor: { id: string; fullName?: string; designation?: string; registrationNumber?: string };
+  doctor: {
+    id: string;
+    fullName?: string;
+    designation?: string;
+    registrationNumber?: string;
+  };
   consultationId: string | null;
   admissionId: string | null;
   lines: PrescriptionLine[];
   notes: string;
-  status: "created" | "pending_dispensing" | "partially_dispensed" | "dispensed" | "cancelled";
+  status:
+    | "created"
+    | "pending_dispensing"
+    | "partially_dispensed"
+    | "dispensed"
+    | "cancelled";
   urgency: "routine" | "urgent" | "stat";
   allergySnapshot: { substance: string; severity: string }[];
   allergiesWereRecorded: boolean;
@@ -199,7 +214,6 @@ export interface DraftLine {
   instructions: string;
   overrideReason: string;
 }
-
 
 // ---- Medical record ----
 export type RecordScope = "full" | "nursing" | "laboratory" | "pharmacy";
@@ -265,5 +279,14 @@ export interface MedicalRecord {
   labResults: RecordLabResult[];
   pendingLabOrders: PendingLabOrder[];
   /** Per section, true when older history exists beyond the returned cap (100 items, 50 visits). */
-  truncated?: Partial<Record<"consultations" | "prescriptions" | "visits" | "labResults" | "pendingLabOrders", boolean>>;
+  truncated?: Partial<
+    Record<
+      | "consultations"
+      | "prescriptions"
+      | "visits"
+      | "labResults"
+      | "pendingLabOrders",
+      boolean
+    >
+  >;
 }

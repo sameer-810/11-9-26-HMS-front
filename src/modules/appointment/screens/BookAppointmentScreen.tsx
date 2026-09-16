@@ -1,7 +1,12 @@
 import React, { useState } from "react";
 import { View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { CalendarDays, ChevronLeft, ChevronRight, Stethoscope } from "lucide-react-native";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Stethoscope,
+} from "lucide-react-native";
 
 import { palette, radius } from "@shared/designSystem";
 import {
@@ -22,14 +27,24 @@ import {
 } from "@shared/ui";
 import { apiErrorCode, apiErrorMessage } from "@api/apiClient";
 import { useDebouncedValue } from "@shared/hooks/useDebouncedValue";
-import { usePatients, usePatientBanner } from "@modules/patient/hooks/usePatients";
-import { useDepartments, useDoctors } from "@modules/appointment/hooks/useDirectory";
+import {
+  usePatients,
+  usePatientBanner,
+} from "@modules/patient/hooks/usePatients";
+import {
+  useDepartments,
+  useDoctors,
+} from "@modules/appointment/hooks/useDirectory";
 import {
   useAvailability,
   useBookAppointment,
   useDoctorsAvailable,
 } from "@modules/appointment/hooks/useAppointments";
-import { todayCalendarDate, addCalendarDays, formatCalendarDate } from "@shared/format";
+import {
+  todayCalendarDate,
+  addCalendarDays,
+  formatCalendarDate,
+} from "@shared/format";
 
 /**
  * Book appointment (AP-01): patient, department, doctor, then a roster slot.
@@ -38,9 +53,12 @@ import { todayCalendarDate, addCalendarDays, formatCalendarDate } from "@shared/
 export default function BookAppointmentScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const preselectedPatientId = (route.params as { patientId?: string })?.patientId;
+  const preselectedPatientId = (route.params as { patientId?: string })
+    ?.patientId;
 
-  const [patientId, setPatientId] = useState<string | null>(preselectedPatientId ?? null);
+  const [patientId, setPatientId] = useState<string | null>(
+    preselectedPatientId ?? null,
+  );
   const [search, setSearch] = useState("");
   const [departmentId, setDepartmentId] = useState<string | null>(null);
   const [doctorId, setDoctorId] = useState<string | null>(null);
@@ -52,13 +70,18 @@ export default function BookAppointmentScreen() {
 
   const debouncedSearch = useDebouncedValue(search, 300);
   const { data: patientResults, isLoading: searching } = usePatients(
-    debouncedSearch.trim().length >= 2 ? { search: debouncedSearch.trim(), limit: 6 } : undefined,
+    debouncedSearch.trim().length >= 2
+      ? { search: debouncedSearch.trim(), limit: 6 }
+      : undefined,
   );
   const { data: banner } = usePatientBanner(patientId ?? undefined);
 
   const { data: departments } = useDepartments();
   const { data: doctors } = useDoctors(departmentId ?? undefined);
-  const { data: whoIsFree } = useDoctorsAvailable(date, departmentId ?? undefined);
+  const { data: whoIsFree } = useDoctorsAvailable(
+    date,
+    departmentId ?? undefined,
+  );
   const { data: availability, isLoading: loadingSlots } = useAvailability(
     doctorId ?? undefined,
     date,
@@ -115,11 +138,20 @@ export default function BookAppointmentScreen() {
       testID="book-appointment"
     >
       <VStack gap={16} style={{ maxWidth: 860 }}>
-        {error ? <Banner tone="danger" message={error} onDismiss={() => setError(null)} /> : null}
+        {error ? (
+          <Banner
+            tone="danger"
+            message={error}
+            onDismiss={() => setError(null)}
+          />
+        ) : null}
 
-        { /* 1 — patient. AP-01: they must already be registered. */ }
+        {/* 1 — patient. AP-01: they must already be registered. */}
         <Card>
-          <SectionHeader title="1. Patient" subtitle="They must already be registered" />
+          <SectionHeader
+            title="1. Patient"
+            subtitle="They must already be registered"
+          />
           {patientId && banner ? (
             <HStack gap={12} align="center" wrap>
               <VStack gap={2} flex={1}>
@@ -182,7 +214,7 @@ export default function BookAppointmentScreen() {
           )}
         </Card>
 
-        { /* 2 — department and doctor. AP-01: department filters the doctors. */ }
+        {/* 2 — department and doctor. AP-01: department filters the doctors. */}
         <Card>
           <SectionHeader title="2. Department and doctor" />
           <HStack gap={12} wrap>
@@ -219,7 +251,7 @@ export default function BookAppointmentScreen() {
           </HStack>
         </Card>
 
-        { /* 3 — the day and the slot. */ }
+        {/* 3 — the day and the slot. */}
         <Card>
           <SectionHeader
             title="3. Date and time"
@@ -232,12 +264,22 @@ export default function BookAppointmentScreen() {
               variant="secondary"
               size="sm"
               fullWidth={false}
-              icon={<ChevronLeft size={15} color={palette.text.primary} strokeWidth={2.2} />}
+              icon={
+                <ChevronLeft
+                  size={15}
+                  color={palette.text.primary}
+                  strokeWidth={2.2}
+                />
+              }
               onPress={() => shiftDate(-1)}
             />
             <View style={styles.dateBox}>
               <HStack gap={8} align="center">
-                <CalendarDays size={16} color={palette.clinical[600]} strokeWidth={2.1} />
+                <CalendarDays
+                  size={16}
+                  color={palette.clinical[600]}
+                  strokeWidth={2.1}
+                />
                 <Text variant="label-lg" tone="primary" testID="book-date">
                   {formatCalendarDate(date)}
                 </Text>
@@ -248,7 +290,13 @@ export default function BookAppointmentScreen() {
               variant="secondary"
               size="sm"
               fullWidth={false}
-              rightIcon={<ChevronRight size={15} color={palette.text.primary} strokeWidth={2.2} />}
+              rightIcon={
+                <ChevronRight
+                  size={15}
+                  color={palette.text.primary}
+                  strokeWidth={2.2}
+                />
+              }
               onPress={() => shiftDate(1)}
             />
             <Button
@@ -264,7 +312,10 @@ export default function BookAppointmentScreen() {
           </HStack>
 
           {!doctorId ? (
-            <Banner tone="info" message="Choose a doctor to see when they are free." />
+            <Banner
+              tone="info"
+              message="Choose a doctor to see when they are free."
+            />
           ) : loadingSlots ? (
             <HStack gap={8} wrap>
               {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
@@ -282,9 +333,12 @@ export default function BookAppointmentScreen() {
           )}
         </Card>
 
-        { /* 4 — why. */ }
+        {/* 4 — why. */}
         <Card>
-          <SectionHeader title="4. Reason" subtitle="In the patient's own words" />
+          <SectionHeader
+            title="4. Reason"
+            subtitle="In the patient's own words"
+          />
           <VStack gap={12}>
             <Select
               label="Visit type"

@@ -40,7 +40,9 @@ const server = http.createServer((req, res) => {
     file = path.join(DIST, "index.html"); // SPA fallback
   }
   const ext = path.extname(file).toLowerCase();
-  res.writeHead(200, { "Content-Type": TYPES[ext] || "application/octet-stream" });
+  res.writeHead(200, {
+    "Content-Type": TYPES[ext] || "application/octet-stream",
+  });
   fs.createReadStream(file).pipe(res);
 });
 
@@ -66,7 +68,9 @@ try {
     { name: "phone", width: 390, height: 844 },
   ]) {
     console.log(`${vp.name} (${vp.width}x${vp.height})`);
-    const ctx = await browser.newContext({ viewport: { width: vp.width, height: vp.height } });
+    const ctx = await browser.newContext({
+      viewport: { width: vp.width, height: vp.height },
+    });
     const page = await ctx.newPage();
 
     const consoleErrors = [];
@@ -75,7 +79,9 @@ try {
       if (m.type() === "error") consoleErrors.push(m.text());
     });
     page.on("pageerror", (e) => consoleErrors.push(String(e)));
-    page.on("requestfailed", (r) => failedRequests.push(`${r.url()} ${r.failure()?.errorText}`));
+    page.on("requestfailed", (r) =>
+      failedRequests.push(`${r.url()} ${r.failure()?.errorText}`),
+    );
 
     await page.goto(base, { waitUntil: "networkidle" });
     // fonts gate the first render.
@@ -84,7 +90,10 @@ try {
     const text = await page.innerText("body");
 
     check(text.includes("Sign in"), `${vp.name}: login screen rendered`);
-    check(text.includes("HMS") || text.includes("One patient"), `${vp.name}: branding present`);
+    check(
+      text.includes("HMS") || text.includes("One patient"),
+      `${vp.name}: branding present`,
+    );
     check(
       consoleErrors.length === 0,
       `${vp.name}: no console errors`,
@@ -98,25 +107,35 @@ try {
 
     // the hero pane is desktop-only.
     if (vp.name === "phone") {
-      check(!text.includes("One patient, one record"), "phone: desktop hero suppressed");
+      check(
+        !text.includes("One patient, one record"),
+        "phone: desktop hero suppressed",
+      );
     } else if (vp.name === "desktop") {
       check(text.includes("One patient, one record"), "desktop: hero shown");
     }
 
     const overflow = await page.evaluate(
-      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      () =>
+        document.documentElement.scrollWidth -
+        document.documentElement.clientWidth,
     );
     check(overflow <= 1, `${vp.name}: no horizontal overflow`, `${overflow}px`);
 
-    const unlabelled = await page.evaluate(() =>
-      Array.from(document.querySelectorAll("input")).filter(
-        (el) =>
-          !el.getAttribute("aria-label") &&
-          !el.getAttribute("placeholder") &&
-          !el.labels?.length,
-      ).length,
+    const unlabelled = await page.evaluate(
+      () =>
+        Array.from(document.querySelectorAll("input")).filter(
+          (el) =>
+            !el.getAttribute("aria-label") &&
+            !el.getAttribute("placeholder") &&
+            !el.labels?.length,
+        ).length,
     );
-    check(unlabelled === 0, `${vp.name}: all inputs labelled`, `${unlabelled} unlabelled`);
+    check(
+      unlabelled === 0,
+      `${vp.name}: all inputs labelled`,
+      `${unlabelled} unlabelled`,
+    );
 
     await page.screenshot({
       path: path.join(SHOTS, `login-${vp.name}.png`),
@@ -132,7 +151,9 @@ try {
 }
 
 if (failures.length) {
-  console.error(`\n${failures.length} check(s) failed:\n - ${failures.join("\n - ")}\n`);
+  console.error(
+    `\n${failures.length} check(s) failed:\n - ${failures.join("\n - ")}\n`,
+  );
   process.exit(1);
 }
 console.log(`All checks passed. Screenshots in docs/shots/\n`);

@@ -3,9 +3,23 @@
  * so a mistyped date is caught while typing; the server still parses it again.
  */
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 const pad = (n: number) => String(n).padStart(2, "0");
-const daysInMonth = (y: number, m: number) => new Date(Date.UTC(y, m, 0)).getUTCDate();
+const daysInMonth = (y: number, m: number) =>
+  new Date(Date.UTC(y, m, 0)).getUTCDate();
 
 export function parseExpiry(input: string): string | null {
   const s = input.trim();
@@ -17,11 +31,15 @@ export function parseExpiry(input: string): string | null {
   }
   if ((m = /^(\d{1,2})[/-](\d{4})$/.exec(s))) {
     const [mo, y] = [Number(m[1]), Number(m[2])];
-    return mo >= 1 && mo <= 12 ? `${y}-${pad(mo)}-${pad(daysInMonth(y, mo))}` : null;
+    return mo >= 1 && mo <= 12
+      ? `${y}-${pad(mo)}-${pad(daysInMonth(y, mo))}`
+      : null;
   }
   if ((m = /^(\d{4})-(\d{1,2})$/.exec(s))) {
     const [y, mo] = [Number(m[1]), Number(m[2])];
-    return mo >= 1 && mo <= 12 ? `${y}-${pad(mo)}-${pad(daysInMonth(y, mo))}` : null;
+    return mo >= 1 && mo <= 12
+      ? `${y}-${pad(mo)}-${pad(daysInMonth(y, mo))}`
+      : null;
   }
   return null;
 }

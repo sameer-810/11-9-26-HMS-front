@@ -1,7 +1,16 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { apiErrorCode } from "@api/apiClient";
 import { auditApi } from "@modules/audit/api/auditApi";
-import type { AuditFilters, GrantReviewBody, GrantStatus } from "@modules/audit/types";
+import type {
+  AuditFilters,
+  GrantReviewBody,
+  GrantStatus,
+} from "@modules/audit/types";
 
 export const AUDIT_PAGE_SIZE = 30;
 export const GRANT_PAGE_SIZE = 20;
@@ -25,7 +34,9 @@ export const useGrants = (params: { status: GrantStatus; page: number }) =>
 export const usePendingGrantCount = () =>
   useQuery({
     queryKey: ["access-grants", "pending-count"],
-    queryFn: async () => (await auditApi.grants({ status: "pending", page: 1, limit: 1 })).meta.total,
+    queryFn: async () =>
+      (await auditApi.grants({ status: "pending", page: 1, limit: 1 })).meta
+        .total,
   });
 
 /**
@@ -35,14 +46,17 @@ export const usePendingGrantCount = () =>
 export const useReviewGrant = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, ...body }: GrantReviewBody & { id: string }) => auditApi.review(id, body),
+    mutationFn: ({ id, ...body }: GrantReviewBody & { id: string }) =>
+      auditApi.review(id, body),
     onSuccess: () => {
-      for (const key of ["access-grants", "audit"]) qc.invalidateQueries({ queryKey: [key] });
+      for (const key of ["access-grants", "audit"])
+        qc.invalidateQueries({ queryKey: [key] });
     },
     // Someone else got there first. Reload so the card shows their decision
     // instead of offering buttons that can only fail again.
     onError: (err) => {
-      if (apiErrorCode(err) === "ALREADY_REVIEWED") qc.invalidateQueries({ queryKey: ["access-grants"] });
+      if (apiErrorCode(err) === "ALREADY_REVIEWED")
+        qc.invalidateQueries({ queryKey: ["access-grants"] });
     },
   });
 };

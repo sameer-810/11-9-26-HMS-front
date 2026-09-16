@@ -1,7 +1,12 @@
 import React, { useMemo, useState } from "react";
 import { View, StyleSheet } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { BedDouble, Activity, HeartPulse, TriangleAlert } from "lucide-react-native";
+import {
+  BedDouble,
+  Activity,
+  HeartPulse,
+  TriangleAlert,
+} from "lucide-react-native";
 
 import { palette, radius, signal } from "@shared/designSystem";
 import { useAuthStore } from "@shared/store/useAuthStore";
@@ -31,7 +36,6 @@ import { News2Pill } from "@modules/inpatient/components/News2Score";
 import { AdmissionRequests } from "@modules/inpatient/components/AdmissionRequests";
 import type { AdmissionRow, EscalationRow } from "@modules/inpatient/types";
 import type { PatientBanner } from "@modules/patient/types";
-
 
 /**
  * Ward board (IP-02, IP-04, NU-01): ward, ICU or "my patients" mode, sickest first
@@ -66,7 +70,11 @@ export default function WardBoardScreen() {
   const rows: AdmissionRow[] = query.data?.data ?? [];
 
   const title =
-    mode === "icu" ? "Intensive care" : mode === "mine" ? "My patients" : "Admitted patients";
+    mode === "icu"
+      ? "Intensive care"
+      : mode === "mine"
+        ? "My patients"
+        : "Admitted patients";
 
   return (
     <Screen
@@ -93,16 +101,18 @@ export default function WardBoardScreen() {
       }
     >
       <VStack gap={16}>
-        { /* NU-03: escalations always sit above everything. */ }
+        {/* NU-03: escalations always sit above everything. */}
         {(escalations.data?.length ?? 0) > 0 ? (
           <EscalationStrip
             rows={escalations.data ?? []}
             canAcknowledge={canAcknowledge}
-            onOpen={(admissionId) => navigation.navigate("Bedside", { admissionId })}
+            onOpen={(admissionId) =>
+              navigation.navigate("Bedside", { admissionId })
+            }
           />
         ) : null}
 
-        { /* US-17: below the escalations — a deteriorating inpatient still comes first. */ }
+        {/* US-17: below the escalations — a deteriorating inpatient still comes first. */}
         {canAdmit && mode === "ward" ? (
           <AdmissionRequests
             onAdmit={(request) =>
@@ -125,7 +135,13 @@ export default function WardBoardScreen() {
           <ErrorState error={query.error} onRetry={() => query.refetch()} />
         ) : rows.length === 0 ? (
           <EmptyState
-            icon={mode === "icu" ? Activity : mode === "mine" ? HeartPulse : BedDouble}
+            icon={
+              mode === "icu"
+                ? Activity
+                : mode === "mine"
+                  ? HeartPulse
+                  : BedDouble
+            }
             title={
               mode === "mine"
                 ? "No patients allocated to you yet"
@@ -145,7 +161,9 @@ export default function WardBoardScreen() {
               <AdmissionCard
                 key={row.id}
                 row={row}
-                onPress={() => navigation.navigate("Bedside", { admissionId: row.id })}
+                onPress={() =>
+                  navigation.navigate("Bedside", { admissionId: row.id })
+                }
               />
             ))}
           </VStack>
@@ -155,11 +173,18 @@ export default function WardBoardScreen() {
   );
 }
 
-function AdmissionCard({ row, onPress }: { row: AdmissionRow; onPress: () => void }) {
+function AdmissionCard({
+  row,
+  onPress,
+}: {
+  row: AdmissionRow;
+  onPress: () => void;
+}) {
   const patient = row.patient as PatientBanner;
   const named = Boolean(patient?.fullName);
   const tier = row.earlyWarning.tier;
-  const accent = tier === "critical" || tier === "urgent" ? signal[tier].color : undefined;
+  const accent =
+    tier === "critical" || tier === "urgent" ? signal[tier].color : undefined;
 
   return (
     <Card
@@ -180,7 +205,9 @@ function AdmissionCard({ row, onPress }: { row: AdmissionRow; onPress: () => voi
 
         <VStack gap={3} style={{ flex: 1, minWidth: 180 }}>
           <HStack gap={8} align="center" wrap>
-            <Text variant="label-lg">{named ? patient.fullName : row.admissionNumber}</Text>
+            <Text variant="label-lg">
+              {named ? patient.fullName : row.admissionNumber}
+            </Text>
             {named ? (
               <Text variant="caption" tone="secondary">
                 {patient.age} · {patient.gender} · {patient.patientId}
@@ -188,14 +215,15 @@ function AdmissionCard({ row, onPress }: { row: AdmissionRow; onPress: () => voi
             ) : null}
           </HStack>
 
-          { /* Allergies shown here too: the drug round starts from this list. */ }
+          {/* Allergies shown here too: the drug round starts from this list. */}
           {named ? <AllergyLine patient={patient} /> : null}
 
           <Text variant="caption" tone="secondary" numberOfLines={1}>
             {row.reason}
           </Text>
           <Text variant="caption" tone="tertiary">
-            Day {row.lengthOfStayDays ?? 1} · {row.doctor?.fullName ?? "no consultant"}
+            Day {row.lengthOfStayDays ?? 1} ·{" "}
+            {row.doctor?.fullName ?? "no consultant"}
             {row.nurse ? ` · nurse ${row.nurse.fullName}` : ""}
           </Text>
         </VStack>
@@ -240,7 +268,11 @@ function AllergyLine({ patient }: { patient: PatientBanner }) {
   return (
     <HStack gap={4} align="center">
       <TriangleAlert size={12} color={signal.critical.text} />
-      <Text variant="caption" style={{ color: signal.critical.text }} numberOfLines={1}>
+      <Text
+        variant="caption"
+        style={{ color: signal.critical.text }}
+        numberOfLines={1}
+      >
         Allergic to {patient.allergies.map((a) => a.substance).join(", ")}
       </Text>
     </HStack>
@@ -283,13 +315,20 @@ function EscalationStrip({
         {rows.map((row) => {
           const patient = row.patient as PatientBanner;
           return (
-            <View key={row.id} style={styles.escalationRow} testID={`escalation-${row.id}`}>
+            <View
+              key={row.id}
+              style={styles.escalationRow}
+              testID={`escalation-${row.id}`}
+            >
               <VStack gap={6}>
                 <HStack gap={8} align="center" wrap>
-                  <Text variant="label">{patient?.fullName ?? row.admissionNumber}</Text>
+                  <Text variant="label">
+                    {patient?.fullName ?? row.admissionNumber}
+                  </Text>
                   <Text variant="caption" tone="secondary">
                     {row.ward}
-                    {row.bed ? ` · bed ${row.bed}` : ""} · waiting {row.waitingMinutes} min
+                    {row.bed ? ` · bed ${row.bed}` : ""} · waiting{" "}
+                    {row.waitingMinutes} min
                   </Text>
                 </HStack>
                 <Text variant="body-sm">{row.escalation.reason}</Text>
@@ -313,7 +352,7 @@ function EscalationStrip({
                   ) : null}
                 </HStack>
 
-                { /* Acknowledging requires a short note, not a bare "reviewed". */ }
+                {/* Acknowledging requires a short note, not a bare "reviewed". */}
                 {acking?.id === row.id ? (
                   <VStack gap={8} testID="acknowledge-form">
                     <TextField
@@ -324,13 +363,18 @@ function EscalationStrip({
                       testID="acknowledge-note"
                     />
                     {acknowledge.isError ? (
-                      <Banner tone="danger" message={apiErrorMessage(acknowledge.error)} />
+                      <Banner
+                        tone="danger"
+                        message={apiErrorMessage(acknowledge.error)}
+                      />
                     ) : null}
                     <HStack gap={8}>
                       <Button
                         label="Record review"
                         size="sm"
-                        disabled={note.trim().length < 5 || acknowledge.isPending}
+                        disabled={
+                          note.trim().length < 5 || acknowledge.isPending
+                        }
                         onPress={() =>
                           acknowledge.mutate(
                             { id: row.id, note: note.trim() },

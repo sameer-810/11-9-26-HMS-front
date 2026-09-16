@@ -47,7 +47,10 @@ const SEVERITIES = [
   { value: "anaphylaxis", label: "Anaphylaxis", sublabel: "Life-threatening" },
 ];
 
-const SEVERITY_SIGNAL: Record<AllergySeverity, "critical" | "urgent" | "caution"> = {
+const SEVERITY_SIGNAL: Record<
+  AllergySeverity,
+  "critical" | "urgent" | "caution"
+> = {
   anaphylaxis: "critical",
   severe: "critical",
   moderate: "urgent",
@@ -75,7 +78,14 @@ export default function PatientDetailScreen() {
     hasPermission(PERMISSIONS.ADMISSION_MANAGE) ||
     hasPermission(PERMISSIONS.VITALS_RECORD);
 
-  const { data: patient, isLoading, isError, error, refetch, isRefetching } = usePatient(id);
+  const {
+    data: patient,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+  } = usePatient(id);
   const { data: banner } = usePatientBanner(id);
 
   if (isLoading) {
@@ -98,7 +108,11 @@ export default function PatientDetailScreen() {
   if (isError || !patient) {
     return (
       <Screen title="Patient">
-        <ErrorState error={error} title="Couldn't load this patient" onRetry={refetch} />
+        <ErrorState
+          error={error}
+          title="Couldn't load this patient"
+          onRetry={refetch}
+        />
       </Screen>
     );
   }
@@ -117,15 +131,24 @@ export default function PatientDetailScreen() {
         canBook || canPrintWristband ? (
           <HStack gap={8} align="flex-start" wrap>
             {canPrintWristband ? (
-              <PrintWristbandButton patient={patient} banner={banner ?? undefined} />
+              <PrintWristbandButton
+                patient={patient}
+                banner={banner ?? undefined}
+              />
             ) : null}
             {canBook ? (
               <Button
                 label="Book appointment"
                 fullWidth={false}
                 testID="book-from-patient"
-                icon={<CalendarPlus size={16} color="#FFFFFF" strokeWidth={2.2} />}
-                onPress={() => navigation.navigate("BookAppointment", { patientId: patient.id })}
+                icon={
+                  <CalendarPlus size={16} color="#FFFFFF" strokeWidth={2.2} />
+                }
+                onPress={() =>
+                  navigation.navigate("BookAppointment", {
+                    patientId: patient.id,
+                  })
+                }
               />
             ) : null}
           </HStack>
@@ -162,11 +185,22 @@ export default function PatientDetailScreen() {
             {seesClinical && patient.bloodGroup ? (
               <Detail
                 label="Blood group"
-                value={patient.bloodGroup === "unknown" ? "Not known" : patient.bloodGroup}
+                value={
+                  patient.bloodGroup === "unknown"
+                    ? "Not known"
+                    : patient.bloodGroup
+                }
               />
             ) : null}
-            <Detail label="Status" value={<StatusChip status={patient.status} size="sm" />} />
-            <Detail label="Visits" value={String(patient.visitCount || 0)} tabular />
+            <Detail
+              label="Status"
+              value={<StatusChip status={patient.status} size="sm" />}
+            />
+            <Detail
+              label="Visits"
+              value={String(patient.visitCount || 0)}
+              tabular
+            />
           </VStack>
         </Card>
 
@@ -177,12 +211,24 @@ export default function PatientDetailScreen() {
               label="Mobile"
               value={patient.mobile}
               tabular
-              icon={<Phone size={14} color={palette.text.tertiary} strokeWidth={2} />}
+              icon={
+                <Phone
+                  size={14}
+                  color={palette.text.tertiary}
+                  strokeWidth={2}
+                />
+              }
             />
             {patient.alternatePhone ? (
-              <Detail label="Alternate" value={patient.alternatePhone} tabular />
+              <Detail
+                label="Alternate"
+                value={patient.alternatePhone}
+                tabular
+              />
             ) : null}
-            {patient.email ? <Detail label="Email" value={patient.email} /> : null}
+            {patient.email ? (
+              <Detail label="Email" value={patient.email} />
+            ) : null}
             <Detail
               label="Address"
               value={
@@ -195,7 +241,13 @@ export default function PatientDetailScreen() {
                   .filter(Boolean)
                   .join(", ") || "Not recorded"
               }
-              icon={<MapPin size={14} color={palette.text.tertiary} strokeWidth={2} />}
+              icon={
+                <MapPin
+                  size={14}
+                  color={palette.text.tertiary}
+                  strokeWidth={2}
+                />
+              }
             />
           </VStack>
         </Card>
@@ -212,7 +264,11 @@ export default function PatientDetailScreen() {
                 label="Relationship"
                 value={patient.emergencyContact.relationship || "Not stated"}
               />
-              <Detail label="Phone" value={patient.emergencyContact.phone || "—"} tabular />
+              <Detail
+                label="Phone"
+                value={patient.emergencyContact.phone || "—"}
+                tabular
+              />
             </VStack>
           ) : (
             <Banner
@@ -292,7 +348,9 @@ function AllergySection({
   return (
     <Card
       accentColor={
-        allergies.some((a) => a.severity === "severe" || a.severity === "anaphylaxis")
+        allergies.some(
+          (a) => a.severity === "severe" || a.severity === "anaphylaxis",
+        )
           ? signal.critical.color
           : undefined
       }
@@ -307,26 +365,43 @@ function AllergySection({
               size="sm"
               fullWidth={false}
               testID="add-allergy"
-              icon={<Plus size={14} color={palette.text.primary} strokeWidth={2.2} />}
+              icon={
+                <Plus
+                  size={14}
+                  color={palette.text.primary}
+                  strokeWidth={2.2}
+                />
+              }
               onPress={() => setAdding(true)}
             />
           ) : undefined
         }
       />
 
-      {error ? <Banner tone="danger" message={error} style={{ marginBottom: 10 }} /> : null}
+      {error ? (
+        <Banner tone="danger" message={error} style={{ marginBottom: 10 }} />
+      ) : null}
 
       {!recorded ? (
         <VStack gap={10}>
           <HStack gap={8} align="center">
-            <ShieldAlert size={17} color={palette.warning.text} strokeWidth={2.2} />
-            <Text variant="label" weight="600" style={{ color: palette.warning.text, flex: 1 }}>
+            <ShieldAlert
+              size={17}
+              color={palette.warning.text}
+              strokeWidth={2.2}
+            />
+            <Text
+              variant="label"
+              weight="600"
+              style={{ color: palette.warning.text, flex: 1 }}
+            >
               Allergies have not been recorded
             </Text>
           </HStack>
           <Text variant="body-sm" tone="secondary">
-            Nobody has asked yet. This is not the same as having none — until someone asks and
-            records the answer, treat this patient as having unknown allergy status.
+            Nobody has asked yet. This is not the same as having none — until
+            someone asks and records the answer, treat this patient as having
+            unknown allergy status.
           </Text>
           {canEdit ? (
             <HStack gap={8} wrap>
@@ -336,7 +411,13 @@ function AllergySection({
                 size="sm"
                 fullWidth={false}
                 testID="record-no-allergies"
-                icon={<Check size={14} color={palette.text.primary} strokeWidth={2.2} />}
+                icon={
+                  <Check
+                    size={14}
+                    color={palette.text.primary}
+                    strokeWidth={2.2}
+                  />
+                }
                 onPress={() => setConfirmNone(true)}
               />
             </HStack>
@@ -345,7 +426,11 @@ function AllergySection({
       ) : allergies.length === 0 ? (
         <HStack gap={8} align="center">
           <Check size={16} color={signal.normal.text} strokeWidth={2.4} />
-          <Text variant="label" weight="600" style={{ color: signal.normal.text }}>
+          <Text
+            variant="label"
+            weight="600"
+            style={{ color: signal.normal.text }}
+          >
             No known allergies
           </Text>
           <Text variant="caption" tone="tertiary">
@@ -357,7 +442,11 @@ function AllergySection({
           {allergies.map((a) => (
             <View key={a.id ?? a.substance}>
               <HStack gap={10} align="center" wrap>
-                <TriangleAlert size={15} color={signal.critical.color} strokeWidth={2.3} />
+                <TriangleAlert
+                  size={15}
+                  color={signal.critical.color}
+                  strokeWidth={2.3}
+                />
                 <Text variant="label-lg" tone="primary">
                   {a.substance}
                 </Text>
@@ -368,14 +457,24 @@ function AllergySection({
                 />
               </HStack>
               {a.reaction ? (
-                <Text variant="body-sm" tone="secondary" style={{ marginLeft: 25 }}>
+                <Text
+                  variant="body-sm"
+                  tone="secondary"
+                  style={{ marginLeft: 25 }}
+                >
                   {a.reaction}
                 </Text>
               ) : null}
               {a.notedByName ? (
-                <Text variant="caption" tone="tertiary" style={{ marginLeft: 25 }}>
+                <Text
+                  variant="caption"
+                  tone="tertiary"
+                  style={{ marginLeft: 25 }}
+                >
                   Noted by {a.notedByName}
-                  {a.notedAt ? ` · ${new Date(a.notedAt).toLocaleDateString("en-IN")}` : ""}
+                  {a.notedAt
+                    ? ` · ${new Date(a.notedAt).toLocaleDateString("en-IN")}`
+                    : ""}
                 </Text>
               ) : null}
             </View>
@@ -472,7 +571,12 @@ function Detail({
         </HStack>
       </View>
       {typeof value === "string" ? (
-        <Text variant="body" tone="primary" tabular={tabular} style={{ flex: 1 }}>
+        <Text
+          variant="body"
+          tone="primary"
+          tabular={tabular}
+          style={{ flex: 1 }}
+        >
           {value}
         </Text>
       ) : (

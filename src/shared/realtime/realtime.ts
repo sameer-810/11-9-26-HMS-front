@@ -6,7 +6,6 @@ import { queryClient } from "@api/queryClient";
 import { useNetworkStore } from "@shared/offline/network";
 import { drainOutbox } from "@shared/offline/outbox";
 
-
 /**
  * Socket.io live updates: each event refetches affected queries and may raise a sticky alert.
  * Events carry ids only (screens refetch under normal permissions); screens also poll, so sockets are optional.
@@ -28,9 +27,16 @@ export const useRealtimeAlerts = create<AlertsState>((set) => ({
   alerts: [],
   push: (alert) =>
     set((s) => ({
-      alerts: [{ ...alert, id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}` }, ...s.alerts].slice(0, 3),
+      alerts: [
+        {
+          ...alert,
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        },
+        ...s.alerts,
+      ].slice(0, 3),
     })),
-  dismiss: (id) => set((s) => ({ alerts: s.alerts.filter((a) => a.id !== id) })),
+  dismiss: (id) =>
+    set((s) => ({ alerts: s.alerts.filter((a) => a.id !== id) })),
 }));
 
 type Payload = Record<string, unknown> | undefined;
@@ -47,19 +53,23 @@ export const REALTIME_EVENTS: Record<string, Rule> = {
     alert: () => ({
       tone: "danger",
       title: "Critical laboratory result",
-      message: "A critical result is waiting for acknowledgement in Lab reports.",
+      message:
+        "A critical result is waiting for acknowledgement in Lab reports.",
     }),
   },
   "lab:reported": { refresh: ["lab-inbox", "lab-order", "medical-record"] },
   "lab:queue-changed": { refresh: ["lab-queue"] },
   "queue:changed": { refresh: ["opd-queue", "my-schedule"] },
-  "appointment:booked": { refresh: ["my-schedule", "opd-queue", "appointments"] },
+  "appointment:booked": {
+    refresh: ["my-schedule", "opd-queue", "appointments"],
+  },
   "roster:conflict": {
     refresh: ["appointments"],
     alert: () => ({
       tone: "warning",
       title: "Roster conflict",
-      message: "A booked appointment conflicts with a doctor's changed roster. Check Appointments.",
+      message:
+        "A booked appointment conflicts with a doctor's changed roster. Check Appointments.",
     }),
   },
   "ed:ambulance": {
@@ -74,8 +84,12 @@ export const REALTIME_EVENTS: Record<string, Rule> = {
     refresh: ["ed-board", "dashboard-summary"],
     alert: (p) => ({
       tone: "danger",
-      title: typeof p?.esiLevel === "number" ? `ESI ${p.esiLevel} patient` : "High-acuity patient",
-      message: "A high-acuity patient has been triaged in the emergency department.",
+      title:
+        typeof p?.esiLevel === "number"
+          ? `ESI ${p.esiLevel} patient`
+          : "High-acuity patient",
+      message:
+        "A high-acuity patient has been triaged in the emergency department.",
     }),
   },
   "access:break-glass": {
@@ -103,7 +117,8 @@ export function startRealtime(token: string): () => void {
 
   for (const [event, rule] of Object.entries(REALTIME_EVENTS)) {
     socket.on(event, (payload: Payload) => {
-      for (const key of rule.refresh) void queryClient.invalidateQueries({ queryKey: [key] });
+      for (const key of rule.refresh)
+        void queryClient.invalidateQueries({ queryKey: [key] });
       if (rule.alert) useRealtimeAlerts.getState().push(rule.alert(payload));
     });
   }

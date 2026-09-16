@@ -1,7 +1,8 @@
 import { Platform } from "react-native";
 import * as Haptics from "expo-haptics";
 
-export type FeedbackTone = "select" | "impact" | "success" | "warning" | "error";
+export type FeedbackTone =
+  "select" | "impact" | "success" | "warning" | "error";
 
 /**
  * Haptic tap confirmation (helps avoid double-charting when not looking at the screen).
@@ -15,10 +16,14 @@ export function haptic(tone: FeedbackTone = "select") {
         void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         break;
       case "success":
-        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        void Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success,
+        );
         break;
       case "warning":
-        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        void Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Warning,
+        );
         break;
       case "error":
         void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -28,6 +33,6 @@ export function haptic(tone: FeedbackTone = "select") {
         void Haptics.selectionAsync();
     }
   } catch {
-  // Haptics unavailable; ignore.
+    // Haptics unavailable; ignore.
   }
 }

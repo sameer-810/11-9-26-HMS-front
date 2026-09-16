@@ -1,10 +1,23 @@
 import React, { useState } from "react";
 import { View, StyleSheet } from "react-native";
 import { palette, radius, signal } from "@shared/designSystem";
-import { Text, HStack, VStack, Card, Button, TextField, Select, Banner, SignalBadge } from "@shared/ui";
-import { useHandovers, useSubmitHandover, useReceiveHandover } from "@modules/inpatient/hooks/useInpatient";
+import {
+  Text,
+  HStack,
+  VStack,
+  Card,
+  Button,
+  TextField,
+  Select,
+  Banner,
+  SignalBadge,
+} from "@shared/ui";
+import {
+  useHandovers,
+  useSubmitHandover,
+  useReceiveHandover,
+} from "@modules/inpatient/hooks/useInpatient";
 import type { Shift, Handover } from "@modules/inpatient/types";
-
 
 /**
  * NU-05: SBAR shift handover form and history.
@@ -19,8 +32,10 @@ const SHIFTS: { value: Shift; label: string }[] = [
 const PROMPTS = {
   situation: "Why is this patient here right now? One or two sentences.",
   background: "What led to this? Relevant history, what has been done so far.",
-  assessment: "What do you think is going on? Your clinical judgement, not just numbers.",
-  recommendation: "What does the next shift need to DO? Be specific and name the times.",
+  assessment:
+    "What do you think is going on? Your clinical judgement, not just numbers.",
+  recommendation:
+    "What does the next shift need to DO? Be specific and name the times.",
 } as const;
 
 interface Props {
@@ -30,7 +45,11 @@ interface Props {
   defaultTo?: Shift;
 }
 
-export function SbarPanel({ admissionId, defaultFrom = "morning", defaultTo = "evening" }: Props) {
+export function SbarPanel({
+  admissionId,
+  defaultFrom = "morning",
+  defaultTo = "evening",
+}: Props) {
   const { data: handovers } = useHandovers(admissionId);
   const submit = useSubmitHandover();
   const receive = useReceiveHandover();
@@ -76,10 +95,18 @@ export function SbarPanel({ admissionId, defaultFrom = "morning", defaultTo = "e
   return (
     <VStack gap={12} testID="sbar-panel">
       {outstanding.map((h) => (
-        <View key={h.id} style={styles.outstanding} testID={`handover-outstanding-${h.id}`}>
+        <View
+          key={h.id}
+          style={styles.outstanding}
+          testID={`handover-outstanding-${h.id}`}
+        >
           <VStack gap={8}>
             <HStack gap={8} align="center" wrap>
-              <SignalBadge level="caution" label="Handover not yet received" size="sm" />
+              <SignalBadge
+                level="caution"
+                label="Handover not yet received"
+                size="sm"
+              />
               <Text variant="caption" tone="secondary">
                 {h.fromShift} → {h.toShift}, given by {h.givenBy}
               </Text>
@@ -185,7 +212,11 @@ export function SbarPanel({ admissionId, defaultFrom = "morning", defaultTo = "e
                 disabled={incomplete.length > 0 || submit.isPending}
                 testID="sbar-submit"
               />
-              <Button label="Cancel" variant="ghost" onPress={() => setOpen(false)} />
+              <Button
+                label="Cancel"
+                variant="ghost"
+                onPress={() => setOpen(false)}
+              />
             </HStack>
           </VStack>
         </Card>
@@ -253,7 +284,11 @@ function HandoverEntry({ handover: h }: { handover: Handover }) {
         {h.alerts.length > 0 ? (
           <View style={styles.alerts}>
             {h.alerts.map((a, i) => (
-              <Text key={i} variant="caption" style={{ color: signal.caution.text }}>
+              <Text
+                key={i}
+                variant="caption"
+                style={{ color: signal.caution.text }}
+              >
                 ⚠ {a}
               </Text>
             ))}

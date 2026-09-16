@@ -14,7 +14,10 @@ export default function AppointmentsNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="AppointmentsList" component={AppointmentsScreen} />
       <Stack.Screen name="BookAppointment" component={BookAppointmentScreen} />
-      <Stack.Screen name="AppointmentBooked" component={AppointmentBookedScreen} />
+      <Stack.Screen
+        name="AppointmentBooked"
+        component={AppointmentBookedScreen}
+      />
       {/*
         Reachable from a booking: the desk often needs the patient's record
         immediately after booking them, and "register first" is a dead end

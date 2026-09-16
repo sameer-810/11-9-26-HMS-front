@@ -22,16 +22,40 @@ export type WristbandSize = keyof typeof WRISTBAND_STOCK;
 /** Type and spacing per stock; font sizes are in mm so they stay physical. */
 const LAYOUT = {
   adult: {
-    padMm: 1.5, gapMm: 4, identityMm: 104,
-    nameMm: 4.4, nameMinMm: 3, lineMm: 2.8, idMm: 3.2, admMm: 2.6,
-    bandMm: 4.6, bandFontMm: 2.8, allergyChars: 60,
-    oneDAvailableMm: 72, oneDMaxDots: 3, twoDMaxDots: 4, hrMm: 2.6, hospitalMm: 1.9,
+    padMm: 1.5,
+    gapMm: 4,
+    identityMm: 104,
+    nameMm: 4.4,
+    nameMinMm: 3,
+    lineMm: 2.8,
+    idMm: 3.2,
+    admMm: 2.6,
+    bandMm: 4.6,
+    bandFontMm: 2.8,
+    allergyChars: 60,
+    oneDAvailableMm: 72,
+    oneDMaxDots: 3,
+    twoDMaxDots: 4,
+    hrMm: 2.6,
+    hospitalMm: 1.9,
   },
   infant: {
-    padMm: 1.2, gapMm: 3, identityMm: 80,
-    nameMm: 3.4, nameMinMm: 2.4, lineMm: 2.2, idMm: 2.5, admMm: 2.1,
-    bandMm: 3.6, bandFontMm: 2.2, allergyChars: 58,
-    oneDAvailableMm: 52, oneDMaxDots: 3, twoDMaxDots: 3, hrMm: 2.1, hospitalMm: 1.6,
+    padMm: 1.2,
+    gapMm: 3,
+    identityMm: 80,
+    nameMm: 3.4,
+    nameMinMm: 2.4,
+    lineMm: 2.2,
+    idMm: 2.5,
+    admMm: 2.1,
+    bandMm: 3.6,
+    bandFontMm: 2.2,
+    allergyChars: 58,
+    oneDAvailableMm: 52,
+    oneDMaxDots: 3,
+    twoDMaxDots: 3,
+    hrMm: 2.1,
+    hospitalMm: 1.6,
   },
 } as const;
 
@@ -39,7 +63,10 @@ const LAYOUT = {
  * Patient wristband: name, hospital number, DOB, allergy status (never blank), a Code 128
  * of the bare number and a DataMatrix of the versioned patient payload.
  */
-export function buildWristband(input: WristbandInput, size: WristbandSize = "adult"): PrintJob {
+export function buildWristband(
+  input: WristbandInput,
+  size: WristbandSize = "adult",
+): PrintJob {
   const stock = WRISTBAND_STOCK[size];
   const L = LAYOUT[size];
   const band = stock.widthMm;
@@ -51,15 +78,27 @@ export function buildWristband(input: WristbandInput, size: WristbandSize = "adu
 
   // Shrink long names rather than clip them. 0.62 em ≈ average bold capital width in Arial.
   const nameText = name.given ? `${name.surname}, ${name.given}` : name.surname;
-  const nameMm = Math.max(L.nameMinMm, Math.min(L.nameMm, L.identityMm / (0.62 * nameText.length)));
+  const nameMm = Math.max(
+    L.nameMinMm,
+    Math.min(L.nameMm, L.identityMm / (0.62 * nameText.length)),
+  );
 
   const identifier = bareIdentifier(input.patientId);
   const barsHeightMm = usable - L.hrMm - L.hospitalMm - 0.4;
-  const linear = code128(identifier, { heightMm: barsHeightMm, availableMm: L.oneDAvailableMm, maxDots: L.oneDMaxDots });
-  const matrix = dataMatrix(patientPayload(input.patientId), { availableMm: usable, maxDots: L.twoDMaxDots });
+  const linear = code128(identifier, {
+    heightMm: barsHeightMm,
+    availableMm: L.oneDAvailableMm,
+    maxDots: L.oneDMaxDots,
+  });
+  const matrix = dataMatrix(patientPayload(input.patientId), {
+    availableMm: usable,
+    maxDots: L.twoDMaxDots,
+  });
   if (!linear.fits || !matrix.fits) {
     // Refuse rather than print an unscannable code.
-    throw new Error("This patient's code does not fit on the band at a scannable size");
+    throw new Error(
+      "This patient's code does not fit on the band at a scannable size",
+    );
   }
 
   const location = name.unidentified
@@ -74,7 +113,13 @@ export function buildWristband(input: WristbandInput, size: WristbandSize = "adu
           .join(" · ")
       : "";
 
-  const facts = [dob ? `DOB ${dob}` : "DOB not recorded", input.age, sexLabel(input.gender)].filter(Boolean).join(" · ");
+  const facts = [
+    dob ? `DOB ${dob}` : "DOB not recorded",
+    input.age,
+    sexLabel(input.gender),
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   const css = `
 .strip {
@@ -120,31 +165,50 @@ export function buildWristband(input: WristbandInput, size: WristbandSize = "adu
 .hospital { font-size: ${mm(L.hospitalMm)}; line-height: 1; white-space: nowrap; }
 `;
 
-  const body = html`
-<div class="strip" data-band-size="${size}">
-  <div class="clasp"></div>
-  <div class="identity">
-    ${
+  const body = html` <div class="strip" data-band-size="${size}">
+    <div class="clasp"></div>
+    <div class="identity">
+      ${
       name.unidentified
-        ? html`<div class="name unidentified" data-field="name">UNIDENTIFIED</div>`
-        : html`<div class="name" data-field="name">${name.surname}${name.given ? html`<span class="given">, ${name.given}</span>` : ""}</div>`
+        ? html`<div class="name unidentified" data-field="name">
+            UNIDENTIFIED
+          </div>`
+        : html`<div class="name" data-field="name">
+            ${name.surname}${name.given ? html`<span class="given">, ${name.given}</span>` : ""}
+          </div>`
     }
-    <div class="facts" data-field="facts">${facts}</div>
-    <div class="hospno" data-field="patientId">Hosp no ${identifier}</div>
-    ${location ? html`<div class="location" data-field="location">${location}</div>` : ""}
-    <div class="allergy ${allergy.state}" data-allergy-band="${allergy.state}">${allergy.text}</div>
-  </div>
-  <div class="code2d" data-scan-payload="${patientPayload(input.patientId)}">${raw(matrix.svg)}</div>
-  <div class="code1d">
-    <div id="wristband-code128" data-barcode="${identifier}">${raw(linear.svg)}</div>
-    <div class="hr">${identifier}</div>
-    <div class="hospital">${input.hospitalName}</div>
-  </div>
-</div>`.__html;
+      <div class="facts" data-field="facts">${facts}</div>
+      <div class="hospno" data-field="patientId">Hosp no ${identifier}</div>
+      ${location ? html`<div class="location" data-field="location">${location}</div>` : ""}
+      <div
+        class="allergy ${allergy.state}"
+        data-allergy-band="${allergy.state}"
+      >
+        ${allergy.text}
+      </div>
+    </div>
+    <div class="code2d" data-scan-payload="${patientPayload(input.patientId)}">
+      ${raw(matrix.svg)}
+    </div>
+    <div class="code1d">
+      <div id="wristband-code128" data-barcode="${identifier}">
+        ${raw(linear.svg)}
+      </div>
+      <div class="hr">${identifier}</div>
+      <div class="hospital">${input.hospitalName}</div>
+    </div>
+  </div>`.__html;
 
   const title = `Wristband ${identifier}`;
   return {
-    html: pageDocument({ title, widthMm: band, heightMm: stock.lengthMm, css, body, documentKind: `wristband-${size}` }),
+    html: pageDocument({
+      title,
+      widthMm: band,
+      heightMm: stock.lengthMm,
+      css,
+      body,
+      documentKind: `wristband-${size}`,
+    }),
     widthMm: band,
     heightMm: stock.lengthMm,
     title,

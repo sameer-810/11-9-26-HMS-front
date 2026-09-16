@@ -27,7 +27,10 @@ const LIMIT = 30;
 
 const ROLE_CHIPS = [
   { key: "all", label: "All roles" },
-  ...(Object.values(ROLES) as Role[]).map((r) => ({ key: r, label: ROLE_LABELS[r] })),
+  ...(Object.values(ROLES) as Role[]).map((r) => ({
+    key: r,
+    label: ROLE_LABELS[r],
+  })),
 ];
 
 const STATUS_CHIPS = [
@@ -110,7 +113,11 @@ export default function UsersScreen() {
         ) : rows.length === 0 ? (
           <EmptyState
             icon={Users}
-            title={debounced || role !== "all" || status !== "all" ? "No one matches" : "No accounts yet"}
+            title={
+              debounced || role !== "all" || status !== "all"
+                ? "No one matches"
+                : "No accounts yet"
+            }
             message="Try a different name or filter, or add the person as a new user."
           />
         ) : (
@@ -119,7 +126,9 @@ export default function UsersScreen() {
               <Card
                 key={u.id}
                 compact
-                onPress={() => navigation.navigate("UserDetail", { userId: u.id })}
+                onPress={() =>
+                  navigation.navigate("UserDetail", { userId: u.id })
+                }
                 testID={`user-row-${u.employeeId}`}
               >
                 <HStack gap={12} align="center" wrap>
@@ -133,16 +142,22 @@ export default function UsersScreen() {
                     </HStack>
                     <Text variant="body-sm" tone="secondary">
                       {u.roleLabel}
-                      {u.designation ? ` · ${u.designation}` : ""} · {u.department?.name ?? "No department"}
+                      {u.designation ? ` · ${u.designation}` : ""} ·{" "}
+                      {u.department?.name ?? "No department"}
                     </Text>
                     <Text variant="caption" tone="tertiary">
                       {u.email}
                     </Text>
                   </VStack>
                   <VStack gap={4} align="flex-end">
-                    <StatusChip status={u.isActive ? "active" : "inactive"} size="sm" />
+                    <StatusChip
+                      status={u.isActive ? "active" : "inactive"}
+                      size="sm"
+                    />
                     <Text variant="caption" tone="tertiary">
-                      {u.lastLoginAt ? `Last signed in ${formatDateTime(u.lastLoginAt)}` : "Never signed in"}
+                      {u.lastLoginAt
+                        ? `Last signed in ${formatDateTime(u.lastLoginAt)}`
+                        : "Never signed in"}
                     </Text>
                     {u.mustChangePassword ? (
                       <Text variant="caption" tone="warning">

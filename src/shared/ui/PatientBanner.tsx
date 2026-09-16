@@ -1,10 +1,15 @@
 import React from "react";
-import { View, StyleSheet, Pressable, useWindowDimensions, ScrollView } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Pressable,
+  useWindowDimensions,
+  ScrollView,
+} from "react-native";
 import { TriangleAlert, Scale, ShieldAlert } from "lucide-react-native";
 import { palette, layout, radius, signal, numeric } from "../designSystem";
 import { Text } from "./Text";
 import { HStack, VStack } from "./Stack";
-
 
 /**
  * Patient identity band against wrong-patient errors: never scrolls or collapses.
@@ -55,8 +60,12 @@ export function PatientBanner({ patient, onPress, right }: Props) {
       style={[
         styles.wrap,
         {
-          minHeight: isPhone ? layout.patientBannerHeightPhone : layout.patientBannerHeight,
-          paddingHorizontal: isPhone ? layout.screenPaddingPhone : layout.screenPadding,
+          minHeight: isPhone
+            ? layout.patientBannerHeightPhone
+            : layout.patientBannerHeight,
+          paddingHorizontal: isPhone
+            ? layout.screenPaddingPhone
+            : layout.screenPadding,
         },
         // A severe allergy is the only condition allowed to restyle the band.
         severe.length > 0 && styles.wrapSevere,
@@ -65,9 +74,16 @@ export function PatientBanner({ patient, onPress, right }: Props) {
       accessibilityLabel={buildA11yLabel(patient)}
     >
       <HStack gap={isPhone ? 10 : 16} align="center" wrap={isPhone}>
-        { /* 1. Identity */ }
-        <VStack gap={2} style={{ minWidth: isPhone ? "100%" : 200, flexShrink: 0 }}>
-          <Text variant={isPhone ? "h3" : "h2"} tone="primary" numberOfLines={1}>
+        {/* 1. Identity */}
+        <VStack
+          gap={2}
+          style={{ minWidth: isPhone ? "100%" : 200, flexShrink: 0 }}
+        >
+          <Text
+            variant={isPhone ? "h3" : "h2"}
+            tone="primary"
+            numberOfLines={1}
+          >
             {patient.fullName}
           </Text>
           <HStack gap={8} align="center" wrap>
@@ -93,8 +109,14 @@ export function PatientBanner({ patient, onPress, right }: Props) {
           </HStack>
         </VStack>
 
-        { /* 2. Allergies */ }
-        <View style={{ flexShrink: 1, flexGrow: 1, minWidth: isPhone ? "100%" : 180 }}>
+        {/* 2. Allergies */}
+        <View
+          style={{
+            flexShrink: 1,
+            flexGrow: 1,
+            minWidth: isPhone ? "100%" : 180,
+          }}
+        >
           <AllergyStrip
             allergies={patient.allergies || []}
             recorded={patient.allergiesRecorded}
@@ -102,12 +124,24 @@ export function PatientBanner({ patient, onPress, right }: Props) {
           />
         </View>
 
-        { /* 3. Location, status, flags */ }
+        {/* 3. Location, status, flags */}
         <HStack gap={8} align="center" style={{ flexShrink: 0 }} wrap>
           {patient.isMlc ? (
-            <View style={[styles.flag, { backgroundColor: palette.warning.bg, borderColor: palette.warning.border }]}>
+            <View
+              style={[
+                styles.flag,
+                {
+                  backgroundColor: palette.warning.bg,
+                  borderColor: palette.warning.border,
+                },
+              ]}
+            >
               <Scale size={12} color={palette.warning.text} strokeWidth={2.2} />
-              <Text variant="label-sm" weight="600" style={{ color: palette.warning.text }}>
+              <Text
+                variant="label-sm"
+                weight="600"
+                style={{ color: palette.warning.text }}
+              >
                 MLC
               </Text>
             </View>
@@ -157,7 +191,11 @@ function AllergyStrip({
     return (
       <HStack gap={6} align="center">
         <ShieldAlert size={14} color={palette.warning.text} strokeWidth={2.2} />
-        <Text variant="label" weight="600" style={{ color: palette.warning.text }}>
+        <Text
+          variant="label"
+          weight="600"
+          style={{ color: palette.warning.text }}
+        >
           Allergies not recorded
         </Text>
       </HStack>
@@ -168,7 +206,11 @@ function AllergyStrip({
   if (!hasAny) {
     return (
       <HStack gap={6} align="center">
-        <Text variant="label" weight="600" style={{ color: signal.normal.text }}>
+        <Text
+          variant="label"
+          weight="600"
+          style={{ color: signal.normal.text }}
+        >
           No known allergies
         </Text>
       </HStack>
@@ -178,26 +220,43 @@ function AllergyStrip({
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
       <HStack gap={6} align="center">
-        <TriangleAlert size={14} color={signal.critical.color} strokeWidth={2.4} />
-        <Text variant="label" weight="600" style={{ color: signal.critical.text }}>
+        <TriangleAlert
+          size={14}
+          color={signal.critical.color}
+          strokeWidth={2.4}
+        />
+        <Text
+          variant="label"
+          weight="600"
+          style={{ color: signal.critical.text }}
+        >
           Allergies
         </Text>
         {allergies.map((a) => {
-          const severe = a.severity === "severe" || a.severity === "anaphylaxis";
+          const severe =
+            a.severity === "severe" || a.severity === "anaphylaxis";
           return (
             <View
               key={a.substance}
               style={[
                 styles.allergyChip,
                 severe
-                  ? { backgroundColor: signal.critical.bg, borderColor: signal.critical.border }
-                  : { backgroundColor: signal.urgent.bg, borderColor: signal.urgent.border },
+                  ? {
+                      backgroundColor: signal.critical.bg,
+                      borderColor: signal.critical.border,
+                    }
+                  : {
+                      backgroundColor: signal.urgent.bg,
+                      borderColor: signal.urgent.border,
+                    },
               ]}
             >
               <Text
                 variant="label-sm"
                 weight="600"
-                style={{ color: severe ? signal.critical.text : signal.urgent.text }}
+                style={{
+                  color: severe ? signal.critical.text : signal.urgent.text,
+                }}
               >
                 {a.substance}
                 {a.severity === "anaphylaxis" ? " · anaphylaxis" : ""}
@@ -217,7 +276,8 @@ function Dot() {
 /** Screen-reader label with the band's safety information in the same order. */
 function buildA11yLabel(p: PatientBannerData) {
   const parts = [p.fullName, `patient ${p.patientId}`, p.age, p.gender];
-  if (p.bloodGroup && p.bloodGroup !== "unknown") parts.push(`blood group ${p.bloodGroup}`);
+  if (p.bloodGroup && p.bloodGroup !== "unknown")
+    parts.push(`blood group ${p.bloodGroup}`);
   if (!p.allergiesRecorded) parts.push("Allergies not recorded");
   else if (!p.allergies?.length) parts.push("No known allergies");
   else

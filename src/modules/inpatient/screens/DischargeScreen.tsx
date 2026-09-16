@@ -17,9 +17,11 @@ import {
   Skeleton,
   ErrorState,
 } from "@shared/ui";
-import { useAdmission, useDischarge } from "@modules/inpatient/hooks/useInpatient";
+import {
+  useAdmission,
+  useDischarge,
+} from "@modules/inpatient/hooks/useInpatient";
 import type { PatientBanner } from "@modules/patient/types";
-
 
 /**
  * Discharge (IP-05). Summary, medication and follow-up are required (also server-enforced);
@@ -38,7 +40,13 @@ export default function DischargeScreen() {
   const route = useRoute<any>();
   const admissionId: string = route.params?.admissionId;
 
-  const { data: admission, isLoading, isError, error, refetch } = useAdmission(admissionId);
+  const {
+    data: admission,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useAdmission(admissionId);
   const discharge = useDischarge(admissionId);
 
   const [summary, setSummary] = useState("");
@@ -81,7 +89,10 @@ export default function DischargeScreen() {
               {patient?.fullName ?? admission.admissionNumber} was discharged
               {admission.dischargedBy ? ` by ${admission.dischargedBy}` : ""}.
             </Text>
-            <Button label="Back to the ward" onPress={() => navigation.goBack()} />
+            <Button
+              label="Back to the ward"
+              onPress={() => navigation.goBack()}
+            />
           </VStack>
         </Card>
       </Screen>

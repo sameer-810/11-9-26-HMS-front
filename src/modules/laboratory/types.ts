@@ -91,7 +91,12 @@ export interface LabEntryParameter {
   choices: string[];
   abnormalValues: string[];
   criticalValues: string[];
-  range: { low: number | null; high: number | null; text: string; basis: string } | null;
+  range: {
+    low: number | null;
+    high: number | null;
+    text: string;
+    basis: string;
+  } | null;
   rangeNote: string;
   criticalLow: number | null;
   criticalHigh: number | null;
@@ -160,10 +165,23 @@ export interface LabOrder {
   completedAt: string | null;
   reportedAt: string | null;
   turnaround: LabTurnaround;
-  stageHistory: { from: string; to: string; toLabel: string; at: string; byName: string; note: string }[];
+  stageHistory: {
+    from: string;
+    to: string;
+    toLabel: string;
+    at: string;
+    byName: string;
+    note: string;
+  }[];
   sampleId: string;
   sampleCollectedByName: string;
-  sampleRejections: { reason: string; fromStatus: string; sampleId: string; at: string; byName: string }[];
+  sampleRejections: {
+    reason: string;
+    fromStatus: string;
+    sampleId: string;
+    at: string;
+    byName: string;
+  }[];
   results: LabResult[];
   labComment: string;
   hasCritical: boolean;
@@ -198,7 +216,10 @@ export interface LabOrder {
     id: string;
     orderNumber: string;
     reportedAt: string;
-    results: Pick<LabResult, "code" | "name" | "valueText" | "unit" | "flag" | "isCritical">[];
+    results: Pick<
+      LabResult,
+      "code" | "name" | "valueText" | "unit" | "flag" | "isCritical"
+    >[];
   }[];
 }
 

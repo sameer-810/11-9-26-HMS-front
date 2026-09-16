@@ -20,7 +20,9 @@ function makeStockNavigator(mode: StockMode) {
           <Stack.Screen name="InventoryList" component={InventoryScreen} />
           <Stack.Screen name="InventoryItem" component={ItemDetailScreen} />
           <Stack.Screen name="ReceiveStock" component={ReceiveStockScreen} />
-          {mode === "store" ? <Stack.Screen name="IssueStock" component={IssueStockScreen} /> : null}
+          {mode === "store" ? (
+            <Stack.Screen name="IssueStock" component={IssueStockScreen} />
+          ) : null}
           <Stack.Screen name="LowStock" component={LowStockScreen} />
           <Stack.Screen name="StockLedger" component={StockLedgerScreen} />
         </Stack.Navigator>

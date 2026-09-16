@@ -29,7 +29,10 @@ import {
   useBreakpoint,
 } from "@shared/ui";
 import { apiErrorMessage, apiErrorCode, apiErrorDetails } from "@api/apiClient";
-import { BreakGlassPrompt, EmergencyAccessBanner } from "@modules/consultation/components/BreakGlassPrompt";
+import {
+  BreakGlassPrompt,
+  EmergencyAccessBanner,
+} from "@modules/consultation/components/BreakGlassPrompt";
 import { useDebouncedValue } from "@shared/hooks/useDebouncedValue";
 import { usePatientBanner } from "@modules/patient/hooks/usePatients";
 import {
@@ -57,13 +60,26 @@ export default function ConsultationScreen() {
   };
 
   const { isWide } = useBreakpoint();
-  const { data: consultation, isLoading, isError, error, refetch } = useConsultation(id);
+  const {
+    data: consultation,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useConsultation(id);
 
-  const patientId = routePatientId ?? (consultation?.patient as { id: string })?.id;
+  const patientId =
+    routePatientId ?? (consultation?.patient as { id: string })?.id;
   const { data: banner } = usePatientBanner(patientId);
-  const { data: context, error: contextError, refetch: refetchContext } = useClinicalContext(patientId);
+  const {
+    data: context,
+    error: contextError,
+    refetch: refetchContext,
+  } = useClinicalContext(patientId);
   const restricted =
-    apiErrorCode(contextError) === "RECORD_RESTRICTED" ? apiErrorDetails<RestrictedDetails>(contextError) : undefined;
+    apiErrorCode(contextError) === "RECORD_RESTRICTED"
+      ? apiErrorDetails<RestrictedDetails>(contextError)
+      : undefined;
 
   const [signOpen, setSignOpen] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -86,7 +102,11 @@ export default function ConsultationScreen() {
     return (
       <Screen title="Consultation" patient={banner ?? undefined}>
         {isError ? (
-          <ErrorState error={error} title="Couldn't open this consultation" onRetry={refetch} />
+          <ErrorState
+            error={error}
+            title="Couldn't open this consultation"
+            onRetry={refetch}
+          />
         ) : (
           <VStack gap={12}>
             <Skeleton width="40%" height={20} />
@@ -133,7 +153,11 @@ export default function ConsultationScreen() {
     >
       <VStack gap={16}>
         {saveError ? (
-          <Banner tone="danger" message={saveError} onDismiss={() => setSaveError(null)} />
+          <Banner
+            tone="danger"
+            message={saveError}
+            onDismiss={() => setSaveError(null)}
+          />
         ) : null}
 
         {lastPrescription ? (
@@ -153,17 +177,24 @@ export default function ConsultationScreen() {
           />
         ) : null}
 
-        { /* OP-01 — the history, before anything is written. */ }
+        {/* OP-01 — the history, before anything is written. */}
         {restricted && patientId ? (
-            <BreakGlassPrompt patientId={patientId} details={restricted} compact />
-          ) : (
-            <VStack gap={10}>
-              {context?.access?.viaBreakGlass && context.access.expiresAt ? (
-                <EmergencyAccessBanner expiresAt={context.access.expiresAt} onExpired={refetchContext} />
-              ) : null}
-              <HistoryPanel context={context} compact={!isWide} />
-            </VStack>
-          )}
+          <BreakGlassPrompt
+            patientId={patientId}
+            details={restricted}
+            compact
+          />
+        ) : (
+          <VStack gap={10}>
+            {context?.access?.viaBreakGlass && context.access.expiresAt ? (
+              <EmergencyAccessBanner
+                expiresAt={context.access.expiresAt}
+                onExpired={refetchContext}
+              />
+            ) : null}
+            <HistoryPanel context={context} compact={!isWide} />
+          </VStack>
+        )}
 
         <ConsultationForm
           consultation={consultation}
@@ -192,7 +223,7 @@ export default function ConsultationScreen() {
           />
         ) : null}
 
-        { /* LB-01, from the consultation. Flow 1 step 9: "request reaches laboratory". */ }
+        {/* LB-01, from the consultation. Flow 1 step 9: "request reaches laboratory". */}
         {patientId ? (
           <OrderTestsPanel
             patientId={patientId}
@@ -202,7 +233,12 @@ export default function ConsultationScreen() {
           />
         ) : null}
 
-        {signed ? <AddendaPanel consultationId={consultation.id} consultation={consultation} /> : null}
+        {signed ? (
+          <AddendaPanel
+            consultationId={consultation.id}
+            consultation={consultation}
+          />
+        ) : null}
       </VStack>
 
       <ConfirmDialog
@@ -247,28 +283,49 @@ function HistoryPanel({
       <SectionHeader
         title="History"
         subtitle="What is already known about this patient"
-        right={<History size={16} color={palette.text.tertiary} strokeWidth={2} />}
+        right={
+          <History size={16} color={palette.text.tertiary} strokeWidth={2} />
+        }
       />
 
       <VStack gap={14}>
-        
         <View>
           {!context.allergiesRecorded ? (
             <HStack gap={8} align="center">
-              <ShieldAlert size={16} color={palette.warning.text} strokeWidth={2.2} />
-              <Text variant="label" weight="600" style={{ color: palette.warning.text }}>
+              <ShieldAlert
+                size={16}
+                color={palette.warning.text}
+                strokeWidth={2.2}
+              />
+              <Text
+                variant="label"
+                weight="600"
+                style={{ color: palette.warning.text }}
+              >
                 Allergies not recorded — ask before prescribing
               </Text>
             </HStack>
           ) : context.allergies.length === 0 ? (
-            <Text variant="label" weight="600" style={{ color: signal.normal.text }}>
+            <Text
+              variant="label"
+              weight="600"
+              style={{ color: signal.normal.text }}
+            >
               No known allergies
             </Text>
           ) : (
             <VStack gap={6}>
               <HStack gap={7} align="center">
-                <TriangleAlert size={15} color={signal.critical.color} strokeWidth={2.4} />
-                <Text variant="label" weight="600" style={{ color: signal.critical.text }}>
+                <TriangleAlert
+                  size={15}
+                  color={signal.critical.color}
+                  strokeWidth={2.4}
+                />
+                <Text
+                  variant="label"
+                  weight="600"
+                  style={{ color: signal.critical.text }}
+                >
                   Allergies
                 </Text>
               </HStack>
@@ -327,7 +384,12 @@ function HistoryPanel({
             </Text>
             <VStack gap={3}>
               {context.recentPrescriptions.slice(0, 3).map((p) => (
-                <Text key={p.id} variant="body-sm" tone="secondary" numberOfLines={1}>
+                <Text
+                  key={p.id}
+                  variant="body-sm"
+                  tone="secondary"
+                  numberOfLines={1}
+                >
                   {p.lines.map((l) => l.medicineName).join(", ")}
                 </Text>
               ))}
@@ -335,7 +397,7 @@ function HistoryPanel({
           </VStack>
         ) : null}
 
-        { /* Recent results with abnormal values named, to avoid duplicate orders. */ }
+        {/* Recent results with abnormal values named, to avoid duplicate orders. */}
         {context.recentLabResults?.length ? (
           <VStack gap={4} testID="history-lab-results">
             <Text variant="label-sm" tone="tertiary">
@@ -356,7 +418,15 @@ function HistoryPanel({
                     ) : (
                       flagged.slice(0, 4).map((x) => (
                         <HStack key={x.code} gap={3} align="center">
-                          <Text variant="caption" tabular style={{ color: x.isCritical ? signal.critical.text : signal.urgent.text }}>
+                          <Text
+                            variant="caption"
+                            tabular
+                            style={{
+                              color: x.isCritical
+                                ? signal.critical.text
+                                : signal.urgent.text,
+                            }}
+                          >
                             {x.name} {x.valueText}
                           </Text>
                           <LabFlagGlyph flag={x.flag} />
@@ -372,7 +442,8 @@ function HistoryPanel({
 
         {context.pendingLabOrders?.length ? (
           <Text variant="body-sm" tone="secondary" testID="history-lab-pending">
-            Awaiting results: {context.pendingLabOrders.map((o) => o.testName).join(", ")}
+            Awaiting results:{" "}
+            {context.pendingLabOrders.map((o) => o.testName).join(", ")}
           </Text>
         ) : null}
 
@@ -398,16 +469,26 @@ function ConsultationForm({
 }) {
   const update = useUpdateConsultation(consultation.id);
 
-  const [chiefComplaint, setChiefComplaint] = useState(consultation.chiefComplaint);
+  const [chiefComplaint, setChiefComplaint] = useState(
+    consultation.chiefComplaint,
+  );
   const [history, setHistory] = useState(consultation.historyOfPresentIllness);
   const [examination, setExamination] = useState(consultation.examination);
   const [plan, setPlan] = useState(consultation.treatmentPlan);
   const [advice, setAdvice] = useState(consultation.advice);
   const [diagnosisText, setDiagnosisText] = useState("");
-  const [diagnoses, setDiagnoses] = useState<Diagnosis[]>(consultation.diagnoses);
+  const [diagnoses, setDiagnoses] = useState<Diagnosis[]>(
+    consultation.diagnoses,
+  );
   const [vitals, setVitals] = useState(consultation.vitals ?? {});
 
-  const draft = JSON.stringify({ chiefComplaint, history, examination, plan, advice });
+  const draft = JSON.stringify({
+    chiefComplaint,
+    history,
+    examination,
+    plan,
+    advice,
+  });
   const debounced = useDebouncedValue(draft, 900);
   const [lastSaved, setLastSaved] = useState(draft);
 
@@ -427,13 +508,20 @@ function ConsultationForm({
         onError(null);
       })
       .catch((err) => onError(apiErrorMessage(err, "Could not save the note")));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debounced, disabled]);
 
   const addDiagnosis = async () => {
     const text = diagnosisText.trim();
     if (!text) return;
-    const next = [...diagnoses, { description: text, type: "provisional" as const, isPrimary: diagnoses.length === 0 }];
+    const next = [
+      ...diagnoses,
+      {
+        description: text,
+        type: "provisional" as const,
+        isPrimary: diagnoses.length === 0,
+      },
+    ];
     setDiagnoses(next);
     setDiagnosisText("");
     try {
@@ -501,12 +589,48 @@ function ConsultationForm({
       <Card>
         <SectionHeader title="Vitals" subtitle="Taken at this consultation" />
         <HStack gap={10} wrap>
-          <VitalField label="Temp" unit="°C" value={vitals.temperatureC} onSave={(v) => setVital("temperatureC", v)} disabled={disabled} />
-          <VitalField label="Pulse" unit="/min" value={vitals.pulse} onSave={(v) => setVital("pulse", v)} disabled={disabled} />
-          <VitalField label="Systolic" unit="mmHg" value={vitals.systolic} onSave={(v) => setVital("systolic", v)} disabled={disabled} />
-          <VitalField label="Diastolic" unit="mmHg" value={vitals.diastolic} onSave={(v) => setVital("diastolic", v)} disabled={disabled} />
-          <VitalField label="SpO₂" unit="%" value={vitals.spo2} onSave={(v) => setVital("spo2", v)} disabled={disabled} />
-          <VitalField label="Weight" unit="kg" value={vitals.weightKg} onSave={(v) => setVital("weightKg", v)} disabled={disabled} />
+          <VitalField
+            label="Temp"
+            unit="°C"
+            value={vitals.temperatureC}
+            onSave={(v) => setVital("temperatureC", v)}
+            disabled={disabled}
+          />
+          <VitalField
+            label="Pulse"
+            unit="/min"
+            value={vitals.pulse}
+            onSave={(v) => setVital("pulse", v)}
+            disabled={disabled}
+          />
+          <VitalField
+            label="Systolic"
+            unit="mmHg"
+            value={vitals.systolic}
+            onSave={(v) => setVital("systolic", v)}
+            disabled={disabled}
+          />
+          <VitalField
+            label="Diastolic"
+            unit="mmHg"
+            value={vitals.diastolic}
+            onSave={(v) => setVital("diastolic", v)}
+            disabled={disabled}
+          />
+          <VitalField
+            label="SpO₂"
+            unit="%"
+            value={vitals.spo2}
+            onSave={(v) => setVital("spo2", v)}
+            disabled={disabled}
+          />
+          <VitalField
+            label="Weight"
+            unit="kg"
+            value={vitals.weightKg}
+            onSave={(v) => setVital("weightKg", v)}
+            disabled={disabled}
+          />
         </HStack>
       </Card>
 
@@ -552,7 +676,13 @@ function ConsultationForm({
                 label="Add"
                 variant="secondary"
                 fullWidth={false}
-                icon={<Plus size={14} color={palette.text.primary} strokeWidth={2.2} />}
+                icon={
+                  <Plus
+                    size={14}
+                    color={palette.text.primary}
+                    strokeWidth={2.2}
+                  />
+                }
                 onPress={addDiagnosis}
                 testID="dx-add"
               />
@@ -584,7 +714,10 @@ function ConsultationForm({
             <Banner
               tone="warning"
               title="Admission recommended"
-              message={consultation.admissionReason || "This patient should be admitted."}
+              message={
+                consultation.admissionReason ||
+                "This patient should be admitted."
+              }
             />
           ) : null}
         </VStack>
@@ -606,10 +739,14 @@ function VitalField({
   onSave: (v: string) => void;
   disabled: boolean;
 }) {
-  const [text, setText] = useState(value === null || value === undefined ? "" : String(value));
+  const [text, setText] = useState(
+    value === null || value === undefined ? "" : String(value),
+  );
 
   if (disabled) {
-    return <VitalTile label={label} value={value ?? null} unit={unit} compact />;
+    return (
+      <VitalTile label={label} value={value ?? null} unit={unit} compact />
+    );
   }
 
   return (
@@ -670,7 +807,8 @@ function AddendaPanel({
                   {a.text}
                 </Text>
                 <Text variant="caption" tone="tertiary">
-                  {a.authorName} · {formatDateTime(a.createdAt)} · {a.reason.replace("_", " ")}
+                  {a.authorName} · {formatDateTime(a.createdAt)} ·{" "}
+                  {a.reason.replace("_", " ")}
                 </Text>
               </View>
             ))}

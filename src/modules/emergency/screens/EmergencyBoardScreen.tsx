@@ -1,7 +1,17 @@
 import React, { useState } from "react";
 import { View, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Ambulance, AlarmClock, ClipboardList, Users, Scale, UserPlus, UserCheck, Siren, Stethoscope } from "lucide-react-native";
+import {
+  Ambulance,
+  AlarmClock,
+  ClipboardList,
+  Users,
+  Scale,
+  UserPlus,
+  UserCheck,
+  Siren,
+  Stethoscope,
+} from "lucide-react-native";
 
 import { palette, radius, signal } from "@shared/designSystem";
 import { useAuthStore } from "@shared/store/useAuthStore";
@@ -23,9 +33,16 @@ import {
 } from "@shared/ui";
 import { apiErrorMessage } from "@api/apiClient";
 import { formatDuration, formatTimeOnly } from "@shared/format";
-import { useEmergencyBoard, useMarkEdArrived } from "@modules/emergency/hooks/useEmergency";
+import {
+  useEmergencyBoard,
+  useMarkEdArrived,
+} from "@modules/emergency/hooks/useEmergency";
 import { EsiBadge } from "@modules/emergency/components/EsiBadge";
-import { ARRIVAL_MODE_LABELS, hasBanner, type EdVisit } from "@modules/emergency/types";
+import {
+  ARRIVAL_MODE_LABELS,
+  hasBanner,
+  type EdVisit,
+} from "@modules/emergency/types";
 
 /**
  * ED board. Server order (untriaged, acuity, wait) is deliberately never re-sorted here,
@@ -38,7 +55,14 @@ export default function EmergencyBoardScreen() {
   const { isWide } = useBreakpoint();
 
   const [error, setError] = useState<string | null>(null);
-  const { data, isLoading, isError, error: loadError, refetch, isRefetching } = useEmergencyBoard();
+  const {
+    data,
+    isLoading,
+    isError,
+    error: loadError,
+    refetch,
+    isRefetching,
+  } = useEmergencyBoard();
   const markArrived = useMarkEdArrived();
 
   const expected = data?.expected ?? [];
@@ -46,7 +70,8 @@ export default function EmergencyBoardScreen() {
   const waitingTriage = active.filter((v) => !v.esiLevel).length;
   const overTarget = active.filter((v) => v.overTarget).length;
 
-  const open = (v: EdVisit) => navigation.navigate("EmergencyVisit", { visitId: v.id });
+  const open = (v: EdVisit) =>
+    navigation.navigate("EmergencyVisit", { visitId: v.id });
 
   const arrive = async (v: EdVisit) => {
     setError(null);
@@ -78,10 +103,21 @@ export default function EmergencyBoardScreen() {
       }
     >
       <VStack gap={16}>
-        {error ? <Banner tone="danger" message={error} onDismiss={() => setError(null)} /> : null}
+        {error ? (
+          <Banner
+            tone="danger"
+            message={error}
+            onDismiss={() => setError(null)}
+          />
+        ) : null}
 
         <HStack gap={10} wrap>
-          <StatTile label="Expected ambulances" value={expected.length} icon={Ambulance} accent="clinical" />
+          <StatTile
+            label="Expected ambulances"
+            value={expected.length}
+            icon={Ambulance}
+            accent="clinical"
+          />
           <StatTile
             label="Waiting triage"
             value={waitingTriage}
@@ -89,12 +125,27 @@ export default function EmergencyBoardScreen() {
             accent="amber"
             attention={waitingTriage > 0}
           />
-          <StatTile label="In department" value={active.length} icon={Users} accent="teal" />
-          <StatTile label="Over target" value={overTarget} icon={AlarmClock} accent="rose" attention={overTarget > 0} />
+          <StatTile
+            label="In department"
+            value={active.length}
+            icon={Users}
+            accent="teal"
+          />
+          <StatTile
+            label="Over target"
+            value={overTarget}
+            icon={AlarmClock}
+            accent="rose"
+            attention={overTarget > 0}
+          />
         </HStack>
 
         {isError ? (
-          <ErrorState error={loadError} title="Couldn't load the board" onRetry={refetch} />
+          <ErrorState
+            error={loadError}
+            title="Couldn't load the board"
+            onRetry={refetch}
+          />
         ) : isLoading ? (
           <VStack gap={8}>
             {[0, 1, 2, 3].map((i) => (
@@ -107,7 +158,10 @@ export default function EmergencyBoardScreen() {
           <>
             {expected.length ? (
               <VStack gap={8}>
-                <SectionHeader title="Expected" subtitle="Ambulance pre-alerts, not yet at the door" />
+                <SectionHeader
+                  title="Expected"
+                  subtitle="Ambulance pre-alerts, not yet at the door"
+                />
                 {expected.map((v) => (
                   <ExpectedRow
                     key={v.id}
@@ -122,7 +176,10 @@ export default function EmergencyBoardScreen() {
             ) : null}
 
             <VStack gap={8}>
-              <SectionHeader title="In the department" subtitle="Untriaged first, then by acuity, then longest wait" />
+              <SectionHeader
+                title="In the department"
+                subtitle="Untriaged first, then by acuity, then longest wait"
+              />
               {active.length === 0 ? (
                 <EmptyState
                   icon={Siren}
@@ -130,10 +187,18 @@ export default function EmergencyBoardScreen() {
                   message="Arrivals appear here the moment reception registers them."
                 />
               ) : (
-                <VStack gap={isWide ? 0 : 8} style={isWide ? styles.table : undefined}>
+                <VStack
+                  gap={isWide ? 0 : 8}
+                  style={isWide ? styles.table : undefined}
+                >
                   {isWide ? <HeaderRow /> : null}
                   {active.map((v) => (
-                    <ActiveRow key={v.id} visit={v} wide={isWide} onOpen={() => open(v)} />
+                    <ActiveRow
+                      key={v.id}
+                      visit={v}
+                      wide={isWide}
+                      onOpen={() => open(v)}
+                    />
                   ))}
                 </VStack>
               )}
@@ -161,7 +226,12 @@ function ExpectedRow({
   const a = v.ambulance;
   const crew = [a?.service, a?.vehicleNumber].filter(Boolean).join(" · ");
   return (
-    <Card compact onPress={onOpen} accentColor={palette.clinical[600]} testID={`ed-expected-${v.visitNumber}`}>
+    <Card
+      compact
+      onPress={onOpen}
+      accentColor={palette.clinical[600]}
+      testID={`ed-expected-${v.visitNumber}`}
+    >
       <HStack gap={12} align="center" wrap>
         <Ambulance size={20} color={palette.clinical[700]} strokeWidth={2} />
         <VStack gap={2} flex={1} style={{ minWidth: 200 }}>
@@ -175,7 +245,9 @@ function ExpectedRow({
           </Text>
         </VStack>
         <Text variant="label-sm" tone="secondary" tabular>
-          {v.expectedAt ? `Due ${formatTimeOnly(v.expectedAt)}` : "Time not given"}
+          {v.expectedAt
+            ? `Due ${formatTimeOnly(v.expectedAt)}`
+            : "Time not given"}
         </Text>
         {canArrive ? (
           <Button
@@ -193,11 +265,22 @@ function ExpectedRow({
   );
 }
 
-const COL = { esi: 140, visit: 120, patient: 200, arrival: 120, wait: 170, doctor: 150 } as const;
+const COL = {
+  esi: 140,
+  visit: 120,
+  patient: 200,
+  arrival: 120,
+  wait: 170,
+  doctor: 150,
+} as const;
 
 function HeaderRow() {
   const h = (label: string, width?: number) => (
-    <Text variant="label-sm" tone="tertiary" style={width ? { width } : { flex: 1, minWidth: 160 }}>
+    <Text
+      variant="label-sm"
+      tone="tertiary"
+      style={width ? { width } : { flex: 1, minWidth: 160 }}
+    >
       {label}
     </Text>
   );
@@ -214,11 +297,30 @@ function HeaderRow() {
   );
 }
 
-function ActiveRow({ visit: v, wide, onOpen }: { visit: EdVisit; wide: boolean; onOpen: () => void }) {
+function ActiveRow({
+  visit: v,
+  wide,
+  onOpen,
+}: {
+  visit: EdVisit;
+  wide: boolean;
+  onOpen: () => void;
+}) {
   const wait = waitSummary(v);
-  const accent = v.overTarget ? signal.critical.color : !v.esiLevel ? palette.ink[900] : undefined;
+  const accent = v.overTarget
+    ? signal.critical.color
+    : !v.esiLevel
+      ? palette.ink[900]
+      : undefined;
 
-  const badge = <EsiBadge level={v.esiLevel} label={wide ? null : v.esiLabel} size="sm" testID={`ed-esi-${v.visitNumber}`} />;
+  const badge = (
+    <EsiBadge
+      level={v.esiLevel}
+      label={wide ? null : v.esiLabel}
+      size="sm"
+      testID={`ed-esi-${v.visitNumber}`}
+    />
+  );
 
   const patient = (
     <HStack gap={6} align="center" wrap>
@@ -233,7 +335,12 @@ function ActiveRow({ visit: v, wide, onOpen }: { visit: EdVisit; wide: boolean; 
     <HStack gap={5} align="center">
       {v.arrivalMode === "ambulance" ? (
         // Decorative; a label on the icon would be repeated on every SVG <path>.
-        <Ambulance size={14} color={palette.clinical[700]} strokeWidth={2.1} aria-hidden />
+        <Ambulance
+          size={14}
+          color={palette.clinical[700]}
+          strokeWidth={2.1}
+          aria-hidden
+        />
       ) : null}
       <Text variant="caption" tone="secondary" tabular numberOfLines={1}>
         {ARRIVAL_MODE_LABELS[v.arrivalMode]} · {formatTimeOnly(v.arrivedAt)}
@@ -244,12 +351,20 @@ function ActiveRow({ visit: v, wide, onOpen }: { visit: EdVisit; wide: boolean; 
   const waitCell = (
     <VStack gap={1}>
       <HStack gap={4} align="center">
-        {v.overTarget ? <AlarmClock size={13} color={signal.critical.color} strokeWidth={2.4} /> : null}
+        {v.overTarget ? (
+          <AlarmClock
+            size={13}
+            color={signal.critical.color}
+            strokeWidth={2.4}
+          />
+        ) : null}
         <Text
           variant="label-sm"
           weight={v.overTarget ? "600" : "500"}
           tabular
-          style={{ color: v.overTarget ? signal.critical.text : palette.text.secondary }}
+          style={{
+            color: v.overTarget ? signal.critical.text : palette.text.secondary,
+          }}
           testID={`ed-wait-${v.visitNumber}`}
         >
           {wait.primary}
@@ -265,8 +380,18 @@ function ActiveRow({ visit: v, wide, onOpen }: { visit: EdVisit; wide: boolean; 
 
   const doctor = (
     <HStack gap={5} align="center">
-      {v.status === "in_treatment" ? <Stethoscope size={13} color={palette.clinical[600]} strokeWidth={2.1} /> : null}
-      <Text variant="caption" tone={v.assignedDoctorName ? "secondary" : "tertiary"} numberOfLines={1}>
+      {v.status === "in_treatment" ? (
+        <Stethoscope
+          size={13}
+          color={palette.clinical[600]}
+          strokeWidth={2.1}
+        />
+      ) : null}
+      <Text
+        variant="caption"
+        tone={v.assignedDoctorName ? "secondary" : "tertiary"}
+        numberOfLines={1}
+      >
         {v.assignedDoctorName ? `Dr ${v.assignedDoctorName}` : "No doctor yet"}
       </Text>
     </HStack>
@@ -274,11 +399,23 @@ function ActiveRow({ visit: v, wide, onOpen }: { visit: EdVisit; wide: boolean; 
 
   if (wide) {
     return (
-      <Card compact onPress={onOpen} accentColor={accent} style={styles.wideRow} testID={`ed-row-${v.visitNumber}`}>
+      <Card
+        compact
+        onPress={onOpen}
+        accentColor={accent}
+        style={styles.wideRow}
+        testID={`ed-row-${v.visitNumber}`}
+      >
         <HStack gap={12} align="center">
           <View style={{ width: COL.esi }}>{badge}</View>
-          { /* One line: a visit number broken at its hyphen reads as two numbers. */ }
-          <Text variant="label-sm" tone="secondary" tabular numberOfLines={1} style={{ width: COL.visit }}>
+          {/* One line: a visit number broken at its hyphen reads as two numbers. */}
+          <Text
+            variant="label-sm"
+            tone="secondary"
+            tabular
+            numberOfLines={1}
+            style={{ width: COL.visit }}
+          >
             {v.visitNumber}
           </Text>
           <VStack gap={1} style={{ width: COL.patient }}>
@@ -287,7 +424,12 @@ function ActiveRow({ visit: v, wide, onOpen }: { visit: EdVisit; wide: boolean; 
               {ageSex(v)}
             </Text>
           </VStack>
-          <Text variant="body-sm" tone="primary" numberOfLines={2} style={{ flex: 1, minWidth: 160 }}>
+          <Text
+            variant="body-sm"
+            tone="primary"
+            numberOfLines={2}
+            style={{ flex: 1, minWidth: 160 }}
+          >
             {v.chiefComplaint}
           </Text>
           <View style={{ width: COL.arrival }}>{arrival}</View>
@@ -299,7 +441,12 @@ function ActiveRow({ visit: v, wide, onOpen }: { visit: EdVisit; wide: boolean; 
   }
 
   return (
-    <Card compact onPress={onOpen} accentColor={accent} testID={`ed-row-${v.visitNumber}`}>
+    <Card
+      compact
+      onPress={onOpen}
+      accentColor={accent}
+      testID={`ed-row-${v.visitNumber}`}
+    >
       <VStack gap={8}>
         <HStack gap={8} align="center" justify="space-between" wrap>
           {badge}
@@ -330,28 +477,45 @@ function MlcFlag() {
   return (
     <View style={styles.mlc} accessibilityLabel="Medico-legal case">
       <Scale size={11} color={palette.warning.text} strokeWidth={2.2} />
-      <Text variant="label-sm" weight="600" style={{ color: palette.warning.text }}>
+      <Text
+        variant="label-sm"
+        weight="600"
+        style={{ color: palette.warning.text }}
+      >
         MLC
       </Text>
     </View>
   );
 }
 
-const ageSex = (v: EdVisit) => (hasBanner(v.patient) ? `${v.patient.age} · ${v.patient.gender}` : "");
-const patientLine = (v: EdVisit) => (hasBanner(v.patient) ? `${v.patient.fullName}, ${ageSex(v)}` : "Patient");
+const ageSex = (v: EdVisit) =>
+  hasBanner(v.patient) ? `${v.patient.age} · ${v.patient.gender}` : "";
+const patientLine = (v: EdVisit) =>
+  hasBanner(v.patient) ? `${v.patient.fullName}, ${ageSex(v)}` : "Patient";
 
 /** Wait text relative to the ESI level's target. */
 function waitSummary(v: EdVisit): { primary: string; secondary?: string } {
   const wait = v.waitMinutes ?? null;
   if (wait === null) return { primary: "—" };
-  if (!v.esiLevel) return { primary: `Waiting ${formatDuration(wait)}`, secondary: "Not triaged" };
+  if (!v.esiLevel)
+    return {
+      primary: `Waiting ${formatDuration(wait)}`,
+      secondary: "Not triaged",
+    };
   const target = v.targetMinutes ?? 0;
   const targetText = target === 0 ? "immediate" : formatDuration(target);
   if (v.overTarget) {
-    return { primary: `Over target by ${formatDuration(wait - target)}`, secondary: `Waited ${formatDuration(wait)} · target ${targetText}` };
+    return {
+      primary: `Over target by ${formatDuration(wait - target)}`,
+      secondary: `Waited ${formatDuration(wait)} · target ${targetText}`,
+    };
   }
-  if (v.seenByDoctorAt) return { primary: `Seen · ${formatDuration(wait)} in dept` };
-  return { primary: `${formatDuration(wait)} of ${targetText}`, secondary: "Within target" };
+  if (v.seenByDoctorAt)
+    return { primary: `Seen · ${formatDuration(wait)} in dept` };
+  return {
+    primary: `${formatDuration(wait)} of ${targetText}`,
+    secondary: "Within target",
+  };
 }
 
 const styles = StyleSheet.create({

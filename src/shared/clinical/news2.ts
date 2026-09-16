@@ -3,7 +3,8 @@
  * tests/news2Parity.test.ts keeps both copies in step; only the server's score is filed.
  */
 
-export type Consciousness = "alert" | "confusion" | "voice" | "pain" | "unresponsive";
+export type Consciousness =
+  "alert" | "confusion" | "voice" | "pain" | "unresponsive";
 
 export interface News2Input {
   respiratoryRate?: number | string | null;
@@ -31,7 +32,10 @@ export interface LocalNews2Result {
   band: LocalNews2Band | null;
   missing: string[];
   missingLabels: string[];
-  parameters: Record<string, { value: number | boolean | string; score: number }>;
+  parameters: Record<
+    string,
+    { value: number | boolean | string; score: number }
+  >;
   highestSingleScore?: number;
   redFlagParameters: string[];
   scale: 1 | 2;
@@ -125,7 +129,8 @@ export const RISK_BANDS: Record<LocalNews2Band["key"], LocalNews2Band> = {
     label: "Low",
     tier: "caution",
     monitoringFrequency: "Minimum 4–6 hourly",
-    response: "A registered nurse should assess the patient and decide whether to increase monitoring.",
+    response:
+      "A registered nurse should assess the patient and decide whether to increase monitoring.",
   },
   lowMedium: {
     key: "lowMedium",
@@ -161,7 +166,9 @@ export function bandFor(total: number, highestSingleScore = 0): LocalNews2Band {
   return RISK_BANDS.none;
 }
 
-export function calculateNews2(input: News2Input | null | undefined): LocalNews2Result {
+export function calculateNews2(
+  input: News2Input | null | undefined,
+): LocalNews2Result {
   const observations = (input || {}) as News2Input & Record<string, unknown>;
 
   // a value that is not a number is missing, never a reading (as in the server copy).
@@ -180,7 +187,11 @@ export function calculateNews2(input: News2Input | null | undefined): LocalNews2
   }) as string[];
 
   const parameters: LocalNews2Result["parameters"] = {};
-  const add = (key: string, value: number | boolean | string, score: number) => {
+  const add = (
+    key: string,
+    value: number | boolean | string,
+    score: number,
+  ) => {
     parameters[key] = { value, score };
   };
 
@@ -191,7 +202,13 @@ export function calculateNews2(input: News2Input | null | undefined): LocalNews2
 
   const spo2 = numeric(observations.spo2);
   if (spo2 !== null) {
-    add("spo2", spo2, observations.useScale2 ? scoreSpo2Scale2(spo2, onOxygen) : scoreSpo2Scale1(spo2));
+    add(
+      "spo2",
+      spo2,
+      observations.useScale2
+        ? scoreSpo2Scale2(spo2, onOxygen)
+        : scoreSpo2Scale1(spo2),
+    );
   }
   if (observations.onOxygen !== undefined && observations.onOxygen !== null) {
     add("onOxygen", onOxygen, onOxygen ? 2 : 0);
@@ -202,13 +219,20 @@ export function calculateNews2(input: News2Input | null | undefined): LocalNews2
   const pulse = numeric(observations.pulse);
   if (pulse !== null) add("pulse", pulse, scorePulse(pulse));
   if (observations.consciousness) {
-    add("consciousness", observations.consciousness, scoreConsciousness(observations.consciousness));
+    add(
+      "consciousness",
+      observations.consciousness,
+      scoreConsciousness(observations.consciousness),
+    );
   }
   const temp = numeric(observations.temperatureC);
   if (temp !== null) add("temperatureC", temp, scoreTemperature(temp));
 
   const total = Object.values(parameters).reduce((sum, p) => sum + p.score, 0);
-  const highestSingle = Object.values(parameters).reduce((m, p) => Math.max(m, p.score), 0);
+  const highestSingle = Object.values(parameters).reduce(
+    (m, p) => Math.max(m, p.score),
+    0,
+  );
   const redFlagParameters = Object.entries(parameters)
     .filter(([, p]) => p.score === 3)
     .map(([key]) => PARAMETER_LABELS[key] || key);

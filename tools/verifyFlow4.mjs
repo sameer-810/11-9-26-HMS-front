@@ -50,7 +50,12 @@ fs.mkdirSync(SHOTS, { recursive: true });
 // ---- 1. API ----
 console.log("\nStarting the API…");
 
-const { MongoMemoryReplSet } = await imp(BACK, "node_modules", "mongodb-memory-server", "index.js");
+const { MongoMemoryReplSet } = await imp(
+  BACK,
+  "node_modules",
+  "mongodb-memory-server",
+  "index.js",
+);
 const replSet = await MongoMemoryReplSet.create({
   replSet: { count: 1, storageEngine: "wiredTiger" },
 });
@@ -86,7 +91,7 @@ async function waitForApi(timeoutMs = 40_000) {
       const res = await fetch(`${API}/health`);
       if (res.ok) return;
     } catch {
-    /* not up yet */
+      /* not up yet */
     }
     if (Date.now() > deadline) {
       throw new Error(`API did not start in ${timeoutMs}ms.\n${apiLog}`);
@@ -105,11 +110,29 @@ process.env.JWT_REFRESH_SECRET ??= "verify-refresh-secret-not-real";
 process.env.JWT_ADMIN_SECRET ??= "verify-admin-secret-not-real";
 process.env.BCRYPT_ROUNDS ??= "4";
 
-const mongoose = (await imp(BACK, "node_modules", "mongoose", "index.js")).default;
+const mongoose = (await imp(BACK, "node_modules", "mongoose", "index.js"))
+  .default;
 await mongoose.connect(mongoUri);
-const { HospitalModel } = await imp(BACK, "src", "modules", "hospital", "hospital.model.js");
-const { UserModel, hashPassword } = await imp(BACK, "src", "modules", "user", "user.model.js");
-const { defaultPermissionsFor, ROLES } = await imp(BACK, "src", "config", "roles.js");
+const { HospitalModel } = await imp(
+  BACK,
+  "src",
+  "modules",
+  "hospital",
+  "hospital.model.js",
+);
+const { UserModel, hashPassword } = await imp(
+  BACK,
+  "src",
+  "modules",
+  "user",
+  "user.model.js",
+);
+const { defaultPermissionsFor, ROLES } = await imp(
+  BACK,
+  "src",
+  "config",
+  "roles.js",
+);
 
 const hospital = await HospitalModel.create({
   name: "City General Hospital",
@@ -141,7 +164,8 @@ const web = http.createServer((req, res) => {
     file = path.join(DIST, "index.html");
   }
   res.writeHead(200, {
-    "Content-Type": TYPES[path.extname(file).toLowerCase()] || "application/octet-stream",
+    "Content-Type":
+      TYPES[path.extname(file).toLowerCase()] || "application/octet-stream",
   });
   fs.createReadStream(file).pipe(res);
 });
@@ -151,7 +175,9 @@ console.log(`Web served on ${WEB}\n`);
 
 // ---- 3. Drive it ----
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const ctx = await browser.newContext({
+  viewport: { width: 1440, height: 900 },
+});
 const page = await ctx.newPage();
 
 const consoleErrors = [];
@@ -162,7 +188,10 @@ page.on("pageerror", (e) => consoleErrors.push(String(e)));
 
 const httpFailures = [];
 page.on("response", (r) => {
-  if (r.status() >= 400) httpFailures.push(`${r.status()} ${r.request().method()} ${new URL(r.url()).pathname}`);
+  if (r.status() >= 400)
+    httpFailures.push(
+      `${r.status()} ${r.request().method()} ${new URL(r.url()).pathname}`,
+    );
 });
 
 // the bundle was built with the default api url; point it at this run's api.
@@ -193,18 +222,32 @@ try {
 
   await page.waitForTimeout(2500);
   let text = await page.innerText("body");
-  check(/Good (morning|afternoon|evening), Asha/.test(text), "administrator reaches the dashboard");
+  check(
+    /Good (morning|afternoon|evening), Asha/.test(text),
+    "administrator reaches the dashboard",
+  );
   check(text.includes("Hospital Administrator"), "their designation is shown");
-  check(text.includes("City General Hospital"), "the hospital they are signed in to is named");
+  check(
+    text.includes("City General Hospital"),
+    "the hospital they are signed in to is named",
+  );
 
-  await page.screenshot({ path: path.join(SHOTS, "flow4-1-admin-dashboard.png") });
+  await page.screenshot({
+    path: path.join(SHOTS, "flow4-1-admin-dashboard.png"),
+  });
 
   check(text.includes("Active staff"), "admin sees the staff figure");
   check(text.includes("Departments"), "admin sees the department figure");
 
   // -- Step 2: the sidebar is built from the role ----------------------------
-  check(text.includes("Users & access"), "admin sees user management in the sidebar");
-  check(text.includes("Audit trail"), "admin sees the audit trail in the sidebar");
+  check(
+    text.includes("Users & access"),
+    "admin sees user management in the sidebar",
+  );
+  check(
+    text.includes("Audit trail"),
+    "admin sees the audit trail in the sidebar",
+  );
   check(
     !text.includes("Consultation") && !text.includes("My schedule"),
     "admin does NOT see clinical sections",
@@ -247,7 +290,7 @@ try {
     try {
       localStorage.removeItem("hms-auth-storage");
     } catch {
-    /* nothing to clear */
+      /* nothing to clear */
     }
   });
   await page.goto(WEB, { waitUntil: "networkidle" });
@@ -260,10 +303,18 @@ try {
 
   text = await page.innerText("body");
   check(text.includes("Set your password"), "forced onto the password screen");
-  check(text.includes("This is required"), "told plainly that it is not optional");
-  check(!text.includes("Good morning, Deepak") && !text.includes("Dashboard"), "the app is NOT reachable yet");
+  check(
+    text.includes("This is required"),
+    "told plainly that it is not optional",
+  );
+  check(
+    !text.includes("Good morning, Deepak") && !text.includes("Dashboard"),
+    "the app is NOT reachable yet",
+  );
 
-  await page.screenshot({ path: path.join(SHOTS, "flow4-2-forced-password.png") });
+  await page.screenshot({
+    path: path.join(SHOTS, "flow4-2-forced-password.png"),
+  });
 
   // -- Step 5: set their own password ----------------------------------------
   await page.getByTestId("cp-current").fill(tempPassword);
@@ -273,19 +324,33 @@ try {
   await page.waitForTimeout(2500);
 
   text = await page.innerText("body");
-  check(/Good (morning|afternoon|evening), Deepak/.test(text), "lands on the dashboard after setting it");
+  check(
+    /Good (morning|afternoon|evening), Deepak/.test(text),
+    "lands on the dashboard after setting it",
+  );
 
   // -- Step 6: the dashboard and menu are built from THEIR role --------------
   check(text.includes("Front Desk Executive"), "their designation is shown");
   check(text.includes("Patients"), "receptionist sees Patients");
   check(text.includes("Appointments"), "receptionist sees Appointments");
   check(text.includes("OPD queue"), "receptionist sees the OPD queue");
-  check(!text.includes("Users & access"), "receptionist does NOT see user management");
-  check(!text.includes("Audit trail"), "receptionist does NOT see the audit trail");
-  check(!text.includes("Active staff"), "receptionist does NOT see staff figures");
+  check(
+    !text.includes("Users & access"),
+    "receptionist does NOT see user management",
+  );
+  check(
+    !text.includes("Audit trail"),
+    "receptionist does NOT see the audit trail",
+  );
+  check(
+    !text.includes("Active staff"),
+    "receptionist does NOT see staff figures",
+  );
   check(!text.includes("Occupancy"), "receptionist does NOT see bed occupancy");
 
-  await page.screenshot({ path: path.join(SHOTS, "flow4-3-receptionist-dashboard.png") });
+  await page.screenshot({
+    path: path.join(SHOTS, "flow4-3-receptionist-dashboard.png"),
+  });
 
   // -- Step 7: the whole journey is in the audit trail ------------------------
   const audit = await fetch(`${API}/api/v1/audit?limit=100`, {
@@ -295,9 +360,14 @@ try {
 
   check(actions.includes("user.create"), "audit: the account creation");
   check(actions.includes("auth.login"), "audit: the sign-ins");
-  check(actions.includes("auth.password.changed"), "audit: the password change");
+  check(
+    actions.includes("auth.password.changed"),
+    "audit: the password change",
+  );
 
-  const createEntry = (audit.data || []).find((a) => a.action === "user.create");
+  const createEntry = (audit.data || []).find(
+    (a) => a.action === "user.create",
+  );
   check(createEntry?.user?.name === "Asha Menon", "audit names who did it");
   check(Boolean(createEntry?.requestId), "audit carries the request id");
 
@@ -306,21 +376,35 @@ try {
 `);
 
   // expected 401s surface as "Failed to load resource"; only real js errors count.
-  const jsErrors = consoleErrors.filter((e) => !/Failed to load resource/i.test(e));
-  check(jsErrors.length === 0, "no JavaScript errors anywhere in the journey", jsErrors.slice(0, 2).join(" | "));
+  const jsErrors = consoleErrors.filter(
+    (e) => !/Failed to load resource/i.test(e),
+  );
+  check(
+    jsErrors.length === 0,
+    "no JavaScript errors anywhere in the journey",
+    jsErrors.slice(0, 2).join(" | "),
+  );
 
   const unexpected = httpFailures.filter((f) => !/^40[13] /.test(f));
-  check(unexpected.length === 0, "no unexpected HTTP failures", unexpected.join(", "));
+  check(
+    unexpected.length === 0,
+    "no unexpected HTTP failures",
+    unexpected.join(", "),
+  );
 
   // -- Step 8: the phone layout of the same journey --------------------------
-  const phone = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const phone = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+  });
   const pPage = await phone.newPage();
   // the live-update socket is not under test; blocked so the gate never reaches
   // the dev port baked into the build.
   await pPage.route("**/socket.io/**", (route) => route.abort());
   await pPage.route("**/api/v1/**", async (route) => {
     const url = new URL(route.request().url());
-    const response = await route.fetch({ url: `${API}${url.pathname}${url.search}` });
+    const response = await route.fetch({
+      url: `${API}${url.pathname}${url.search}`,
+    });
     await route.fulfill({ response });
   });
   await pPage.goto(WEB, { waitUntil: "networkidle" });
@@ -331,19 +415,28 @@ try {
   await pPage.waitForTimeout(2500);
 
   const pText = await pPage.innerText("body");
-  check(/Good (morning|afternoon|evening), Deepak/.test(pText), "phone: signs in and reaches the dashboard");
+  check(
+    /Good (morning|afternoon|evening), Deepak/.test(pText),
+    "phone: signs in and reaches the dashboard",
+  );
 
   const overflow = await pPage.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    () =>
+      document.documentElement.scrollWidth -
+      document.documentElement.clientWidth,
   );
   check(overflow <= 1, "phone: no horizontal overflow", `${overflow}px`);
 
-  await pPage.screenshot({ path: path.join(SHOTS, "flow4-4-phone-dashboard.png") });
+  await pPage.screenshot({
+    path: path.join(SHOTS, "flow4-4-phone-dashboard.png"),
+  });
   await phone.close();
 } catch (err) {
   console.error("\nJourney threw:", err.message);
   failures.push(`exception: ${err.message}`);
-  await page.screenshot({ path: path.join(SHOTS, "flow4-FAILURE.png") }).catch(() => {});
+  await page
+    .screenshot({ path: path.join(SHOTS, "flow4-FAILURE.png") })
+    .catch(() => {});
 } finally {
   await browser.close();
   web.close();
@@ -353,7 +446,9 @@ try {
 }
 
 if (failures.length) {
-  console.error(`\n${failures.length} check(s) failed:\n - ${failures.join("\n - ")}\n`);
+  console.error(
+    `\n${failures.length} check(s) failed:\n - ${failures.join("\n - ")}\n`,
+  );
   process.exit(1);
 }
 console.log("\nFlow 4 passes end to end. Screenshots in docs/shots/\n");

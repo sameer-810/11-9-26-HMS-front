@@ -35,9 +35,23 @@ export function ConfirmDialog({
 }: Props) {
   const reduceMotion = useReducedMotion();
   return (
-    <Modal visible={visible} transparent animationType={reduceMotion ? "none" : "fade"} onRequestClose={onCancel}>
-      <Pressable style={styles.overlay} onPress={loading ? undefined : onCancel} focusable={false}>
-        <Pressable style={styles.card} onPress={() => {}} accessibilityViewIsModal focusable={false}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType={reduceMotion ? "none" : "fade"}
+      onRequestClose={onCancel}
+    >
+      <Pressable
+        style={styles.overlay}
+        onPress={loading ? undefined : onCancel}
+        focusable={false}
+      >
+        <Pressable
+          style={styles.card}
+          onPress={() => {}}
+          accessibilityViewIsModal
+          focusable={false}
+        >
           <Text variant="h2" tone="primary" heading={2}>
             {title}
           </Text>

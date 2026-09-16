@@ -7,9 +7,7 @@
     "scheme": "hms",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.hms.app",
@@ -41,12 +39,7 @@
       "bundler": "metro",
       "output": "single"
     },
-    "plugins": [
-      "expo-secure-store",
-      "expo-font",
-      "expo-camera",
-      "expo-audio"
-    ],
+    "plugins": ["expo-secure-store", "expo-font", "expo-camera", "expo-audio"],
     "runtimeVersion": {
       "policy": "appVersion"
     },

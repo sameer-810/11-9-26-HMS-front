@@ -58,7 +58,11 @@ export function Select({
             {label}
           </Text>
           {required ? (
-            <Text variant="label" style={{ color: palette.danger.text }} aria-hidden>
+            <Text
+              variant="label"
+              style={{ color: palette.danger.text }}
+              aria-hidden
+            >
               *
             </Text>
           ) : null}
@@ -72,7 +76,12 @@ export function Select({
         // aria-required is invalid on a button, so "Required" is appended to the label.
         accessibilityLabel={`${label ? `${label}. ${selected?.label ?? placeholder}` : placeholder}${required ? ". Required" : ""}`}
         accessibilityState={{ disabled: Boolean(disabled), expanded: open }}
-        {...webAria({ hasPopup: "menu", expanded: open, describedBy: error || hint ? messageId : undefined, invalid: Boolean(error) })}
+        {...webAria({
+          hasPopup: "menu",
+          expanded: open,
+          describedBy: error || hint ? messageId : undefined,
+          invalid: Boolean(error),
+        })}
         style={[
           styles.control,
           {
@@ -96,7 +105,13 @@ export function Select({
       </Pressable>
 
       {error ? (
-        <Text variant="caption" tone="danger" nativeID={messageId} accessibilityRole="alert" accessibilityLiveRegion="polite">
+        <Text
+          variant="caption"
+          tone="danger"
+          nativeID={messageId}
+          accessibilityRole="alert"
+          accessibilityLiveRegion="polite"
+        >
           {error}
         </Text>
       ) : hint ? (
@@ -111,16 +126,28 @@ export function Select({
         animationType={reduceMotion ? "none" : "fade"}
         onRequestClose={() => setOpen(false)}
       >
-        { /* Backdrop and sheet are pointer-only, not Tab stops. */ }
-        <Pressable style={styles.overlay} onPress={() => setOpen(false)} focusable={false}>
+        {/* Backdrop and sheet are pointer-only, not Tab stops. */}
+        <Pressable
+          style={styles.overlay}
+          onPress={() => setOpen(false)}
+          focusable={false}
+        >
           <Pressable style={styles.sheet} onPress={() => {}} focusable={false}>
             {label ? (
-              <Text variant="h3" tone="primary" heading={2} style={{ marginBottom: 8 }}>
+              <Text
+                variant="h3"
+                tone="primary"
+                heading={2}
+                style={{ marginBottom: 8 }}
+              >
                 {label}
               </Text>
             ) : null}
             <ScrollView bounces={false}>
-              <View accessibilityRole="menu" accessibilityLabel={label ?? placeholder}>
+              <View
+                accessibilityRole="menu"
+                accessibilityLabel={label ?? placeholder}
+              >
                 {options.map((o) => {
                   const isSelected = o.value === value;
                   return (
@@ -132,16 +159,26 @@ export function Select({
                         setOpen(false);
                       }}
                       accessibilityRole="menuitem"
-                      accessibilityState={{ selected: isSelected, disabled: Boolean(o.disabled) }}
+                      accessibilityState={{
+                        selected: isSelected,
+                        disabled: Boolean(o.disabled),
+                      }}
                       style={({ pressed }) => [
                         styles.option,
-                        pressed && !o.disabled ? { backgroundColor: palette.ink[50] } : null,
-                        isSelected ? { backgroundColor: palette.clinical[50] } : null,
+                        pressed && !o.disabled
+                          ? { backgroundColor: palette.ink[50] }
+                          : null,
+                        isSelected
+                          ? { backgroundColor: palette.clinical[50] }
+                          : null,
                         o.disabled ? { opacity: 0.5 } : null,
                       ]}
                     >
                       <VStack gap={1} flex={1}>
-                        <Text variant="body" tone={o.disabled ? "disabled" : "primary"}>
+                        <Text
+                          variant="body"
+                          tone={o.disabled ? "disabled" : "primary"}
+                        >
                           {o.label}
                         </Text>
                         {}
@@ -156,7 +193,11 @@ export function Select({
                         ) : null}
                       </VStack>
                       {isSelected ? (
-                        <Check size={16} color={palette.clinical[700]} strokeWidth={2.4} />
+                        <Check
+                          size={16}
+                          color={palette.clinical[700]}
+                          strokeWidth={2.4}
+                        />
                       ) : null}
                     </Pressable>
                   );

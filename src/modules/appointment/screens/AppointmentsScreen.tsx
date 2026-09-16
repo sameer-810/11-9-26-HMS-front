@@ -1,7 +1,12 @@
 import React, { useState } from "react";
 import { View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { CalendarPlus, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react-native";
+import {
+  CalendarPlus,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react-native";
 
 import { palette, radius, signal } from "@shared/designSystem";
 import { useAuthStore } from "@shared/store/useAuthStore";
@@ -55,7 +60,14 @@ export default function AppointmentsScreen() {
   const [cancelTarget, setCancelTarget] = useState<Appointment | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const { data, isLoading, isError, error: loadError, refetch, isRefetching } = useAppointments({
+  const {
+    data,
+    isLoading,
+    isError,
+    error: loadError,
+    refetch,
+    isRefetching,
+  } = useAppointments({
     date,
     ...(status ? { status } : {}),
     limit: 100,
@@ -131,7 +143,9 @@ export default function AppointmentsScreen() {
       key: "status",
       header: "Status",
       width: 140,
-      render: (a) => <StatusChip status={a.status.replace("_", " ")} size="sm" />,
+      render: (a) => (
+        <StatusChip status={a.status.replace("_", " ")} size="sm" />
+      ),
     },
     {
       key: "actions",
@@ -146,7 +160,9 @@ export default function AppointmentsScreen() {
               variant="secondary"
               size="xs"
               fullWidth={false}
-              onPress={() => navigation.navigate("RescheduleAppointment", { id: a.id })}
+              onPress={() =>
+                navigation.navigate("RescheduleAppointment", { id: a.id })
+              }
             />
             <Button
               label="Cancel"
@@ -181,7 +197,13 @@ export default function AppointmentsScreen() {
       }
     >
       <VStack gap={12}>
-        {error ? <Banner tone="danger" message={error} onDismiss={() => setError(null)} /> : null}
+        {error ? (
+          <Banner
+            tone="danger"
+            message={error}
+            onDismiss={() => setError(null)}
+          />
+        ) : null}
 
         <HStack gap={10} align="center" wrap>
           <Button
@@ -189,12 +211,22 @@ export default function AppointmentsScreen() {
             variant="secondary"
             size="sm"
             fullWidth={false}
-            icon={<ChevronLeft size={15} color={palette.text.primary} strokeWidth={2.2} />}
+            icon={
+              <ChevronLeft
+                size={15}
+                color={palette.text.primary}
+                strokeWidth={2.2}
+              />
+            }
             onPress={() => setDate((d) => addCalendarDays(d, -1))}
           />
           <View style={dateBox}>
             <HStack gap={8} align="center">
-              <CalendarDays size={15} color={palette.clinical[600]} strokeWidth={2.1} />
+              <CalendarDays
+                size={15}
+                color={palette.clinical[600]}
+                strokeWidth={2.1}
+              />
               <Text variant="label" tone="primary" testID="appointments-date">
                 {formatCalendarDate(date)}
               </Text>
@@ -205,7 +237,13 @@ export default function AppointmentsScreen() {
             variant="secondary"
             size="sm"
             fullWidth={false}
-            rightIcon={<ChevronRight size={15} color={palette.text.primary} strokeWidth={2.2} />}
+            rightIcon={
+              <ChevronRight
+                size={15}
+                color={palette.text.primary}
+                strokeWidth={2.2}
+              />
+            }
             onPress={() => setDate((d) => addCalendarDays(d, 1))}
           />
           <Button
@@ -220,7 +258,11 @@ export default function AppointmentsScreen() {
         <ChipsRow chips={STATUS_CHIPS} active={status} onChange={setStatus} />
 
         {isError ? (
-          <ErrorState error={loadError} title="Couldn't load appointments" onRetry={refetch} />
+          <ErrorState
+            error={loadError}
+            title="Couldn't load appointments"
+            onRetry={refetch}
+          />
         ) : isLoading && appointments.length === 0 ? (
           <VStack gap={8}>
             {[0, 1, 2, 3].map((i) => (
@@ -243,7 +285,9 @@ export default function AppointmentsScreen() {
             }
             emptyIcon={CalendarDays}
             emptyTitle="Nothing booked for this day"
-            emptyMessage={canManage ? "Book an appointment to fill the diary." : undefined}
+            emptyMessage={
+              canManage ? "Book an appointment to fill the diary." : undefined
+            }
             mobileCard={(a) => {
               const p = a.patient as PatientBanner;
               return (
@@ -251,7 +295,9 @@ export default function AppointmentsScreen() {
                   title={p?.fullName ?? "—"}
                   subtitle={`${formatWallTime(a.scheduledTime)} · ${(a.doctor as { fullName?: string })?.fullName ?? ""}`}
                   meta={p?.patientId}
-                  right={<StatusChip status={a.status.replace("_", " ")} size="sm" />}
+                  right={
+                    <StatusChip status={a.status.replace("_", " ")} size="sm" />
+                  }
                 />
               );
             }}

@@ -11,7 +11,12 @@ interface Props {
 
 export function SectionHeader({ title, subtitle, right }: Props) {
   return (
-    <HStack gap={12} align="center" justify="space-between" style={{ marginBottom: 10 }}>
+    <HStack
+      gap={12}
+      align="center"
+      justify="space-between"
+      style={{ marginBottom: 10 }}
+    >
       <VStack gap={1} flex={1}>
         <Text variant="h3" tone="primary" heading={2}>
           {title}

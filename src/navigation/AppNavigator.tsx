@@ -103,13 +103,18 @@ export default function AppNavigator() {
   const { width } = useWindowDimensions();
   const isWide = width >= layout.wideBreakpoint;
   const [collapsed, setCollapsed] = useState(false);
-  const drawerNav = useRef<DrawerContentComponentProps["navigation"] | null>(null);
+  const drawerNav = useRef<DrawerContentComponentProps["navigation"] | null>(
+    null,
+  );
   const items = useVisibleNavItems();
 
   // session-scoped services; restarted when the signed-in user or token changes.
   const userId = useAuthStore((s) => s.user?.id);
   const token = useAuthStore((s) => s.token);
-  useEffect(() => (userId ? startMirror(queryClient, userId) : undefined), [userId]);
+  useEffect(
+    () => (userId ? startMirror(queryClient, userId) : undefined),
+    [userId],
+  );
   useEffect(() => startOutboxSync(), []);
   useEffect(() => (token ? startRealtime(token) : undefined), [token]);
 
@@ -154,10 +159,18 @@ export default function AppNavigator() {
                   accessibilityRole="button"
                   accessibilityLabel="Open menu"
                 >
-                  <Menu size={22} color={palette.text.primary} strokeWidth={2} />
+                  <Menu
+                    size={22}
+                    color={palette.text.primary}
+                    strokeWidth={2}
+                  />
                 </Pressable>
                 <View style={styles.mark}>
-                  <Hospital size={16} color={palette.clinical[700]} strokeWidth={2.2} />
+                  <Hospital
+                    size={16}
+                    color={palette.clinical[700]}
+                    strokeWidth={2.2}
+                  />
                 </View>
                 <Text variant="h3" tone="primary">
                   {NAV_ITEMS.find((i) => i.name === route.name)?.label || "HMS"}
@@ -166,14 +179,17 @@ export default function AppNavigator() {
             </SafeAreaView>
           ),
           drawerStyle: {
-            width: isWide && collapsed ? layout.sidebarCollapsedWidth : layout.sidebarWidth,
+            width:
+              isWide && collapsed
+                ? layout.sidebarCollapsedWidth
+                : layout.sidebarWidth,
             borderRightWidth: 0,
           },
           overlayColor: "rgba(11,18,32,0.4)",
           sceneStyle: { backgroundColor: palette.surface.secondary },
         }}
       >
-        { /* only permitted routes are registered, so a deep link to any other cannot render. */ }
+        {/* only permitted routes are registered, so a deep link to any other cannot render. */}
         {items.map((item) => {
           const Component = SCREENS[item.name] ?? PlaceholderScreen;
           return (

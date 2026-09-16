@@ -1,6 +1,7 @@
 import type { PatientBanner } from "@modules/patient/types";
 
-export type ArrivalMode = "walk_in" | "ambulance" | "police" | "referral" | "other";
+export type ArrivalMode =
+  "walk_in" | "ambulance" | "police" | "referral" | "other";
 export type EdStatus =
   | "expected"
   | "waiting_triage"
@@ -43,7 +44,12 @@ export const DISPOSITION_LABELS: Record<DispositionType, string> = {
 };
 
 /** The states in which the department still owes the patient something. */
-export const ACTIVE_STATUSES: EdStatus[] = ["expected", "waiting_triage", "triaged", "in_treatment"];
+export const ACTIVE_STATUSES: EdStatus[] = [
+  "expected",
+  "waiting_triage",
+  "triaged",
+  "in_treatment",
+];
 
 export interface EdMeta {
   resources: { key: string; label: string; weight: number }[];
@@ -58,7 +64,13 @@ export interface EsiAnswers {
   expectedResources: string[];
 }
 
-export type VitalKey = "pulse" | "respiratoryRate" | "spo2" | "systolic" | "temperatureC" | "painScore";
+export type VitalKey =
+  | "pulse"
+  | "respiratoryRate"
+  | "spo2"
+  | "systolic"
+  | "temperatureC"
+  | "painScore";
 export type EsiVitals = Partial<Record<VitalKey, number | null>>;
 
 export interface EsiSuggestion {
@@ -76,7 +88,8 @@ export interface EsiSuggestion {
  */
 export type EdPatient = PatientBanner & { accessRestricted: boolean };
 
-export const hasBanner = (p: EdPatient | { id: string }): p is EdPatient => "patientId" in p;
+export const hasBanner = (p: EdPatient | { id: string }): p is EdPatient =>
+  "patientId" in p;
 
 export interface EdVisit {
   id: string;
@@ -87,7 +100,12 @@ export interface EdVisit {
   arrivedAt: string | null;
   expectedAt: string | null;
   broughtBy: string;
-  ambulance: { service: string; vehicleNumber: string; crew: string; preAlertNote: string } | null;
+  ambulance: {
+    service: string;
+    vehicleNumber: string;
+    crew: string;
+    preAlertNote: string;
+  } | null;
   referredFrom: string;
   chiefComplaint: string;
   isMlc: boolean;
@@ -136,11 +154,19 @@ export interface EdBoard {
 
 export interface RegisterArrivalBody {
   patientId?: string;
-  unidentified?: { gender: "male" | "female" | "other"; approximateAgeYears?: number };
+  unidentified?: {
+    gender: "male" | "female" | "other";
+    approximateAgeYears?: number;
+  };
   arrivalMode: ArrivalMode;
   chiefComplaint: string;
   broughtBy?: string;
-  ambulance?: { service?: string; vehicleNumber?: string; crew?: string; preAlertNote?: string };
+  ambulance?: {
+    service?: string;
+    vehicleNumber?: string;
+    crew?: string;
+    preAlertNote?: string;
+  };
   referredFrom?: string;
   isMlc?: boolean;
   expected?: boolean;

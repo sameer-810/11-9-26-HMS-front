@@ -21,7 +21,11 @@ import {
 } from "@shared/ui";
 import { formatDateTime } from "@shared/format";
 import { useMyOps, type OutboxOp } from "@shared/offline/outbox";
-import { useBedside, useAddNursingNote, useTransfer } from "@modules/inpatient/hooks/useInpatient";
+import {
+  useBedside,
+  useAddNursingNote,
+  useTransfer,
+} from "@modules/inpatient/hooks/useInpatient";
 import { useSelectableBeds } from "@modules/inpatient/hooks/useBeds";
 import { News2Score } from "@modules/inpatient/components/News2Score";
 import { ObservationForm } from "@modules/inpatient/components/ObservationForm";
@@ -31,9 +35,14 @@ import type { PatientBanner } from "@modules/patient/types";
 import type { News2Result, Observation } from "@modules/inpatient/types";
 import { calculateNews2, type News2Input } from "@shared/clinical/news2";
 import { apiErrorCode, apiErrorDetails } from "@api/apiClient";
-import { BreakGlassPrompt, EmergencyAccessBanner } from "@modules/consultation/components/BreakGlassPrompt";
-import type { RecordAccess, RestrictedDetails } from "@modules/consultation/types";
-
+import {
+  BreakGlassPrompt,
+  EmergencyAccessBanner,
+} from "@modules/consultation/components/BreakGlassPrompt";
+import type {
+  RecordAccess,
+  RestrictedDetails,
+} from "@modules/consultation/types";
 
 /**
  * Bedside chart (IP-04): tabs for chart, observations, drug round and notes.
@@ -59,7 +68,15 @@ export default function BedsideScreen() {
   const canManageAdmission = hasPermission(PERMISSIONS.ADMISSION_MANAGE);
 
   const [tab, setTab] = useState<Tab>("chart");
-  const { data, isLoading, isError, error, refetch, isRefetching, fetchStatus } = useBedside(admissionId);
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+    fetchStatus,
+  } = useBedside(admissionId);
 
   // Score the newest unsent local set, so the pinned score is never an older server one.
   const myOps = useMyOps();
@@ -67,9 +84,17 @@ export default function BedsideScreen() {
   const pendingScore = useMemo(() => {
     const newest = [...myOps]
       .reverse()
-      .find((o) => o.kind === "observation" && o.admissionId === admissionId && o.status === "pending");
+      .find(
+        (o) =>
+          o.kind === "observation" &&
+          o.admissionId === admissionId &&
+          o.status === "pending",
+      );
     if (!newest) return null;
-    const local = calculateNews2({ ...(newest.body as News2Input), useScale2: news2Scale === 2 });
+    const local = calculateNews2({
+      ...(newest.body as News2Input),
+      useScale2: news2Scale === 2,
+    });
     return { ...local, delta: null, significantRise: false } as News2Result;
   }, [myOps, admissionId, news2Scale]);
 
@@ -106,11 +131,16 @@ export default function BedsideScreen() {
   if (isError || !admission) {
     // Restricted record and not on the treating team: offer break-the-glass.
     const restricted =
-      apiErrorCode(error) === "RECORD_RESTRICTED" ? apiErrorDetails<RestrictedDetails>(error) : undefined;
+      apiErrorCode(error) === "RECORD_RESTRICTED"
+        ? apiErrorDetails<RestrictedDetails>(error)
+        : undefined;
     return (
       <Screen title="Bedside">
         {restricted?.patientId ? (
-          <BreakGlassPrompt patientId={restricted.patientId} details={restricted} />
+          <BreakGlassPrompt
+            patientId={restricted.patientId}
+            details={restricted}
+          />
         ) : (
           <ErrorState error={error} onRetry={() => refetch()} />
         )}
@@ -169,9 +199,12 @@ export default function BedsideScreen() {
       }
     >
       <VStack gap={16}>
-        { /* Pinned above the tabs: access banner and current score. */ }
+        {/* Pinned above the tabs: access banner and current score. */}
         {access?.viaBreakGlass && access.expiresAt ? (
-          <EmergencyAccessBanner expiresAt={access.expiresAt} onExpired={() => refetch()} />
+          <EmergencyAccessBanner
+            expiresAt={access.expiresAt}
+            onExpired={() => refetch()}
+          />
         ) : null}
 
         {pendingScore ? (
@@ -228,7 +261,12 @@ export default function BedsideScreen() {
 
         {tab === "notes" ? (
           <VStack gap={16}>
-            {canWriteNotes ? <NoteComposer admissionId={admissionId} patientName={patient?.fullName} /> : null}
+            {canWriteNotes ? (
+              <NoteComposer
+                admissionId={admissionId}
+                patientName={patient?.fullName}
+              />
+            ) : null}
             <NotesList notes={data?.notes ?? []} admissionId={admissionId} />
             <SbarPanel admissionId={admissionId} />
           </VStack>
@@ -249,7 +287,10 @@ function ChartTab({
 }) {
   const myOps = useMyOps();
   const pending = useMemo(
-    () => myOps.filter((o) => o.kind === "observation" && o.admissionId === admissionId),
+    () =>
+      myOps.filter(
+        (o) => o.kind === "observation" && o.admissionId === admissionId,
+      ),
     [myOps, admissionId],
   );
 
@@ -258,7 +299,7 @@ function ChartTab({
       <Card>
         <VStack gap={10}>
           <Text variant="h4">Observation trend</Text>
-          { /* Offline sets first, styled so they are never mistaken for filed ones. */ }
+          {/* Offline sets first, styled so they are never mistaken for filed ones. */}
           {pending.length > 0 ? (
             <VStack gap={8} testID="pending-observations">
               {pending
@@ -314,8 +355,14 @@ function ObservationRow({ observation: o }: { observation: Observation }) {
         <HStack gap={10} wrap style={{ flex: 1 }}>
           <Vital label="RR" value={v.respiratoryRate} />
           <Vital label="SpO₂" value={v.spo2} suffix="%" />
-          <Vital label="O₂" value={v.onOxygen === null ? null : v.onOxygen ? "yes" : "air"} />
-          <Vital label="BP" value={v.systolic ? `${v.systolic}/${v.diastolic ?? "—"}` : null} />
+          <Vital
+            label="O₂"
+            value={v.onOxygen === null ? null : v.onOxygen ? "yes" : "air"}
+          />
+          <Vital
+            label="BP"
+            value={v.systolic ? `${v.systolic}/${v.diastolic ?? "—"}` : null}
+          />
           <Vital label="HR" value={v.pulse} />
           <Vital label="Temp" value={v.temperatureC} suffix="°C" />
           <Vital label="ACVPU" value={v.consciousness || null} />
@@ -334,7 +381,11 @@ function ObservationRow({ observation: o }: { observation: Observation }) {
           {o.escalation.required ? (
             <Text
               variant="caption"
-              style={{ color: o.escalation.acknowledged ? signal.normal.text : signal.critical.text }}
+              style={{
+                color: o.escalation.acknowledged
+                  ? signal.normal.text
+                  : signal.critical.text,
+              }}
             >
               {o.escalation.acknowledged ? "reviewed" : "escalated"}
             </Text>
@@ -359,13 +410,26 @@ function PendingObservationRow({ op }: { op: OutboxOp }) {
   const failed = op.status === "failed";
   return (
     <View
-      style={[styles.obsRow, { borderLeftColor: failed ? signal.critical.color : palette.border.strong, borderStyle: "dashed" }]}
+      style={[
+        styles.obsRow,
+        {
+          borderLeftColor: failed
+            ? signal.critical.color
+            : palette.border.strong,
+          borderStyle: "dashed",
+        },
+      ]}
       testID={`pending-observation-${op.id}`}
     >
       <HStack gap={10} align="center" wrap>
         <VStack gap={2} style={{ minWidth: 120 }}>
           <Text variant="label-sm">{formatDateTime(op.takenAt)}</Text>
-          <Text variant="caption" style={{ color: failed ? signal.critical.text : palette.warning.text }}>
+          <Text
+            variant="caption"
+            style={{
+              color: failed ? signal.critical.text : palette.warning.text,
+            }}
+          >
             {failed ? "Not filed" : "Waiting to send"}
           </Text>
         </VStack>
@@ -376,7 +440,11 @@ function PendingObservationRow({ op }: { op: OutboxOp }) {
               <Vital
                 key={key}
                 label={label}
-                value={typeof value === "number" || typeof value === "string" ? value : null}
+                value={
+                  typeof value === "number" || typeof value === "string"
+                    ? value
+                    : null
+                }
                 suffix={suffix}
               />
             );
@@ -407,8 +475,10 @@ function Vital({
         {label}
       </Text>
       <Text variant="label-sm" tabular>
-        { /* A dash, never a zero, for a missing reading. */ }
-        {value === null || value === undefined || value === "" ? "—" : `${value}${suffix ?? ""}`}
+        {/* A dash, never a zero, for a missing reading. */}
+        {value === null || value === undefined || value === ""
+          ? "—"
+          : `${value}${suffix ?? ""}`}
       </Text>
     </VStack>
   );
@@ -436,7 +506,7 @@ function TransferPanel({ admissionId }: { admissionId: string }) {
     <Card testID="transfer-form">
       <VStack gap={12}>
         <Text variant="h4">Transfer</Text>
-        { /* Occupied beds are shown disabled rather than hidden. */ }
+        {/* Occupied beds are shown disabled rather than hidden. */}
         <Select
           label="New bed"
           value={bedId}
@@ -470,18 +540,31 @@ function TransferPanel({ admissionId }: { admissionId: string }) {
             }
             testID="transfer-submit"
           />
-          <Button label="Cancel" variant="ghost" onPress={() => setOpen(false)} />
+          <Button
+            label="Cancel"
+            variant="ghost"
+            onPress={() => setOpen(false)}
+          />
         </HStack>
       </VStack>
     </Card>
   );
 }
 
-function NoteComposer({ admissionId, patientName }: { admissionId: string; patientName?: string }) {
+function NoteComposer({
+  admissionId,
+  patientName,
+}: {
+  admissionId: string;
+  patientName?: string;
+}) {
   const [note, setNote] = useState("");
   const [category, setCategory] = useState("general");
   const [queued, setQueued] = useState(false);
-  const add = useAddNursingNote(admissionId, patientName ? `Nursing note · ${patientName}` : "Nursing note");
+  const add = useAddNursingNote(
+    admissionId,
+    patientName ? `Nursing note · ${patientName}` : "Nursing note",
+  );
 
   return (
     <Card>
@@ -542,12 +625,20 @@ function NotesList({
   notes,
   admissionId,
 }: {
-  notes: { id: string; note: string; category: string; recordedAt: string; recordedBy: string; shift: string }[];
+  notes: {
+    id: string;
+    note: string;
+    category: string;
+    recordedAt: string;
+    recordedBy: string;
+    shift: string;
+  }[];
   admissionId: string;
 }) {
   const myOps = useMyOps();
   const pending = useMemo(
-    () => myOps.filter((o) => o.kind === "note" && o.admissionId === admissionId),
+    () =>
+      myOps.filter((o) => o.kind === "note" && o.admissionId === admissionId),
     [myOps, admissionId],
   );
   if (notes.length === 0 && pending.length === 0) return null;
@@ -561,10 +652,22 @@ function NotesList({
           .slice()
           .reverse()
           .map((op) => (
-            <View key={op.id} style={styles.note} testID={`pending-note-${op.id}`}>
+            <View
+              key={op.id}
+              style={styles.note}
+              testID={`pending-note-${op.id}`}
+            >
               <VStack gap={3}>
                 <HStack gap={8} align="center" wrap>
-                  <Text variant="label-sm" style={{ color: op.status === "failed" ? signal.critical.text : palette.warning.text }}>
+                  <Text
+                    variant="label-sm"
+                    style={{
+                      color:
+                        op.status === "failed"
+                          ? signal.critical.text
+                          : palette.warning.text,
+                    }}
+                  >
                     {op.status === "failed" ? "Not filed" : "Waiting to send"}
                   </Text>
                   <Text variant="caption" tone="tertiary">
@@ -573,7 +676,10 @@ function NotesList({
                 </HStack>
                 <Text variant="body-sm">{String(op.body.note ?? "")}</Text>
                 {op.error ? (
-                  <Text variant="caption" style={{ color: signal.critical.text }}>
+                  <Text
+                    variant="caption"
+                    style={{ color: signal.critical.text }}
+                  >
                     {op.error}
                   </Text>
                 ) : null}

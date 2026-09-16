@@ -12,7 +12,12 @@ function useBillMutation<T>(fn: (arg: T) => Promise<Bill>) {
     mutationFn: fn,
     onSuccess: (bill) => {
       qc.setQueryData(["bill", bill.id], bill);
-      for (const key of ["bills", "outstanding", "billing-preview", "dashboard"]) {
+      for (const key of [
+        "bills",
+        "outstanding",
+        "billing-preview",
+        "dashboard",
+      ]) {
         qc.invalidateQueries({ queryKey: [key] });
       }
     },
@@ -22,11 +27,23 @@ function useBillMutation<T>(fn: (arg: T) => Promise<Bill>) {
   });
 }
 
-export const useBills = (params: { status?: BillStatus; search?: string; page?: number }) =>
-  useQuery({ queryKey: ["bills", params], queryFn: () => billingApi.list({ ...params, limit: 30 }) });
+export const useBills = (params: {
+  status?: BillStatus;
+  search?: string;
+  page?: number;
+}) =>
+  useQuery({
+    queryKey: ["bills", params],
+    queryFn: () => billingApi.list({ ...params, limit: 30 }),
+  });
 
 export const useBill = (id?: string) =>
-  useQuery({ queryKey: ["bill", id], queryFn: () => billingApi.get(id!), enabled: Boolean(id), staleTime: 0 });
+  useQuery({
+    queryKey: ["bill", id],
+    queryFn: () => billingApi.get(id!),
+    enabled: Boolean(id),
+    staleTime: 0,
+  });
 
 export const useBillingPreview = (patientId?: string) =>
   useQuery({
@@ -37,27 +54,58 @@ export const useBillingPreview = (patientId?: string) =>
   });
 
 export const useGenerateBill = () =>
-  useBillMutation((body: { patientId: string; billType: BillType; admissionId?: string }) => billingApi.generate(body));
+  useBillMutation(
+    (body: { patientId: string; billType: BillType; admissionId?: string }) =>
+      billingApi.generate(body),
+  );
 
-export const useRefreshBill = (id: string) => useBillMutation(() => billingApi.refresh(id));
+export const useRefreshBill = (id: string) =>
+  useBillMutation(() => billingApi.refresh(id));
 export const useAddService = (id: string) =>
-  useBillMutation((body: { tariffId: string; quantity: number }) => billingApi.addService(id, body));
+  useBillMutation((body: { tariffId: string; quantity: number }) =>
+    billingApi.addService(id, body),
+  );
 export const useRemoveLine = (id: string) =>
-  useBillMutation(({ lineId, reason }: { lineId: string; reason: string }) => billingApi.removeLine(id, lineId, reason));
+  useBillMutation(({ lineId, reason }: { lineId: string; reason: string }) =>
+    billingApi.removeLine(id, lineId, reason),
+  );
 export const useRequestDiscount = (id: string) =>
-  useBillMutation((body: { amount: number; reason: string }) => billingApi.requestDiscount(id, body));
+  useBillMutation((body: { amount: number; reason: string }) =>
+    billingApi.requestDiscount(id, body),
+  );
 export const useDecideDiscount = (id: string) =>
-  useBillMutation((body: { approve: boolean; note?: string }) => billingApi.decideDiscount(id, body));
-export const useFinaliseBill = (id: string) => useBillMutation(() => billingApi.finalise(id));
-export const useCancelBill = (id: string) => useBillMutation((reason: string) => billingApi.cancel(id, reason));
-export const useRecordPayment = (id: string) => useBillMutation((body: PaymentBody) => billingApi.pay(id, body));
+  useBillMutation((body: { approve: boolean; note?: string }) =>
+    billingApi.decideDiscount(id, body),
+  );
+export const useFinaliseBill = (id: string) =>
+  useBillMutation(() => billingApi.finalise(id));
+export const useCancelBill = (id: string) =>
+  useBillMutation((reason: string) => billingApi.cancel(id, reason));
+export const useRecordPayment = (id: string) =>
+  useBillMutation((body: PaymentBody) => billingApi.pay(id, body));
 export const useVoidPayment = () =>
-  useBillMutation(({ paymentId, reason }: { paymentId: string; reason: string }) => billingApi.voidPayment(paymentId, reason));
+  useBillMutation(
+    ({ paymentId, reason }: { paymentId: string; reason: string }) =>
+      billingApi.voidPayment(paymentId, reason),
+  );
 
 export const useReceipt = (paymentId?: string) =>
-  useQuery({ queryKey: ["receipt", paymentId], queryFn: () => billingApi.receipt(paymentId!), enabled: Boolean(paymentId) });
+  useQuery({
+    queryKey: ["receipt", paymentId],
+    queryFn: () => billingApi.receipt(paymentId!),
+    enabled: Boolean(paymentId),
+  });
 
 export const useOutstanding = () =>
-  useQuery({ queryKey: ["outstanding"], queryFn: billingApi.outstanding, refetchOnWindowFocus: true });
+  useQuery({
+    queryKey: ["outstanding"],
+    queryFn: billingApi.outstanding,
+    refetchOnWindowFocus: true,
+  });
 
-export const useTariff = () => useQuery({ queryKey: ["tariff"], queryFn: billingApi.tariff, staleTime: 5 * 60_000 });
+export const useTariff = () =>
+  useQuery({
+    queryKey: ["tariff"],
+    queryFn: billingApi.tariff,
+    staleTime: 5 * 60_000,
+  });

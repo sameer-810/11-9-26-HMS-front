@@ -28,8 +28,19 @@ export function CameraScanner({ onCode, onClose }: CameraScannerProps) {
         <Text variant="body-sm" tone="secondary">
           The camera is needed to scan a wristband or tube.
         </Text>
-        <Button label="Allow camera" size="sm" fullWidth={false} onPress={requestPermission} />
-        <Button label="Cancel" variant="ghost" size="sm" fullWidth={false} onPress={onClose} />
+        <Button
+          label="Allow camera"
+          size="sm"
+          fullWidth={false}
+          onPress={requestPermission}
+        />
+        <Button
+          label="Cancel"
+          variant="ghost"
+          size="sm"
+          fullWidth={false}
+          onPress={onClose}
+        />
       </VStack>
     );
   }
@@ -40,7 +51,9 @@ export function CameraScanner({ onCode, onClose }: CameraScannerProps) {
         <CameraView
           style={StyleSheet.absoluteFill}
           facing="back"
-          barcodeScannerSettings={{ barcodeTypes: ["code128", "datamatrix", "qr"] }}
+          barcodeScannerSettings={{
+            barcodeTypes: ["code128", "datamatrix", "qr"],
+          }}
           onBarcodeScanned={({ data }) => {
             if (delivered.current || !data) return;
             delivered.current = true;
@@ -48,7 +61,13 @@ export function CameraScanner({ onCode, onClose }: CameraScannerProps) {
           }}
         />
       </View>
-      <Button label="Stop camera" variant="secondary" size="sm" fullWidth={false} onPress={onClose} />
+      <Button
+        label="Stop camera"
+        variant="secondary"
+        size="sm"
+        fullWidth={false}
+        onPress={onClose}
+      />
     </VStack>
   );
 }

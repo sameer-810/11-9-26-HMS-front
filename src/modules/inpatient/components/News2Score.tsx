@@ -1,10 +1,24 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
-import { TrendingUp, TrendingDown, Minus, CircleHelp } from "lucide-react-native";
-import { palette, radius, signal, numeric, type SignalLevel } from "@shared/designSystem";
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  CircleHelp,
+} from "lucide-react-native";
+import {
+  palette,
+  radius,
+  signal,
+  numeric,
+  type SignalLevel,
+} from "@shared/designSystem";
 import { Text, HStack, VStack, SignalBadge } from "@shared/ui";
-import type { News2Band, News2Result, EarlyWarning } from "@modules/inpatient/types";
-
+import type {
+  News2Band,
+  News2Result,
+  EarlyWarning,
+} from "@modules/inpatient/types";
 
 /**
  * NEWS2 score display. an incomplete score is never shown as a number; the band label
@@ -22,7 +36,12 @@ function tierOf(band: News2Band | null | undefined): SignalLevel {
   return (band?.tier as SignalLevel) ?? "normal";
 }
 
-export function News2Score({ result, summary, size = "md", showResponse = false }: Props) {
+export function News2Score({
+  result,
+  summary,
+  size = "md",
+  showResponse = false,
+}: Props) {
   // ---- incomplete score ----
   if (result && !result.complete) {
     return (
@@ -77,10 +96,20 @@ export function News2Score({ result, summary, size = "md", showResponse = false 
   const s = signal[tier];
   const delta = result?.delta ?? null;
   const TrendIcon =
-    delta === null ? Minus : delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus;
+    delta === null
+      ? Minus
+      : delta > 0
+        ? TrendingUp
+        : delta < 0
+          ? TrendingDown
+          : Minus;
 
   const numberStyle =
-    size === "lg" ? styles.numberLg : size === "sm" ? styles.numberSm : styles.numberMd;
+    size === "lg"
+      ? styles.numberLg
+      : size === "sm"
+        ? styles.numberSm
+        : styles.numberMd;
 
   return (
     <View
@@ -100,7 +129,11 @@ export function News2Score({ result, summary, size = "md", showResponse = false 
 
         <VStack gap={4} style={{ flex: 1 }}>
           <HStack gap={6} align="center" wrap>
-            <SignalBadge level={tier} label={band?.label ?? "Scored"} size="sm" />
+            <SignalBadge
+              level={tier}
+              label={band?.label ?? "Scored"}
+              size="sm"
+            />
             {result?.scale === 2 ? (
               <View style={styles.scalePill}>
                 <Text variant="caption" tone="secondary">
@@ -116,7 +149,9 @@ export function News2Score({ result, summary, size = "md", showResponse = false 
                 />
                 <Text
                   variant="caption"
-                  style={{ color: delta > 0 ? signal.urgent.text : signal.normal.text }}
+                  style={{
+                    color: delta > 0 ? signal.urgent.text : signal.normal.text,
+                  }}
                 >
                   {delta > 0 ? `+${delta}` : delta} since last
                 </Text>
@@ -124,7 +159,7 @@ export function News2Score({ result, summary, size = "md", showResponse = false 
             ) : null}
           </HStack>
 
-          { /* a rise of 2 is its own warning, even when the band itself is not alarming */ }
+          {/* a rise of 2 is its own warning, even when the band itself is not alarming */}
           {result?.significantRise ? (
             <Text variant="caption" style={{ color: signal.urgent.text }}>
               Rising. Review before the number itself is alarming.
@@ -164,7 +199,7 @@ export function News2Pill({ summary }: { summary: EarlyWarning }) {
   return (
     <HStack gap={6} align="center">
       <SignalBadge level={tier} label={`NEWS ${summary.score}`} size="sm" />
-      { /* overdue is measured against the band's own monitoring frequency, not a fixed interval */ }
+      {/* overdue is measured against the band's own monitoring frequency, not a fixed interval */}
       {summary.overdue ? (
         <Text variant="caption" style={{ color: signal.urgent.text }}>
           obs overdue

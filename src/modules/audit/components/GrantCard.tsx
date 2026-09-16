@@ -1,14 +1,32 @@
 import React, { useState } from "react";
 import { View, StyleSheet } from "react-native";
 import { palette, radius, signal } from "@shared/designSystem";
-import { Banner, Button, Card, HStack, SignalBadge, Text, TextField, VStack } from "@shared/ui";
+import {
+  Banner,
+  Button,
+  Card,
+  HStack,
+  SignalBadge,
+  Text,
+  TextField,
+  VStack,
+} from "@shared/ui";
 import { apiErrorMessage } from "@api/apiClient";
 import { formatDateTime } from "@shared/format";
 import { useReviewGrant } from "@modules/audit/hooks/useAudit";
 import { roleLabel } from "@modules/audit/components/AuditEntryCard";
-import { GRANT_STATUS_LABELS, REVIEW_NOTE_MIN, type BreakGlassGrant, type GrantOutcome } from "@modules/audit/types";
+import {
+  GRANT_STATUS_LABELS,
+  REVIEW_NOTE_MIN,
+  type BreakGlassGrant,
+  type GrantOutcome,
+} from "@modules/audit/types";
 
-const STATUS_TONE = { pending: "warning", appropriate: "success", inappropriate: "danger" } as const;
+const STATUS_TONE = {
+  pending: "warning",
+  appropriate: "success",
+  inappropriate: "danger",
+} as const;
 
 /**
  * Break-glass grant review. "Inappropriate" requires a note; self-review is refused by the server
@@ -22,14 +40,22 @@ export function GrantCard({ grant }: { grant: BreakGlassGrant }) {
   const isPending = grant.review.status === "pending";
   const noteLength = note.trim().length;
   const submit = (outcome: GrantOutcome) =>
-    review.mutate({ id: grant.id, outcome, note: outcome === "inappropriate" ? note.trim() : undefined });
+    review.mutate({
+      id: grant.id,
+      outcome,
+      note: outcome === "inappropriate" ? note.trim() : undefined,
+    });
 
   const patient = grant.patient.fullName
     ? `${grant.patient.fullName}${grant.patient.patientId ? ` · ${grant.patient.patientId}` : ""}`
     : "Patient record";
 
   return (
-    <Card compact accentColor={isPending ? signal.critical.color : undefined} testID={`grant-${grant.id}`}>
+    <Card
+      compact
+      accentColor={isPending ? signal.critical.color : undefined}
+      testID={`grant-${grant.id}`}
+    >
       <VStack gap={8}>
         <HStack gap={8} align="center" wrap>
           <Text variant="label">{grant.userName || "Unknown user"}</Text>
@@ -45,7 +71,11 @@ export function GrantCard({ grant }: { grant: BreakGlassGrant }) {
               Expired
             </Text>
           )}
-          <Text variant="label-sm" tone={STATUS_TONE[grant.review.status]} style={{ marginLeft: "auto" }}>
+          <Text
+            variant="label-sm"
+            tone={STATUS_TONE[grant.review.status]}
+            style={{ marginLeft: "auto" }}
+          >
             {GRANT_STATUS_LABELS[grant.review.status]}
           </Text>
         </HStack>
@@ -63,21 +93,31 @@ export function GrantCard({ grant }: { grant: BreakGlassGrant }) {
         </View>
 
         <Text variant="caption" tone="tertiary" tabular>
-          Granted {formatDateTime(grant.grantedAt)} · Expires {formatDateTime(grant.expiresAt)} · Opened{" "}
-          {grant.viewCount} {grant.viewCount === 1 ? "time" : "times"} under this access
+          Granted {formatDateTime(grant.grantedAt)} · Expires{" "}
+          {formatDateTime(grant.expiresAt)} · Opened {grant.viewCount}{" "}
+          {grant.viewCount === 1 ? "time" : "times"} under this access
         </Text>
 
         {!isPending ? (
           <VStack gap={2}>
             <Text variant="caption" tone="secondary">
-              Reviewed by {grant.review.reviewedByName || "—"} on {formatDateTime(grant.review.reviewedAt)}
+              Reviewed by {grant.review.reviewedByName || "—"} on{" "}
+              {formatDateTime(grant.review.reviewedAt)}
             </Text>
-            {grant.review.note ? <Text variant="body-sm">Note: {grant.review.note}</Text> : null}
+            {grant.review.note ? (
+              <Text variant="body-sm">Note: {grant.review.note}</Text>
+            ) : null}
           </VStack>
         ) : (
           <VStack gap={8}>
             {review.isError ? (
-              <Banner tone="danger" message={apiErrorMessage(review.error, "Could not record the review")} />
+              <Banner
+                tone="danger"
+                message={apiErrorMessage(
+                  review.error,
+                  "Could not record the review",
+                )}
+              />
             ) : null}
             <HStack gap={8} wrap>
               <Button
@@ -86,7 +126,10 @@ export function GrantCard({ grant }: { grant: BreakGlassGrant }) {
                 variant="secondary"
                 fullWidth={false}
                 disabled={review.isPending}
-                loading={review.isPending && review.variables?.outcome === "appropriate"}
+                loading={
+                  review.isPending &&
+                  review.variables?.outcome === "appropriate"
+                }
                 onPress={() => submit("appropriate")}
                 testID={`grant-appropriate-${grant.id}`}
               />
@@ -125,7 +168,10 @@ export function GrantCard({ grant }: { grant: BreakGlassGrant }) {
                     variant="destructive"
                     fullWidth={false}
                     disabled={noteLength < REVIEW_NOTE_MIN || review.isPending}
-                    loading={review.isPending && review.variables?.outcome === "inappropriate"}
+                    loading={
+                      review.isPending &&
+                      review.variables?.outcome === "inappropriate"
+                    }
                     onPress={() => submit("inappropriate")}
                     testID={`grant-submit-${grant.id}`}
                   />

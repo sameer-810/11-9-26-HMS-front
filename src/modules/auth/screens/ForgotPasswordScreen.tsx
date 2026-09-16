@@ -8,7 +8,10 @@ import { palette, radius } from "@shared/designSystem";
 import { Text, VStack, HStack, Button, Banner } from "@shared/ui";
 import { ControlledTextField } from "@shared/form/ControlledTextField";
 import { apiErrorMessage } from "@api/apiClient";
-import { useForgotPassword, useResetPassword } from "@modules/auth/hooks/useAuth";
+import {
+  useForgotPassword,
+  useResetPassword,
+} from "@modules/auth/hooks/useAuth";
 import {
   forgotPasswordSchema,
   resetPasswordSchema,
@@ -17,7 +20,11 @@ import {
 } from "@modules/auth/auth.validation";
 
 /** Password reset: request a code, then use it, on one screen so the email carries over. */
-export default function ForgotPasswordScreen({ navigation }: { navigation?: any }) {
+export default function ForgotPasswordScreen({
+  navigation,
+}: {
+  navigation?: any;
+}) {
   const [stage, setStage] = useState<"request" | "reset">("request");
   const [email, setEmail] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
@@ -35,7 +42,12 @@ export default function ForgotPasswordScreen({ navigation }: { navigation?: any 
   const resetForm = useForm<ResetPasswordForm>({
     resolver: zodResolver(resetPasswordSchema),
     mode: "onTouched",
-    defaultValues: { email: "", code: "", newPassword: "", confirmPassword: "" },
+    defaultValues: {
+      email: "",
+      code: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
   });
 
   const submitRequest = requestForm.handleSubmit(async (values) => {
@@ -71,7 +83,11 @@ export default function ForgotPasswordScreen({ navigation }: { navigation?: any 
   });
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.content} role="main">
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={styles.content}
+      role="main"
+    >
       <VStack gap={20} style={{ width: "100%", maxWidth: 400 }}>
         <HStack gap={12} align="center">
           <View style={styles.mark}>
@@ -89,8 +105,20 @@ export default function ForgotPasswordScreen({ navigation }: { navigation?: any 
           </VStack>
         </HStack>
 
-        {notice ? <Banner tone="info" message={notice} onDismiss={() => setNotice(null)} /> : null}
-        {error ? <Banner tone="danger" message={error} onDismiss={() => setError(null)} /> : null}
+        {notice ? (
+          <Banner
+            tone="info"
+            message={notice}
+            onDismiss={() => setNotice(null)}
+          />
+        ) : null}
+        {error ? (
+          <Banner
+            tone="danger"
+            message={error}
+            onDismiss={() => setError(null)}
+          />
+        ) : null}
 
         {stage === "request" ? (
           <VStack gap={14}>
@@ -105,7 +133,11 @@ export default function ForgotPasswordScreen({ navigation }: { navigation?: any 
               onSubmitEditing={submitRequest}
               returnKeyType="go"
             />
-            <Button label="Send code" onPress={submitRequest} loading={forgot.isPending} />
+            <Button
+              label="Send code"
+              onPress={submitRequest}
+              loading={forgot.isPending}
+            />
           </VStack>
         ) : (
           <VStack gap={14}>
@@ -135,7 +167,11 @@ export default function ForgotPasswordScreen({ navigation }: { navigation?: any 
               onSubmitEditing={submitReset}
               returnKeyType="go"
             />
-            <Button label="Reset password" onPress={submitReset} loading={reset.isPending} />
+            <Button
+              label="Reset password"
+              onPress={submitReset}
+              loading={reset.isPending}
+            />
             <Button
               label="Use a different email"
               variant="ghost"
@@ -152,7 +188,9 @@ export default function ForgotPasswordScreen({ navigation }: { navigation?: any 
           label="Back to sign in"
           variant="ghost"
           size="sm"
-          icon={<ArrowLeft size={15} color={palette.text.accent} strokeWidth={2} />}
+          icon={
+            <ArrowLeft size={15} color={palette.text.accent} strokeWidth={2} />
+          }
           onPress={() => navigation?.navigate?.("Login")}
         />
       </VStack>
@@ -162,7 +200,12 @@ export default function ForgotPasswordScreen({ navigation }: { navigation?: any 
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: palette.surface.secondary },
-  content: { flexGrow: 1, alignItems: "center", justifyContent: "center", padding: 24 },
+  content: {
+    flexGrow: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
   mark: {
     width: 40,
     height: 40,

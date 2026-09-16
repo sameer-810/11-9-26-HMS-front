@@ -8,7 +8,12 @@ import { useAuthStore } from "../store/useAuthStore";
 import { useSessionNotice } from "./sessionNotice";
 import { idleState, lastActivityAt, recordActivity } from "./activity";
 
-const WEB_ACTIVITY_EVENTS = ["pointerdown", "keydown", "wheel", "touchstart"] as const;
+const WEB_ACTIVITY_EVENTS = [
+  "pointerdown",
+  "keydown",
+  "wheel",
+  "touchstart",
+] as const;
 
 /**
  * US-01 idle timeout: warns for a minute, then signs out (outbox ops are kept).
@@ -51,9 +56,14 @@ export function IdleTimeout() {
     let detach = () => {};
     if (Platform.OS === "web" && typeof window !== "undefined") {
       const onActivity = () => recordActivity();
-      for (const e of WEB_ACTIVITY_EVENTS) window.addEventListener(e, onActivity, { capture: true, passive: true });
+      for (const e of WEB_ACTIVITY_EVENTS)
+        window.addEventListener(e, onActivity, {
+          capture: true,
+          passive: true,
+        });
       detach = () => {
-        for (const e of WEB_ACTIVITY_EVENTS) window.removeEventListener(e, onActivity, { capture: true });
+        for (const e of WEB_ACTIVITY_EVENTS)
+          window.removeEventListener(e, onActivity, { capture: true });
       };
     }
 
@@ -62,11 +72,12 @@ export function IdleTimeout() {
       appState.remove();
       detach();
     };
-  // signOut reads `minutes` through the closure recreated with this effect.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // signOut reads `minutes` through the closure recreated with this effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [minutes]);
 
-  const seconds = remaining === null ? 0 : Math.max(1, Math.ceil(remaining / 1000));
+  const seconds =
+    remaining === null ? 0 : Math.max(1, Math.ceil(remaining / 1000));
 
   return (
     <Modal
@@ -79,11 +90,22 @@ export function IdleTimeout() {
       }}
     >
       <View style={styles.overlay}>
-        <View style={styles.card} accessibilityViewIsModal testID="idle-warning" role="alertdialog" aria-labelledby="idle-title">
+        <View
+          style={styles.card}
+          accessibilityViewIsModal
+          testID="idle-warning"
+          role="alertdialog"
+          aria-labelledby="idle-title"
+        >
           <Text variant="h2" tone="primary" heading={2} nativeID="idle-title">
             Are you still there?
           </Text>
-          <Text variant="body-sm" tone="secondary" style={{ marginTop: 8 }} accessibilityLiveRegion="polite">
+          <Text
+            variant="body-sm"
+            tone="secondary"
+            style={{ marginTop: 8 }}
+            accessibilityLiveRegion="polite"
+          >
             {`This screen signs out in ${seconds} ${seconds === 1 ? "second" : "seconds"} to protect patient information.`}
           </Text>
           <HStack gap={10} justify="flex-end" wrap style={{ marginTop: 20 }}>

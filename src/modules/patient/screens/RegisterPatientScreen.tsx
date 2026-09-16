@@ -30,7 +30,10 @@ import {
   type RegisterPatientForm,
 } from "@modules/patient/patient.validation";
 import { DuplicateWarning } from "@modules/patient/components/DuplicateWarning";
-import type { DuplicateMatch, RegisterPatientPayload } from "@modules/patient/types";
+import type {
+  DuplicateMatch,
+  RegisterPatientPayload,
+} from "@modules/patient/types";
 
 const GENDERS = [
   { value: "male", label: "Male" },
@@ -40,7 +43,10 @@ const GENDERS = [
 
 const BLOOD_GROUPS = [
   { value: "unknown", label: "Not known" },
-  ...["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((g) => ({ value: g, label: g })),
+  ...["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((g) => ({
+    value: g,
+    label: g,
+  })),
 ];
 
 export default function RegisterPatientScreen() {
@@ -65,29 +71,30 @@ export default function RegisterPatientScreen() {
   /** Set by the server refusing a save, which outranks anything checked here. */
   const [serverRefused, setServerRefused] = useState(false);
 
-  const { control, handleSubmit, setValue, formState } = useForm<RegisterPatientForm>({
-    resolver: zodResolver(registerPatientSchema),
-    mode: "onTouched",
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      dateOfBirth: "",
-      approximateAgeYears: "" as never,
-      gender: undefined as never,
-      mobile: "",
-      alternatePhone: "",
-      email: "",
-      addressLine1: "",
-      city: "",
-      state: "",
-      pincode: "",
-      emergencyName: "",
-      emergencyRelationship: "",
-      emergencyPhone: "",
-      abhaNumber: "",
-      isMlc: false,
-    },
-  });
+  const { control, handleSubmit, setValue, formState } =
+    useForm<RegisterPatientForm>({
+      resolver: zodResolver(registerPatientSchema),
+      mode: "onTouched",
+      defaultValues: {
+        firstName: "",
+        lastName: "",
+        dateOfBirth: "",
+        approximateAgeYears: "" as never,
+        gender: undefined as never,
+        mobile: "",
+        alternatePhone: "",
+        email: "",
+        addressLine1: "",
+        city: "",
+        state: "",
+        pincode: "",
+        emergencyName: "",
+        emergencyRelationship: "",
+        emergencyPhone: "",
+        abhaNumber: "",
+        isMlc: false,
+      },
+    });
 
   // Watched so the duplicate check can run while the form is being filled in,
   // rather than only on submit — the patient is still at the desk now.
@@ -120,19 +127,24 @@ export default function RegisterPatientScreen() {
       })
       .then((res) => {
         if (!cancelled) {
-          setDupResult({ key: checkKey, matches: res.matches, mustConfirm: res.mustConfirm });
+          setDupResult({
+            key: checkKey,
+            matches: res.matches,
+            mustConfirm: res.mustConfirm,
+          });
         }
       })
       .catch(() => {
         // A failed check must not block registration — the server re-runs it
         // on save regardless, and that is the control.
-        if (!cancelled) setDupResult({ key: checkKey, matches: [], mustConfirm: false });
+        if (!cancelled)
+          setDupResult({ key: checkKey, matches: [], mustConfirm: false });
       });
 
     return () => {
       cancelled = true;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkKey, enoughToCheck]);
 
   // Only trust the answer if it was asked about the details currently typed in.
@@ -165,17 +177,28 @@ export default function RegisterPatientScreen() {
       confirmedNotDuplicate,
     };
     if (v.dateOfBirth) payload.dateOfBirth = v.dateOfBirth;
-    else if (v.approximateAgeYears !== "" && v.approximateAgeYears !== undefined) {
+    else if (
+      v.approximateAgeYears !== "" &&
+      v.approximateAgeYears !== undefined
+    ) {
       payload.approximateAgeYears = Number(v.approximateAgeYears);
     }
     return payload;
   };
 
-  const save = async (v: RegisterPatientForm, confirmedNotDuplicate = false) => {
+  const save = async (
+    v: RegisterPatientForm,
+    confirmedNotDuplicate = false,
+  ) => {
     setError(null);
     try {
-      const patient = await register.mutateAsync(toPayload(v, confirmedNotDuplicate));
-      navigation.replace("PatientDetail", { id: patient.id, justRegistered: true });
+      const patient = await register.mutateAsync(
+        toPayload(v, confirmedNotDuplicate),
+      );
+      navigation.replace("PatientDetail", {
+        id: patient.id,
+        justRegistered: true,
+      });
     } catch (err) {
       if (apiErrorCode(err) === "POSSIBLE_DUPLICATE") {
         // The server refused. It knows something the client's check did not —
@@ -209,12 +232,20 @@ export default function RegisterPatientScreen() {
       testID="register-patient-screen"
     >
       <VStack gap={16} style={{ maxWidth: 760 }}>
-        {error ? <Banner tone="danger" message={error} onDismiss={() => setError(null)} /> : null}
+        {error ? (
+          <Banner
+            tone="danger"
+            message={error}
+            onDismiss={() => setError(null)}
+          />
+        ) : null}
 
         <DuplicateWarning
           matches={matches}
           mustConfirm={mustConfirm}
-          onOpenExisting={(m) => navigation.replace("PatientDetail", { id: m.id })}
+          onOpenExisting={(m) =>
+            navigation.replace("PatientDetail", { id: m.id })
+          }
         />
 
         <Card>
@@ -228,7 +259,13 @@ export default function RegisterPatientScreen() {
                   label="First name"
                   required
                   testID="reg-firstName"
-                  leading={<User size={16} color={palette.text.tertiary} strokeWidth={1.9} />}
+                  leading={
+                    <User
+                      size={16}
+                      color={palette.text.tertiary}
+                      strokeWidth={1.9}
+                    />
+                  }
                 />
               </View>
               <View style={{ flex: 1, minWidth: 200 }}>
@@ -250,7 +287,13 @@ export default function RegisterPatientScreen() {
                   placeholder="YYYY-MM-DD"
                   testID="reg-dob"
                   hint="Leave blank if not known, and give an age instead."
-                  leading={<Calendar size={16} color={palette.text.tertiary} strokeWidth={1.9} />}
+                  leading={
+                    <Calendar
+                      size={16}
+                      color={palette.text.tertiary}
+                      strokeWidth={1.9}
+                    />
+                  }
                 />
               </View>
               <View style={{ flex: 1, minWidth: 160 }}>
@@ -306,7 +349,13 @@ export default function RegisterPatientScreen() {
                   numericField
                   maxLength={13}
                   testID="reg-mobile"
-                  leading={<Phone size={16} color={palette.text.tertiary} strokeWidth={1.9} />}
+                  leading={
+                    <Phone
+                      size={16}
+                      color={palette.text.tertiary}
+                      strokeWidth={1.9}
+                    />
+                  }
                 />
               </View>
               <View style={{ flex: 1, minWidth: 200 }}>
@@ -325,15 +374,29 @@ export default function RegisterPatientScreen() {
               name="addressLine1"
               label="Address"
               testID="reg-address"
-              leading={<MapPin size={16} color={palette.text.tertiary} strokeWidth={1.9} />}
+              leading={
+                <MapPin
+                  size={16}
+                  color={palette.text.tertiary}
+                  strokeWidth={1.9}
+                />
+              }
             />
 
             <HStack gap={12} wrap>
               <View style={{ flex: 1, minWidth: 150 }}>
-                <ControlledTextField control={control} name="city" label="City" />
+                <ControlledTextField
+                  control={control}
+                  name="city"
+                  label="City"
+                />
               </View>
               <View style={{ flex: 1, minWidth: 150 }}>
-                <ControlledTextField control={control} name="state" label="State" />
+                <ControlledTextField
+                  control={control}
+                  name="state"
+                  label="State"
+                />
               </View>
               <View style={{ flex: 1, minWidth: 120 }}>
                 <ControlledTextField
@@ -355,7 +418,11 @@ export default function RegisterPatientScreen() {
           />
           <HStack gap={12} wrap>
             <View style={{ flex: 1, minWidth: 180 }}>
-              <ControlledTextField control={control} name="emergencyName" label="Name" />
+              <ControlledTextField
+                control={control}
+                name="emergencyName"
+                label="Name"
+              />
             </View>
             <View style={{ flex: 1, minWidth: 150 }}>
               <ControlledTextField
@@ -392,7 +459,8 @@ export default function RegisterPatientScreen() {
             <HStack gap={8} align="center">
               <Scale size={15} color={palette.warning.text} strokeWidth={2} />
               <Text variant="body-sm" tone="secondary" style={{ flex: 1 }}>
-                Allergies are recorded by clinical staff on the patient&apos;s record, not here.
+                Allergies are recorded by clinical staff on the patient&apos;s
+                record, not here.
               </Text>
             </HStack>
           </VStack>
@@ -416,7 +484,7 @@ export default function RegisterPatientScreen() {
         </HStack>
       </VStack>
 
-      { /* Last gate before a second record for one person; spells out the consequence. */ }
+      {/* Last gate before a second record for one person; spells out the consequence. */}
       <ConfirmDialog
         visible={confirmOpen}
         title="Create a second record?"

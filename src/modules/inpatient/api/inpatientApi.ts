@@ -32,7 +32,8 @@ export interface DischargeBody {
   dischargeMedication: string;
   followUpInstructions: string;
   dischargeDiagnosis?: string;
-  dischargeType?: "routine" | "against_advice" | "referred" | "absconded" | "deceased";
+  dischargeType?:
+    "routine" | "against_advice" | "referred" | "absconded" | "deceased";
 }
 
 export interface ObservationBody {
@@ -56,8 +57,8 @@ export interface ObservationBody {
   /** Stamped before the first attempt; see shared/offline/outbox.ts. */
   clientOpId?: string;
   takenAt?: string;
-// No escalationRequired or useScale2 by design: the server decides escalation, and the NEWS2
-// scale is set on the admission, so a client cannot make a deteriorating patient look well.
+  // No escalationRequired or useScale2 by design: the server decides escalation, and the NEWS2
+  // scale is set on the admission, so a client cannot make a deteriorating patient look well.
 }
 
 export interface AdministerBody {
@@ -101,7 +102,9 @@ export interface AdmissionQuery {
 export const inpatientApi = {
   // ---- Admissions ---------------------------------------------------------
   list: async (query: AdmissionQuery = {}) => {
-    const res = await apiClient.get<Paginated<AdmissionRow>>("/admissions", { params: query });
+    const res = await apiClient.get<Paginated<AdmissionRow>>("/admissions", {
+      params: query,
+    });
     return res.data;
   },
 
@@ -116,67 +119,102 @@ export const inpatientApi = {
   },
 
   transfer: async (id: string, body: { bedId: string; reason: string }) => {
-    const res = await apiClient.post<{ data: Admission }>(`/admissions/${id}/transfer`, body);
-    return res.data.data;
-  },
-
-  discharge: async (id: string, body: DischargeBody) => {
-    const res = await apiClient.post<{ data: Admission }>(`/admissions/${id}/discharge`, body);
-    return res.data.data;
-  },
-
-  /** US-17: recommendations to admit that have not become an admission. */
-  admissionRequests: async () => {
-    const res = await apiClient.get<{ data: AdmissionRequest[] }>("/admissions/requests");
-    return res.data.data;
-  },
-
-  closeAdmissionRequest: async (consultationId: string, body: { outcome: RequestClosureOutcome; note: string }) => {
-    const res = await apiClient.post<{ data: { consultationId: string; outcome: RequestClosureOutcome } }>(
-      `/admissions/requests/${consultationId}/close`,
+    const res = await apiClient.post<{ data: Admission }>(
+      `/admissions/${id}/transfer`,
       body,
     );
     return res.data.data;
   },
 
+  discharge: async (id: string, body: DischargeBody) => {
+    const res = await apiClient.post<{ data: Admission }>(
+      `/admissions/${id}/discharge`,
+      body,
+    );
+    return res.data.data;
+  },
+
+  /** US-17: recommendations to admit that have not become an admission. */
+  admissionRequests: async () => {
+    const res = await apiClient.get<{ data: AdmissionRequest[] }>(
+      "/admissions/requests",
+    );
+    return res.data.data;
+  },
+
+  closeAdmissionRequest: async (
+    consultationId: string,
+    body: { outcome: RequestClosureOutcome; note: string },
+  ) => {
+    const res = await apiClient.post<{
+      data: { consultationId: string; outcome: RequestClosureOutcome };
+    }>(`/admissions/requests/${consultationId}/close`, body);
+    return res.data.data;
+  },
+
   /** NU-01 / US-23. The nurse's own list: allocated by name, or on their wards. */
   myPatients: async () => {
-    const res = await apiClient.get<Paginated<AdmissionRow>>("/admissions/my-patients");
+    const res = await apiClient.get<Paginated<AdmissionRow>>(
+      "/admissions/my-patients",
+    );
     return res.data;
   },
 
   assignNurse: async (id: string, nurseId: string) => {
-    const res = await apiClient.post<{ data: AdmissionRow }>(`/admissions/${id}/nurse`, {
-      nurseId,
-    });
+    const res = await apiClient.post<{ data: AdmissionRow }>(
+      `/admissions/${id}/nurse`,
+      {
+        nurseId,
+      },
+    );
     return res.data.data;
   },
 
-  setNews2Scale: async (id: string, useScale2: boolean, indication?: string) => {
-    const res = await apiClient.post<{ data: AdmissionRow }>(`/admissions/${id}/news2-scale`, {
-      useScale2,
-      indication,
-    });
+  setNews2Scale: async (
+    id: string,
+    useScale2: boolean,
+    indication?: string,
+  ) => {
+    const res = await apiClient.post<{ data: AdmissionRow }>(
+      `/admissions/${id}/news2-scale`,
+      {
+        useScale2,
+        indication,
+      },
+    );
     return res.data.data;
   },
 
   // ---- Observations -------------------------------------------------------
   recordObservation: async (body: ObservationBody) => {
-    const res = await apiClient.post<{ data: Observation }>("/nursing/observations", body);
+    const res = await apiClient.post<{ data: Observation }>(
+      "/nursing/observations",
+      body,
+    );
     return res.data.data;
   },
 
-  observations: async (query: { admissionId?: string; patientId?: string; limit?: number }) => {
-    const res = await apiClient.get<Paginated<Observation>>("/nursing/observations", {
-      params: query,
-    });
+  observations: async (query: {
+    admissionId?: string;
+    patientId?: string;
+    limit?: number;
+  }) => {
+    const res = await apiClient.get<Paginated<Observation>>(
+      "/nursing/observations",
+      {
+        params: query,
+      },
+    );
     return res.data;
   },
 
   escalations: async (wardId?: string) => {
-    const res = await apiClient.get<{ data: EscalationRow[] }>("/nursing/escalations", {
-      params: wardId ? { wardId } : undefined,
-    });
+    const res = await apiClient.get<{ data: EscalationRow[] }>(
+      "/nursing/escalations",
+      {
+        params: wardId ? { wardId } : undefined,
+      },
+    );
     return res.data.data;
   },
 
@@ -196,7 +234,10 @@ export const inpatientApi = {
     clientOpId?: string;
     takenAt?: string;
   }) => {
-    const res = await apiClient.post<{ data: NursingNote }>("/nursing/notes", body);
+    const res = await apiClient.post<{ data: NursingNote }>(
+      "/nursing/notes",
+      body,
+    );
     return res.data.data;
   },
 
@@ -209,38 +250,54 @@ export const inpatientApi = {
 
   // ---- NU-04: the drug round ---------------------------------------------
   drugRound: async (admissionId: string, date?: string) => {
-    const res = await apiClient.get<{ data: DrugRound }>("/nursing/drug-round", {
-      params: { admissionId, ...(date ? { date } : {}) },
-    });
+    const res = await apiClient.get<{ data: DrugRound }>(
+      "/nursing/drug-round",
+      {
+        params: { admissionId, ...(date ? { date } : {}) },
+      },
+    );
     return res.data.data;
   },
 
   administer: async (body: AdministerBody) => {
-    const res = await apiClient.post<{ data: Administration }>("/nursing/administrations", body);
+    const res = await apiClient.post<{ data: Administration }>(
+      "/nursing/administrations",
+      body,
+    );
     return res.data.data;
   },
 
   // ---- NU-05: SBAR --------------------------------------------------------
   submitHandover: async (body: HandoverBody) => {
-    const res = await apiClient.post<{ data: Handover }>("/nursing/handovers", body);
+    const res = await apiClient.post<{ data: Handover }>(
+      "/nursing/handovers",
+      body,
+    );
     return res.data.data;
   },
 
   handovers: async (admissionId: string) => {
-    const res = await apiClient.get<{ data: Handover[] }>("/nursing/handovers", {
-      params: { admissionId },
-    });
+    const res = await apiClient.get<{ data: Handover[] }>(
+      "/nursing/handovers",
+      {
+        params: { admissionId },
+      },
+    );
     return res.data.data;
   },
 
   receiveHandover: async (id: string) => {
-    const res = await apiClient.post<{ data: Handover }>(`/nursing/handovers/${id}/receive`);
+    const res = await apiClient.post<{ data: Handover }>(
+      `/nursing/handovers/${id}/receive`,
+    );
     return res.data.data;
   },
 
   // ---- IP-04: the bedside chart in one request ----------------------------
   bedside: async (admissionId: string) => {
-    const res = await apiClient.get<{ data: Bedside }>(`/nursing/bedside/${admissionId}`);
+    const res = await apiClient.get<{ data: Bedside }>(
+      `/nursing/bedside/${admissionId}`,
+    );
     return res.data.data;
   },
 };

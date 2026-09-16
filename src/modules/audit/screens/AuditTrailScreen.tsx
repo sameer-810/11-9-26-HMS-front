@@ -27,7 +27,11 @@ import {
 } from "@modules/audit/hooks/useAudit";
 import { AuditEntryCard } from "@modules/audit/components/AuditEntryCard";
 import { GrantCard } from "@modules/audit/components/GrantCard";
-import { OUTCOME_LABELS, type AuditOutcome, type GrantStatus } from "@modules/audit/types";
+import {
+  OUTCOME_LABELS,
+  type AuditOutcome,
+  type GrantStatus,
+} from "@modules/audit/types";
 
 type Tab = "activity" | "grants";
 
@@ -46,7 +50,9 @@ const GRANT_STATUSES: { key: GrantStatus; label: string }[] = [
 function localDayBoundary(dateStr: string, end: boolean): string | undefined {
   if (!DATE_RE.test(dateStr)) return undefined;
   const [y, m, d] = dateStr.split("-").map(Number);
-  const at = end ? new Date(y, m - 1, d, 23, 59, 59, 999) : new Date(y, m - 1, d, 0, 0, 0, 0);
+  const at = end
+    ? new Date(y, m - 1, d, 23, 59, 59, 999)
+    : new Date(y, m - 1, d, 0, 0, 0, 0);
   return Number.isNaN(at.getTime()) ? undefined : at.toISOString();
 }
 
@@ -67,30 +73,38 @@ function ActivityTab() {
         ? "Ends before it starts"
         : undefined;
 
-  const { data, isLoading, isError, error, refetch, isPlaceholderData } = useAuditLog({
-    page,
-    outcome: outcome === "all" ? undefined : outcome,
-    breakGlass: breakGlassOnly ? "true" : undefined,
-    action: debouncedAction.trim() || undefined,
-    from: fromError ? undefined : localDayBoundary(from, false),
-    to: toError ? undefined : localDayBoundary(to, true),
-  });
+  const { data, isLoading, isError, error, refetch, isPlaceholderData } =
+    useAuditLog({
+      page,
+      outcome: outcome === "all" ? undefined : outcome,
+      breakGlass: breakGlassOnly ? "true" : undefined,
+      action: debouncedAction.trim() || undefined,
+      from: fromError ? undefined : localDayBoundary(from, false),
+      to: toError ? undefined : localDayBoundary(to, true),
+    });
   const rows = data?.data ?? [];
 
   // Filter changes reset to page 1, since the current page may no longer exist.
-  const refilter = <T,>(set: (v: T) => void) => (v: T) => {
-    set(v);
-    setPage(1);
-  };
+  const refilter =
+    <T,>(set: (v: T) => void) =>
+    (v: T) => {
+      set(v);
+      setPage(1);
+    };
 
   return (
     <VStack gap={12}>
       <Card compact>
         <VStack gap={10}>
           <HStack gap={8} wrap>
-            { /* Outcome tablist; the switch beside it must stay outside. */ }
+            {/* Outcome tablist; the switch beside it must stay outside. */}
             <HStack gap={8} wrap role="tablist" accessibilityLabel="Outcome">
-              <FilterChip label="All outcomes" active={outcome === "all"} onPress={() => refilter(setOutcome)("all")} testID="audit-outcome-all" />
+              <FilterChip
+                label="All outcomes"
+                active={outcome === "all"}
+                onPress={() => refilter(setOutcome)("all")}
+                testID="audit-outcome-all"
+              />
               {OUTCOMES.map((o) => (
                 <FilterChip
                   key={o}
@@ -153,11 +167,23 @@ function ActivityTab() {
           <Skeleton height={72} />
         </VStack>
       ) : isError ? (
-        <ErrorState error={error} title="Couldn't load the audit trail" onRetry={refetch} />
+        <ErrorState
+          error={error}
+          title="Couldn't load the audit trail"
+          onRetry={refetch}
+        />
       ) : rows.length === 0 ? (
-        <EmptyState icon={ScrollText} title="No matching activity" message="Nothing in the audit trail matches these filters." />
+        <EmptyState
+          icon={ScrollText}
+          title="No matching activity"
+          message="Nothing in the audit trail matches these filters."
+        />
       ) : (
-        <VStack gap={8} testID="audit-entries" style={{ opacity: isPlaceholderData ? 0.6 : 1 }}>
+        <VStack
+          gap={8}
+          testID="audit-entries"
+          style={{ opacity: isPlaceholderData ? 0.6 : 1 }}
+        >
           {rows.map((e) => (
             <AuditEntryCard key={e.id} entry={e} />
           ))}
@@ -181,14 +207,17 @@ function ActivityTab() {
 function GrantsTab() {
   const [status, setStatus] = useState<GrantStatus>("pending");
   const [page, setPage] = useState(1);
-  const { data, isLoading, isError, error, refetch } = useGrants({ status, page });
+  const { data, isLoading, isError, error, refetch } = useGrants({
+    status,
+    page,
+  });
   const rows = data?.data ?? [];
 
   return (
     <VStack gap={12}>
       <Text variant="body-sm" tone="tertiary">
-        Every emergency access to a restricted record waits here until someone other than the person who used it
-        decides whether it was appropriate.
+        Every emergency access to a restricted record waits here until someone
+        other than the person who used it decides whether it was appropriate.
       </Text>
       <HStack gap={8} wrap role="tablist" accessibilityLabel="Review status">
         {GRANT_STATUSES.map((s) => (
@@ -211,12 +240,24 @@ function GrantsTab() {
           <Skeleton height={140} />
         </VStack>
       ) : isError ? (
-        <ErrorState error={error} title="Couldn't load emergency access" onRetry={refetch} />
+        <ErrorState
+          error={error}
+          title="Couldn't load emergency access"
+          onRetry={refetch}
+        />
       ) : rows.length === 0 ? (
         <EmptyState
           icon={ShieldAlert}
-          title={status === "pending" ? "Nothing awaiting review" : `No access reviewed as ${status}`}
-          message={status === "pending" ? "Every emergency access has been reviewed." : undefined}
+          title={
+            status === "pending"
+              ? "Nothing awaiting review"
+              : `No access reviewed as ${status}`
+          }
+          message={
+            status === "pending"
+              ? "Every emergency access has been reviewed."
+              : undefined
+          }
         />
       ) : (
         <VStack gap={10} testID="grant-rows">
@@ -258,7 +299,12 @@ export default function AuditTrailScreen() {
     >
       <VStack gap={14}>
         <HStack gap={8} wrap role="tablist" accessibilityLabel="Audit views">
-          <FilterChip label="Activity" active={tab === "activity"} onPress={() => setTab("activity")} testID="audit-tab-activity" />
+          <FilterChip
+            label="Activity"
+            active={tab === "activity"}
+            onPress={() => setTab("activity")}
+            testID="audit-tab-activity"
+          />
           <FilterChip
             label="Emergency access"
             count={pendingCount}

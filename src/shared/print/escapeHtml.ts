@@ -38,7 +38,10 @@ export function raw(markup: string): SafeHtml {
   return mint(markup);
 }
 
-export function html(strings: TemplateStringsArray, ...values: unknown[]): SafeHtml {
+export function html(
+  strings: TemplateStringsArray,
+  ...values: unknown[]
+): SafeHtml {
   let out = strings[0];
   values.forEach((v, i) => {
     out += renderValue(v) + strings[i + 1];

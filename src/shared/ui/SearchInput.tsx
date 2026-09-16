@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { View, TextInput, StyleSheet, Pressable, ViewStyle, StyleProp } from "react-native";
+import {
+  View,
+  TextInput,
+  StyleSheet,
+  Pressable,
+  ViewStyle,
+  StyleProp,
+} from "react-native";
 import { Search, X } from "lucide-react-native";
 import { palette, radius } from "../designSystem";
 import { useControlHeight } from "./useBreakpoint";
@@ -34,7 +41,13 @@ export function SearchInput({
         { minHeight: height },
         // The same two-pixel focus ring as TextField: a keyboard user tabbing
         // into the patient search must see that they have arrived.
-        focused ? { borderColor: palette.border.focus, borderWidth: 2, paddingHorizontal: 9 } : null,
+        focused
+          ? {
+              borderColor: palette.border.focus,
+              borderWidth: 2,
+              paddingHorizontal: 9,
+            }
+          : null,
         style,
       ]}
     >

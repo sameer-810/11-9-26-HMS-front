@@ -2,7 +2,13 @@ import React, { useState } from "react";
 import { View, Pressable, StyleSheet } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { checkable } from "@shared/ui/a11y";
-import { OctagonAlert, Phone, CircleCheck, Square, SquareCheck } from "lucide-react-native";
+import {
+  OctagonAlert,
+  Phone,
+  CircleCheck,
+  Square,
+  SquareCheck,
+} from "lucide-react-native";
 
 import { palette, radius, signal } from "@shared/designSystem";
 import { useAuthStore } from "@shared/store/useAuthStore";
@@ -37,16 +43,20 @@ import { ResultTable } from "@modules/laboratory/components/ResultTable";
 import { ResultEntryForm } from "@modules/laboratory/components/ResultEntryForm";
 import { LabFlagGlyph } from "@modules/laboratory/components/LabFlag";
 import { UrgencyBadge } from "./LabQueueScreen";
-import { PrintTubeLabelButton, PrintLabReportButton } from "@modules/printing/components/PrintLabButtons";
+import {
+  PrintTubeLabelButton,
+  PrintLabReportButton,
+} from "@modules/printing/components/PrintLabButtons";
 import type { LabOrder, LabStatus } from "@modules/laboratory/types";
 import type { PatientBanner } from "@modules/patient/types";
-
 
 /**
  * one laboratory order: the bench workspace for the lab, the result view for the doctor.
  * a doctor sees no values until the order is reported — bench values are unchecked.
  */
-const NEXT_ACTION: Partial<Record<LabStatus, { to: LabStatus; label: string }>> = {
+const NEXT_ACTION: Partial<
+  Record<LabStatus, { to: LabStatus; label: string }>
+> = {
   requested: { to: "sample_collected", label: "Sample collected" },
   sample_collected: { to: "in_progress", label: "Start test" },
   in_progress: { to: "completed", label: "Complete" },
@@ -61,7 +71,14 @@ export default function LabOrderScreen() {
   const canOrder = hasPermission(PERMISSIONS.LAB_REQUEST_CREATE);
   const canAcknowledge = hasPermission(PERMISSIONS.CONSULTATION_MANAGE);
 
-  const { data: order, isLoading, isError, error, refetch, isRefetching } = useLabOrder(orderId);
+  const {
+    data: order,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+  } = useLabOrder(orderId);
   const advance = useAdvanceLabOrder(orderId);
   const [confirmReport, setConfirmReport] = useState(false);
 
@@ -83,9 +100,11 @@ export default function LabOrderScreen() {
   const patient = order.patient as PatientBanner;
   const next = NEXT_ACTION[order.status];
   const showResults =
-    order.results.length > 0 && (order.status === "reported" || (canWork && order.status === "completed"));
+    order.results.length > 0 &&
+    (order.status === "reported" || (canWork && order.status === "completed"));
   // tube label needs a sample number (set at collection); the report needs a reported result.
-  const canPrintTubeLabel = canWork && Boolean(order.sampleId) && order.status !== "cancelled";
+  const canPrintTubeLabel =
+    canWork && Boolean(order.sampleId) && order.status !== "cancelled";
   const canPrintReport = order.status === "reported";
 
   const doAdvance = () => {
@@ -135,27 +154,43 @@ export default function LabOrderScreen() {
             {order.sampleRejections.length > 0 ? (
               <VStack gap={4} testID="sample-rejections">
                 {order.sampleRejections.map((r, i) => (
-                  <Text key={i} variant="caption" style={{ color: signal.caution.text }}>
-                    Sample {r.sampleId || ""} rejected {formatDateTime(r.at)} by {r.byName}: {r.reason}
+                  <Text
+                    key={i}
+                    variant="caption"
+                    style={{ color: signal.caution.text }}
+                  >
+                    Sample {r.sampleId || ""} rejected {formatDateTime(r.at)} by{" "}
+                    {r.byName}: {r.reason}
                   </Text>
                 ))}
               </VStack>
             ) : null}
 
             {advance.isError ? (
-              <Banner tone="danger" message={apiErrorMessage(advance.error, "The test could not be moved on")} />
+              <Banner
+                tone="danger"
+                message={apiErrorMessage(
+                  advance.error,
+                  "The test could not be moved on",
+                )}
+              />
             ) : null}
 
             {canWork && next ? (
               <HStack gap={8} wrap>
                 <Button
                   label={next.label}
-                  variant={next.to === "reported" && order.hasCritical ? "critical" : "primary"}
+                  variant={
+                    next.to === "reported" && order.hasCritical
+                      ? "critical"
+                      : "primary"
+                  }
                   onPress={doAdvance}
                   loading={advance.isPending}
                   testID={`advance-${next.to}`}
                 />
-                {order.status === "sample_collected" || order.status === "in_progress" ? (
+                {order.status === "sample_collected" ||
+                order.status === "in_progress" ? (
                   <RejectSample order={order} />
                 ) : null}
               </HStack>
@@ -164,7 +199,10 @@ export default function LabOrderScreen() {
         </Card>
 
         {canWork && order.status === "in_progress" ? (
-          <ResultEntryForm key={`${order.id}-${order.resultsEnteredAt ?? "new"}`} order={order} />
+          <ResultEntryForm
+            key={`${order.id}-${order.resultsEnteredAt ?? "new"}`}
+            order={order}
+          />
         ) : null}
 
         {showResults ? (
@@ -173,8 +211,12 @@ export default function LabOrderScreen() {
               <SectionHeader
                 title="Results"
                 subtitle={[
-                  order.performedByName ? `Performed by ${order.performedByName}` : "",
-                  order.reportedByName ? `reported by ${order.reportedByName} ${formatDateTime(order.reportedAt)}` : "",
+                  order.performedByName
+                    ? `Performed by ${order.performedByName}`
+                    : "",
+                  order.reportedByName
+                    ? `reported by ${order.reportedByName} ${formatDateTime(order.reportedAt)}`
+                    : "",
                 ]
                   .filter(Boolean)
                   .join(", ")}
@@ -187,23 +229,40 @@ export default function LabOrderScreen() {
               ) : null}
             </VStack>
           </Card>
-        ) : !canWork && order.status !== "reported" && order.status !== "cancelled" ? (
+        ) : !canWork &&
+          order.status !== "reported" &&
+          order.status !== "cancelled" ? (
           <Card>
-            <Text variant="body-sm" tone="secondary" testID="results-not-reported">
-              Results appear here when the laboratory reports them. Values on the bench have not been checked yet.
+            <Text
+              variant="body-sm"
+              tone="secondary"
+              testID="results-not-reported"
+            >
+              Results appear here when the laboratory reports them. Values on
+              the bench have not been checked yet.
             </Text>
           </Card>
         ) : null}
 
         {order.critical.status !== "none" ? (
-          <CriticalPanel order={order} canCall={canWork} canAcknowledge={canAcknowledge} />
+          <CriticalPanel
+            order={order}
+            canCall={canWork}
+            canAcknowledge={canAcknowledge}
+          />
         ) : null}
 
-        {canOrder && order.status === "reported" && order.abnormalCount > 0 && order.critical.status === "none" ? (
+        {canOrder &&
+        order.status === "reported" &&
+        order.abnormalCount > 0 &&
+        order.critical.status === "none" ? (
           <ReviewButton order={order} />
         ) : null}
 
-        {canOrder && ["requested", "sample_collected", "in_progress"].includes(order.status) ? (
+        {canOrder &&
+        ["requested", "sample_collected", "in_progress"].includes(
+          order.status,
+        ) ? (
           <CancelOrder order={order} />
         ) : null}
 
@@ -218,7 +277,10 @@ export default function LabOrderScreen() {
         cancelLabel="Not yet"
         loading={advance.isPending}
         onConfirm={() => {
-          advance.mutate({ to: "reported" }, { onSettled: () => setConfirmReport(false) });
+          advance.mutate(
+            { to: "reported" },
+            { onSettled: () => setConfirmReport(false) },
+          );
         }}
         onCancel={() => setConfirmReport(false)}
       />
@@ -234,7 +296,7 @@ function RequestCard({ order }: { order: LabOrder }) {
           title="The request"
           subtitle={`Ordered by ${order.doctor.fullName}, ${formatDateTime(order.requestedAt)}`}
         />
-        
+
         <View style={styles.indication}>
           <Text variant="caption" tone="tertiary">
             Clinical indication
@@ -246,7 +308,13 @@ function RequestCard({ order }: { order: LabOrder }) {
         <HStack gap={16} wrap>
           <Fact label="Sample" value={order.test.sampleType} />
           <Fact label="Container" value={order.test.container} />
-          {order.sampleId ? <Fact label="Sample number" value={order.sampleId} testID="lab-sample-id" /> : null}
+          {order.sampleId ? (
+            <Fact
+              label="Sample number"
+              value={order.sampleId}
+              testID="lab-sample-id"
+            />
+          ) : null}
           <Fact
             label="Turnaround"
             value={`${formatDuration(order.turnaround.ageMinutes)} of ${formatDuration(order.turnaround.targetMinutes)}${order.turnaround.overdue && order.status !== "reported" ? " — late" : ""}`}
@@ -262,7 +330,15 @@ function RequestCard({ order }: { order: LabOrder }) {
   );
 }
 
-function Fact({ label, value, testID }: { label: string; value: string; testID?: string }) {
+function Fact({
+  label,
+  value,
+  testID,
+}: {
+  label: string;
+  value: string;
+  testID?: string;
+}) {
   return (
     <VStack gap={0} style={{ minWidth: 140 }}>
       <Text variant="caption" tone="tertiary">
@@ -281,25 +357,40 @@ function RejectSample({ order }: { order: LabOrder }) {
   const reject = useRejectSample(order.id);
 
   if (!open) {
-    return <Button label="Reject sample" variant="secondary" onPress={() => setOpen(true)} testID="reject-sample-open" />;
+    return (
+      <Button
+        label="Reject sample"
+        variant="secondary"
+        onPress={() => setOpen(true)}
+        testID="reject-sample-open"
+      />
+    );
   }
   return (
     <VStack gap={8} style={{ flexBasis: "100%" }}>
       <TextField
         label="What is wrong with the sample?"
-        hint={order.results.length ? "Results entered from this sample will be discarded." : "The test returns to the collection list."}
+        hint={
+          order.results.length
+            ? "Results entered from this sample will be discarded."
+            : "The test returns to the collection list."
+        }
         value={reason}
         onChangeText={setReason}
         testID="reject-reason"
       />
-      {reject.isError ? <Banner tone="danger" message={apiErrorMessage(reject.error)} /> : null}
+      {reject.isError ? (
+        <Banner tone="danger" message={apiErrorMessage(reject.error)} />
+      ) : null}
       <HStack gap={8}>
         <Button
           label="Reject and recollect"
           variant="destructive"
           disabled={reason.trim().length < 5}
           loading={reject.isPending}
-          onPress={() => reject.mutate(reason.trim(), { onSuccess: () => setOpen(false) })}
+          onPress={() =>
+            reject.mutate(reason.trim(), { onSuccess: () => setOpen(false) })
+          }
           testID="reject-sample-submit"
         />
         <Button label="Cancel" variant="ghost" onPress={() => setOpen(false)} />
@@ -312,7 +403,15 @@ function RejectSample({ order }: { order: LabOrder }) {
  * critical result follow-up: the lab records calls and read-back; a doctor acknowledges.
  * only the acknowledgement stops escalation, not the call.
  */
-function CriticalPanel({ order, canCall, canAcknowledge }: { order: LabOrder; canCall: boolean; canAcknowledge: boolean }) {
+function CriticalPanel({
+  order,
+  canCall,
+  canAcknowledge,
+}: {
+  order: LabOrder;
+  canCall: boolean;
+  canAcknowledge: boolean;
+}) {
   const c = order.critical;
   const open = c.status === "unacknowledged";
   const [note, setNote] = useState("");
@@ -323,7 +422,10 @@ function CriticalPanel({ order, canCall, canAcknowledge }: { order: LabOrder; ca
   const criticalValues = order.results.filter((r) => r.isCritical);
 
   return (
-    <Card accentColor={open ? signal.critical.color : signal.normal.color} testID="critical-panel">
+    <Card
+      accentColor={open ? signal.critical.color : signal.normal.color}
+      testID="critical-panel"
+    >
       <VStack gap={12}>
         <HStack gap={8} align="center">
           {open ? (
@@ -331,8 +433,13 @@ function CriticalPanel({ order, canCall, canAcknowledge }: { order: LabOrder; ca
           ) : (
             <CircleCheck size={18} color={signal.normal.text} />
           )}
-          <Text variant="h4" style={{ color: open ? signal.critical.text : signal.normal.text }}>
-            {open ? "Critical result — not yet acknowledged" : `Acknowledged by ${c.acknowledgedByName}`}
+          <Text
+            variant="h4"
+            style={{ color: open ? signal.critical.text : signal.normal.text }}
+          >
+            {open
+              ? "Critical result — not yet acknowledged"
+              : `Acknowledged by ${c.acknowledgedByName}`}
           </Text>
         </HStack>
 
@@ -379,7 +486,12 @@ function CriticalPanel({ order, canCall, canAcknowledge }: { order: LabOrder; ca
         {open && canCall ? (
           <VStack gap={8} style={styles.subform} testID="critical-call-form">
             <Text variant="label">Record the telephone call</Text>
-            <TextField label="Given to" value={to} onChangeText={setTo} testID="critical-call-to" />
+            <TextField
+              label="Given to"
+              value={to}
+              onChangeText={setTo}
+              testID="critical-call-to"
+            />
             <Pressable
               onPress={() => setReadBack((v) => !v)}
               style={styles.checkbox}
@@ -395,7 +507,9 @@ function CriticalPanel({ order, canCall, canAcknowledge }: { order: LabOrder; ca
               )}
               <Text variant="body-sm">They read the value back to me</Text>
             </Pressable>
-            {call.isError ? <Banner tone="danger" message={apiErrorMessage(call.error)} /> : null}
+            {call.isError ? (
+              <Banner tone="danger" message={apiErrorMessage(call.error)} />
+            ) : null}
             <Button
               label="Record call"
               variant="secondary"
@@ -418,22 +532,35 @@ function CriticalPanel({ order, canCall, canAcknowledge }: { order: LabOrder; ca
         ) : null}
 
         {open && canAcknowledge ? (
-          <VStack gap={8} style={styles.subform} testID="critical-acknowledge-form">
+          <VStack
+            gap={8}
+            style={styles.subform}
+            testID="critical-acknowledge-form"
+          >
             <TextField
               label="What are you doing about it?"
-              hint={'A sentence, not "seen". This is what anyone reviewing this patient will read.'}
+              hint={
+                'A sentence, not "seen". This is what anyone reviewing this patient will read.'
+              }
               value={note}
               onChangeText={setNote}
               multiline
               testID="critical-acknowledge-note"
             />
-            {acknowledge.isError ? <Banner tone="danger" message={apiErrorMessage(acknowledge.error)} /> : null}
+            {acknowledge.isError ? (
+              <Banner
+                tone="danger"
+                message={apiErrorMessage(acknowledge.error)}
+              />
+            ) : null}
             <Button
               label="Acknowledge critical result"
               variant="critical"
               disabled={note.trim().length < 10}
               loading={acknowledge.isPending}
-              onPress={() => acknowledge.mutate({ id: order.id, note: note.trim() })}
+              onPress={() =>
+                acknowledge.mutate({ id: order.id, note: note.trim() })
+              }
               testID="critical-acknowledge-submit"
             />
           </VStack>
@@ -468,23 +595,46 @@ function CancelOrder({ order }: { order: LabOrder }) {
   const [reason, setReason] = useState("");
   const cancel = useCancelLabOrder();
   if (!open) {
-    return <Button label="Cancel this test" variant="ghost" onPress={() => setOpen(true)} testID="cancel-order-open" />;
+    return (
+      <Button
+        label="Cancel this test"
+        variant="ghost"
+        onPress={() => setOpen(true)}
+        testID="cancel-order-open"
+      />
+    );
   }
   return (
     <Card>
       <VStack gap={8}>
-        <TextField label="Why is the test being cancelled?" value={reason} onChangeText={setReason} testID="cancel-reason" />
-        {cancel.isError ? <Banner tone="danger" message={apiErrorMessage(cancel.error)} /> : null}
+        <TextField
+          label="Why is the test being cancelled?"
+          value={reason}
+          onChangeText={setReason}
+          testID="cancel-reason"
+        />
+        {cancel.isError ? (
+          <Banner tone="danger" message={apiErrorMessage(cancel.error)} />
+        ) : null}
         <HStack gap={8}>
           <Button
             label="Cancel test"
             variant="destructive"
             disabled={reason.trim().length < 5}
             loading={cancel.isPending}
-            onPress={() => cancel.mutate({ id: order.id, reason: reason.trim() }, { onSuccess: () => setOpen(false) })}
+            onPress={() =>
+              cancel.mutate(
+                { id: order.id, reason: reason.trim() },
+                { onSuccess: () => setOpen(false) },
+              )
+            }
             testID="cancel-order-submit"
           />
-          <Button label="Keep it" variant="ghost" onPress={() => setOpen(false)} />
+          <Button
+            label="Keep it"
+            variant="ghost"
+            onPress={() => setOpen(false)}
+          />
         </HStack>
       </VStack>
     </Card>
@@ -530,5 +680,10 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: palette.border.subtle,
   },
-  checkbox: { flexDirection: "row", alignItems: "center", gap: 8, minHeight: 44 },
+  checkbox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    minHeight: 44,
+  },
 });

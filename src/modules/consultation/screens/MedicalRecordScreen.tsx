@@ -27,12 +27,24 @@ import {
   StatusChip,
   SignalBadge,
 } from "@shared/ui";
-import { formatDateTime, formatCalendarDate, formatWallTime } from "@shared/format";
+import {
+  formatDateTime,
+  formatCalendarDate,
+  formatWallTime,
+} from "@shared/format";
 import { usePatientBanner } from "@modules/patient/hooks/usePatients";
 import { useMedicalRecord } from "@modules/consultation/hooks/useConsultation";
-import type { RecordScope, Consultation, Prescription, RestrictedDetails } from "@modules/consultation/types";
+import type {
+  RecordScope,
+  Consultation,
+  Prescription,
+  RestrictedDetails,
+} from "@modules/consultation/types";
 import { apiErrorCode, apiErrorDetails } from "@api/apiClient";
-import { BreakGlassPrompt, EmergencyAccessBanner } from "@modules/consultation/components/BreakGlassPrompt";
+import {
+  BreakGlassPrompt,
+  EmergencyAccessBanner,
+} from "@modules/consultation/components/BreakGlassPrompt";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { PERMISSIONS } from "@shared/permissions";
 import { OrderTestsPanel } from "@modules/laboratory/components/OrderTestsPanel";
@@ -69,8 +81,15 @@ export default function MedicalRecordScreen() {
 
   const [tab, setTab] = useState("summary");
   const { data: banner } = usePatientBanner(patientId);
-  const { data: record, isLoading, isError, error, refetch, isRefetching, fetchStatus } =
-    useMedicalRecord(patientId);
+  const {
+    data: record,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+    fetchStatus,
+  } = useMedicalRecord(patientId);
 
   // Offline and never mirrored on this device.
   if (!record && fetchStatus === "paused") {
@@ -105,13 +124,19 @@ export default function MedicalRecordScreen() {
 
   if (isError || !record) {
     const restricted =
-      apiErrorCode(error) === "RECORD_RESTRICTED" ? apiErrorDetails<RestrictedDetails>(error) : undefined;
+      apiErrorCode(error) === "RECORD_RESTRICTED"
+        ? apiErrorDetails<RestrictedDetails>(error)
+        : undefined;
     return (
       <Screen title="Medical record" patient={banner ?? undefined}>
         {restricted ? (
           <BreakGlassPrompt patientId={patientId} details={restricted} />
         ) : (
-          <ErrorState error={error} title="Couldn't open this record" onRetry={refetch} />
+          <ErrorState
+            error={error}
+            title="Couldn't open this record"
+            onRetry={refetch}
+          />
         )}
       </Screen>
     );
@@ -121,17 +146,39 @@ export default function MedicalRecordScreen() {
 
   const chips = [
     { key: "summary", label: "Summary" },
-    ...(record.consultations.length > 0 || record.scope === "full" || record.scope === "nursing"
-      ? [{ key: "consultations", label: "Consultations", count: record.consultations.length }]
+    ...(record.consultations.length > 0 ||
+    record.scope === "full" ||
+    record.scope === "nursing"
+      ? [
+          {
+            key: "consultations",
+            label: "Consultations",
+            count: record.consultations.length,
+          },
+        ]
       : []),
     ...(record.prescriptions.length > 0 || record.scope === "pharmacy"
-      ? [{ key: "medication", label: "Medication", count: record.prescriptions.length }]
+      ? [
+          {
+            key: "medication",
+            label: "Medication",
+            count: record.prescriptions.length,
+          },
+        ]
       : []),
     // Shown even when empty, so "no results" is stated rather than a missing tab.
     ...(record.scope !== "pharmacy"
-      ? [{ key: "lab", label: "Lab results", count: record.labResults?.length ?? 0 }]
+      ? [
+          {
+            key: "lab",
+            label: "Lab results",
+            count: record.labResults?.length ?? 0,
+          },
+        ]
       : []),
-    ...(record.visits.length > 0 ? [{ key: "visits", label: "Visits", count: record.visits.length }] : []),
+    ...(record.visits.length > 0
+      ? [{ key: "visits", label: "Visits", count: record.visits.length }]
+      : []),
   ];
 
   return (
@@ -154,7 +201,10 @@ export default function MedicalRecordScreen() {
     >
       <VStack gap={14}>
         {record.access?.viaBreakGlass && record.access.expiresAt ? (
-          <EmergencyAccessBanner expiresAt={record.access.expiresAt} onExpired={refetch} />
+          <EmergencyAccessBanner
+            expiresAt={record.access.expiresAt}
+            onExpired={refetch}
+          />
         ) : record.access?.restricted ? (
           <Banner
             tone="warning"
@@ -163,14 +213,20 @@ export default function MedicalRecordScreen() {
           />
         ) : null}
 
-        { /* Partial-record notice for scoped views. */ }
-        {scope.note ? <Banner tone="info" title={scope.label} message={scope.note} /> : null}
+        {/* Partial-record notice for scoped views. */}
+        {scope.note ? (
+          <Banner tone="info" title={scope.label} message={scope.note} />
+        ) : null}
 
         <ChipsRow chips={chips} active={tab} onChange={setTab} />
 
         {tab === "summary" ? <SummaryTab record={record} /> : null}
-        {tab === "consultations" ? <ConsultationsTab consultations={record.consultations} /> : null}
-        {tab === "medication" ? <MedicationTab prescriptions={record.prescriptions} /> : null}
+        {tab === "consultations" ? (
+          <ConsultationsTab consultations={record.consultations} />
+        ) : null}
+        {tab === "medication" ? (
+          <MedicationTab prescriptions={record.prescriptions} />
+        ) : null}
         {tab === "lab" ? (
           <LabResultsTab
             patientId={patientId}
@@ -184,7 +240,11 @@ export default function MedicalRecordScreen() {
   );
 }
 
-function SummaryTab({ record }: { record: NonNullable<ReturnType<typeof useMedicalRecord>["data"]> }) {
+function SummaryTab({
+  record,
+}: {
+  record: NonNullable<ReturnType<typeof useMedicalRecord>["data"]>;
+}) {
   const severe = record.allergies.filter(
     (a) => a.severity === "severe" || a.severity === "anaphylaxis",
   );
@@ -196,8 +256,16 @@ function SummaryTab({ record }: { record: NonNullable<ReturnType<typeof useMedic
         {!record.allergiesRecorded ? (
           <VStack gap={6}>
             <HStack gap={8} align="center">
-              <ShieldAlert size={16} color={palette.warning.text} strokeWidth={2.2} />
-              <Text variant="label" weight="600" style={{ color: palette.warning.text }}>
+              <ShieldAlert
+                size={16}
+                color={palette.warning.text}
+                strokeWidth={2.2}
+              />
+              <Text
+                variant="label"
+                weight="600"
+                style={{ color: palette.warning.text }}
+              >
                 Not recorded
               </Text>
             </HStack>
@@ -206,7 +274,11 @@ function SummaryTab({ record }: { record: NonNullable<ReturnType<typeof useMedic
             </Text>
           </VStack>
         ) : record.allergies.length === 0 ? (
-          <Text variant="label" weight="600" style={{ color: signal.normal.text }}>
+          <Text
+            variant="label"
+            weight="600"
+            style={{ color: signal.normal.text }}
+          >
             No known allergies — asked and recorded
           </Text>
         ) : (
@@ -214,7 +286,11 @@ function SummaryTab({ record }: { record: NonNullable<ReturnType<typeof useMedic
             {record.allergies.map((a) => (
               <View key={a.substance}>
                 <HStack gap={9} align="center" wrap>
-                  <TriangleAlert size={15} color={signal.critical.color} strokeWidth={2.3} />
+                  <TriangleAlert
+                    size={15}
+                    color={signal.critical.color}
+                    strokeWidth={2.3}
+                  />
                   <Text variant="label-lg" tone="primary">
                     {a.substance}
                   </Text>
@@ -231,7 +307,11 @@ function SummaryTab({ record }: { record: NonNullable<ReturnType<typeof useMedic
                   />
                 </HStack>
                 {a.reaction ? (
-                  <Text variant="body-sm" tone="secondary" style={{ marginLeft: 25 }}>
+                  <Text
+                    variant="body-sm"
+                    tone="secondary"
+                    style={{ marginLeft: 25 }}
+                  >
                     {a.reaction}
                   </Text>
                 ) : null}
@@ -252,7 +332,10 @@ function SummaryTab({ record }: { record: NonNullable<ReturnType<typeof useMedic
 
       {record.diagnosisHistory.length > 0 ? (
         <Card>
-          <SectionHeader title="Diagnosis history" subtitle="Every diagnosis ever recorded" />
+          <SectionHeader
+            title="Diagnosis history"
+            subtitle="Every diagnosis ever recorded"
+          />
           <VStack gap={8}>
             {record.diagnosisHistory.map((d) => (
               <HStack key={d.description} gap={10} align="center">
@@ -263,7 +346,9 @@ function SummaryTab({ record }: { record: NonNullable<ReturnType<typeof useMedic
                     {d.code ? ` (${d.code})` : ""}
                   </Text>
                   <Text variant="caption" tone="tertiary">
-                    {d.occurrences > 1 ? `Recorded ${d.occurrences} times · ` : ""}
+                    {d.occurrences > 1
+                      ? `Recorded ${d.occurrences} times · `
+                      : ""}
                     last {formatDateTime(d.lastRecorded)}
                   </Text>
                 </VStack>
@@ -276,7 +361,11 @@ function SummaryTab({ record }: { record: NonNullable<ReturnType<typeof useMedic
   );
 }
 
-function ConsultationsTab({ consultations }: { consultations: Consultation[] }) {
+function ConsultationsTab({
+  consultations,
+}: {
+  consultations: Consultation[];
+}) {
   if (consultations.length === 0) {
     return (
       <EmptyState
@@ -306,7 +395,11 @@ function ConsultationsTab({ consultations }: { consultations: Consultation[] }) 
               </VStack>
               {c.isSigned ? (
                 <HStack gap={5} align="center">
-                  <Lock size={12} color={palette.text.tertiary} strokeWidth={2} />
+                  <Lock
+                    size={12}
+                    color={palette.text.tertiary}
+                    strokeWidth={2}
+                  />
                   <Text variant="caption" tone="tertiary">
                     signed
                   </Text>
@@ -317,7 +410,11 @@ function ConsultationsTab({ consultations }: { consultations: Consultation[] }) 
             {c.diagnoses?.length ? (
               <VStack gap={3}>
                 {c.diagnoses.map((d, i) => (
-                  <Text key={`${d.description}-${i}`} variant="body-sm" tone="primary">
+                  <Text
+                    key={`${d.description}-${i}`}
+                    variant="body-sm"
+                    tone="primary"
+                  >
                     {d.description}
                     {d.code ? ` (${d.code})` : ""}
                   </Text>
@@ -347,7 +444,7 @@ function ConsultationsTab({ consultations }: { consultations: Consultation[] }) 
               </VStack>
             ) : null}
 
-            { /* OP-06: corrections sit beside the original, never inside it. */ }
+            {/* OP-06: corrections sit beside the original, never inside it. */}
             {c.addenda?.length ? (
               <VStack gap={6}>
                 <Text variant="label-sm" tone="tertiary">
@@ -413,16 +510,28 @@ function MedicationTab({ prescriptions }: { prescriptions: Prescription[] }) {
                     </Text>
                   ) : null}
 
-                  { /* PH-03: show the overridden alert beside the reason so it can be reviewed. */ }
+                  {/* PH-03: show the overridden alert beside the reason so it can be reviewed. */}
                   {l.overrideReason ? (
                     <View style={styles.override}>
                       <HStack gap={7} align="center">
-                        <TriangleAlert size={13} color={signal.critical.color} strokeWidth={2.3} />
-                        <Text variant="caption" weight="600" style={{ color: signal.critical.text }}>
-                          {l.safetyAlerts[0]?.title ?? "Prescribed despite an alert"}
+                        <TriangleAlert
+                          size={13}
+                          color={signal.critical.color}
+                          strokeWidth={2.3}
+                        />
+                        <Text
+                          variant="caption"
+                          weight="600"
+                          style={{ color: signal.critical.text }}
+                        >
+                          {l.safetyAlerts[0]?.title ??
+                            "Prescribed despite an alert"}
                         </Text>
                       </HStack>
-                      <Text variant="caption" style={{ color: signal.critical.text }}>
+                      <Text
+                        variant="caption"
+                        style={{ color: signal.critical.text }}
+                      >
                         {l.overrideReason} — {l.overriddenByName}
                       </Text>
                     </View>
@@ -447,7 +556,9 @@ function LabResultsTab({
   results: RecordLabResult[];
   pending: PendingLabOrder[];
 }) {
-  const canOrder = useAuthStore((s) => s.hasPermission)(PERMISSIONS.LAB_REQUEST_CREATE);
+  const canOrder = useAuthStore((s) => s.hasPermission)(
+    PERMISSIONS.LAB_REQUEST_CREATE,
+  );
   const [ordered, setOrdered] = useState<string | null>(null);
 
   return (
@@ -460,7 +571,9 @@ function LabResultsTab({
           onDismiss={() => setOrdered(null)}
         />
       ) : null}
-      {canOrder ? <OrderTestsPanel patientId={patientId} onOrdered={setOrdered} /> : null}
+      {canOrder ? (
+        <OrderTestsPanel patientId={patientId} onOrdered={setOrdered} />
+      ) : null}
 
       {pending.length > 0 ? (
         <Card testID="record-lab-pending">
@@ -470,7 +583,8 @@ function LabResultsTab({
               <HStack key={o.id} gap={8} align="center" wrap>
                 <Text variant="label">{o.testName}</Text>
                 <Text variant="caption" tone="secondary">
-                  {LAB_STAGE_LABELS[o.status]} · {o.urgency} · ordered {formatDateTime(o.requestedAt)} by {o.doctorName}
+                  {LAB_STAGE_LABELS[o.status]} · {o.urgency} · ordered{" "}
+                  {formatDateTime(o.requestedAt)} by {o.doctorName}
                 </Text>
               </HStack>
             ))}
@@ -484,7 +598,13 @@ function LabResultsTab({
         results.map((r) => (
           <Card
             key={r.id}
-            accentColor={r.hasCritical ? signal.critical.color : r.abnormalCount ? signal.urgent.color : undefined}
+            accentColor={
+              r.hasCritical
+                ? signal.critical.color
+                : r.abnormalCount
+                  ? signal.urgent.color
+                  : undefined
+            }
             testID={`record-lab-${r.orderNumber}`}
           >
             <VStack gap={8}>
@@ -494,8 +614,16 @@ function LabResultsTab({
                 right={
                   r.hasCritical ? (
                     <SignalBadge
-                      level={r.criticalStatus === "acknowledged" ? "normal" : "critical"}
-                      label={r.criticalStatus === "acknowledged" ? `Critical, acknowledged by ${r.acknowledgedByName}` : "Critical, not acknowledged"}
+                      level={
+                        r.criticalStatus === "acknowledged"
+                          ? "normal"
+                          : "critical"
+                      }
+                      label={
+                        r.criticalStatus === "acknowledged"
+                          ? `Critical, acknowledged by ${r.acknowledgedByName}`
+                          : "Critical, not acknowledged"
+                      }
                       size="sm"
                     />
                   ) : null
@@ -523,7 +651,8 @@ function VisitsTab({
 }: {
   visits: NonNullable<ReturnType<typeof useMedicalRecord>["data"]>["visits"];
 }) {
-  if (visits.length === 0) return <EmptyState icon={CalendarDays} title="No visits recorded" />;
+  if (visits.length === 0)
+    return <EmptyState icon={CalendarDays} title="No visits recorded" />;
 
   return (
     <VStack gap={8}>
@@ -549,7 +678,12 @@ function VisitsTab({
 }
 
 const styles = StyleSheet.create({
-  dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: palette.clinical[600] },
+  dot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: palette.clinical[600],
+  },
   addendum: {
     padding: 9,
     borderRadius: radius.sm,

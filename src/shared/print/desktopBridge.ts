@@ -28,7 +28,9 @@ export interface HmsDesktopBridge {
 export function desktopBridge(): HmsDesktopBridge | null {
   const w = globalThis as unknown as { hmsDesktop?: Partial<HmsDesktopBridge> };
   const bridge = w.hmsDesktop;
-  return bridge && typeof bridge.printExact === "function" && typeof bridge.listPrinters === "function"
+  return bridge &&
+    typeof bridge.printExact === "function" &&
+    typeof bridge.listPrinters === "function"
     ? (bridge as HmsDesktopBridge)
     : null;
 }
@@ -52,6 +54,6 @@ export function setLabelPrinter(name: string | null): void {
     if (name) globalThis.localStorage?.setItem(LABEL_PRINTER_KEY, name);
     else globalThis.localStorage?.removeItem(LABEL_PRINTER_KEY);
   } catch {
-  /* private window or quota — the choice just will not persist */
+    /* private window or quota — the choice just will not persist */
   }
 }

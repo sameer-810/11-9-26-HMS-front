@@ -20,7 +20,11 @@ export interface PrintIdentity extends PrintAllergies {
 
 export interface WristbandInput extends PrintIdentity {
   hospitalName: string;
-  admission: { admissionNumber: string; wardName: string; bedNumber: string } | null;
+  admission: {
+    admissionNumber: string;
+    wardName: string;
+    bedNumber: string;
+  } | null;
 }
 
 export interface SpecimenLabelInput {
@@ -52,8 +56,13 @@ export interface PrescriptionInput {
   createdAt: string;
   urgency: "routine" | "urgent" | "stat";
   notes: string;
-  patient: Pick<PatientBanner, "patientId" | "fullName" | "age" | "gender"> & PrintAllergies;
-  prescriber: { fullName: string; designation: string; registrationNumber: string };
+  patient: Pick<PatientBanner, "patientId" | "fullName" | "age" | "gender"> &
+    PrintAllergies;
+  prescriber: {
+    fullName: string;
+    designation: string;
+    registrationNumber: string;
+  };
   lines: PrescriptionPrintLine[];
   /** Lines the prescriber cancelled. Counted on the page, never printed as medicines. */
   cancelledLineCount: number;

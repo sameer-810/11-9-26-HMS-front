@@ -70,7 +70,10 @@ function nextWeekday(dow) {
 console.log("\nStarting the API…");
 
 const { MongoMemoryReplSet } = await imp(
-  BACK, "node_modules", "mongodb-memory-server", "index.js",
+  BACK,
+  "node_modules",
+  "mongodb-memory-server",
+  "index.js",
 );
 const replSet = await MongoMemoryReplSet.create({
   replSet: { count: 1, storageEngine: "wiredTiger" },
@@ -103,7 +106,7 @@ for (let waited = 0; ; waited += 300) {
   try {
     if ((await fetch(`${API}/health`)).ok) break;
   } catch {
-  /* not up yet */
+    /* not up yet */
   }
   if (waited > 40_000) throw new Error(`API did not start.\n${apiLog}`);
   await new Promise((r) => setTimeout(r, 300));
@@ -117,11 +120,29 @@ process.env.JWT_REFRESH_SECRET ??= "verify-refresh-secret-not-real";
 process.env.JWT_ADMIN_SECRET ??= "verify-admin-secret-not-real";
 process.env.BCRYPT_ROUNDS ??= "4";
 
-const mongoose = (await imp(BACK, "node_modules", "mongoose", "index.js")).default;
+const mongoose = (await imp(BACK, "node_modules", "mongoose", "index.js"))
+  .default;
 await mongoose.connect(mongoUri);
-const { HospitalModel } = await imp(BACK, "src", "modules", "hospital", "hospital.model.js");
-const { UserModel, hashPassword } = await imp(BACK, "src", "modules", "user", "user.model.js");
-const { defaultPermissionsFor, ROLES } = await imp(BACK, "src", "config", "roles.js");
+const { HospitalModel } = await imp(
+  BACK,
+  "src",
+  "modules",
+  "hospital",
+  "hospital.model.js",
+);
+const { UserModel, hashPassword } = await imp(
+  BACK,
+  "src",
+  "modules",
+  "user",
+  "user.model.js",
+);
+const { defaultPermissionsFor, ROLES } = await imp(
+  BACK,
+  "src",
+  "config",
+  "roles.js",
+);
 
 const hospital = await HospitalModel.create({
   name: "City General Hospital",
@@ -185,7 +206,11 @@ async function provision({ employeeId, firstName, email, role, departmentId }) {
   const password = `${firstName}Password123`;
   await post(
     "/auth/change-password",
-    { currentPassword: temp, newPassword: password, deviceId: `${employeeId}-device` },
+    {
+      currentPassword: temp,
+      newPassword: password,
+      deviceId: `${employeeId}-device`,
+    },
     first.data.accessToken,
   );
   return { id: created.data.user.id, email, password };
@@ -230,11 +255,13 @@ await post(
     dateOfBirth: "1985-06-15",
     mobile: "9876543210",
   },
-  (await post("/auth/login", {
-    email: reception.email,
-    password: reception.password,
-    deviceId: "REC001-device",
-  })).data.accessToken,
+  (
+    await post("/auth/login", {
+      email: reception.email,
+      password: reception.password,
+      deviceId: "REC001-device",
+    })
+  ).data.accessToken,
 );
 
 console.log(`Seeded: hospital, 3 staff, a Tuesday clinic, 1 existing patient`);
@@ -248,7 +275,8 @@ const web = http.createServer((req, res) => {
     file = path.join(DIST, "index.html");
   }
   res.writeHead(200, {
-    "Content-Type": TYPES[path.extname(file).toLowerCase()] || "application/octet-stream",
+    "Content-Type":
+      TYPES[path.extname(file).toLowerCase()] || "application/octet-stream",
   });
   fs.createReadStream(file).pipe(res);
 });
@@ -257,7 +285,9 @@ const WEB = `http://127.0.0.1:${web.address().port}`;
 
 // ---- Drive it ----
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 980 } });
+const ctx = await browser.newContext({
+  viewport: { width: 1440, height: 980 },
+});
 const page = await ctx.newPage();
 
 const consoleErrors = [];
@@ -268,7 +298,9 @@ page.on("console", (m) => {
 page.on("pageerror", (e) => consoleErrors.push(String(e)));
 page.on("response", (r) => {
   if (r.status() >= 400) {
-    httpFailures.push(`${r.status()} ${r.request().method()} ${new URL(r.url()).pathname}`);
+    httpFailures.push(
+      `${r.status()} ${r.request().method()} ${new URL(r.url()).pathname}`,
+    );
   }
 });
 // the live-update socket is not under test; blocked so the gate never reaches
@@ -276,7 +308,9 @@ page.on("response", (r) => {
 await page.route("**/socket.io/**", (route) => route.abort());
 await page.route("**/api/v1/**", async (route) => {
   const url = new URL(route.request().url());
-  const response = await route.fetch({ url: `${API}${url.pathname}${url.search}` });
+  const response = await route.fetch({
+    url: `${API}${url.pathname}${url.search}`,
+  });
   await route.fulfill({ response });
 });
 
@@ -292,7 +326,9 @@ try {
   await page.waitForTimeout(2200);
 
   check(
-    /Good (morning|afternoon|evening), Deepak/.test(await page.innerText("body")),
+    /Good (morning|afternoon|evening), Deepak/.test(
+      await page.innerText("body"),
+    ),
     "receptionist signs in",
   );
 
@@ -303,9 +339,14 @@ try {
   await page.waitForTimeout(1400);
 
   let text = await page.innerText("body");
-  check(text.includes("Sanjay Kumar"), "step 1: search finds the existing patient");
+  check(
+    text.includes("Sanjay Kumar"),
+    "step 1: search finds the existing patient",
+  );
   check(text.includes("CGH-P"), "the system-issued patient ID is shown");
-  await page.screenshot({ path: path.join(SHOTS, "flow1-1-patient-search.png") });
+  await page.screenshot({
+    path: path.join(SHOTS, "flow1-1-patient-search.png"),
+  });
 
   // -- Step 2: register, and see the duplicate warning appear ----------------
   await page.getByTestId("register-patient-cta").click();
@@ -321,15 +362,26 @@ try {
   await page.getByTestId("reg-mobile").fill("9876543210");
   await page.waitForTimeout(1800);
 
-  const dupVisible = await page.getByTestId("duplicate-warning").isVisible().catch(() => false);
+  const dupVisible = await page
+    .getByTestId("duplicate-warning")
+    .isVisible()
+    .catch(() => false);
   check(dupVisible, "RG-01: the duplicate warning appears while typing");
 
   if (dupVisible) {
     const dupText = await page.getByTestId("duplicate-warning").innerText();
-    check(dupText.includes("Same mobile number"), "the warning says WHY it matched");
-    check(dupText.includes("Sanjay Kumar"), "the warning names the existing patient");
+    check(
+      dupText.includes("Same mobile number"),
+      "the warning says WHY it matched",
+    );
+    check(
+      dupText.includes("Sanjay Kumar"),
+      "the warning names the existing patient",
+    );
   }
-  await page.screenshot({ path: path.join(SHOTS, "flow1-2-duplicate-warning.png") });
+  await page.screenshot({
+    path: path.join(SHOTS, "flow1-2-duplicate-warning.png"),
+  });
 
   await page.getByTestId("reg-firstName").fill("Kamala");
   await page.getByTestId("reg-lastName").fill("Devi");
@@ -341,7 +393,10 @@ try {
     .getByTestId("duplicate-warning")
     .isVisible()
     .catch(() => false);
-  check(!stillWarning, "the warning clears once the details are someone else's");
+  check(
+    !stillWarning,
+    "the warning clears once the details are someone else's",
+  );
 
   // gender is a Select, which opens a sheet.
   await page.getByRole("button", { name: /^Gender\./ }).click();
@@ -394,7 +449,10 @@ try {
   }
   await page.waitForTimeout(1400);
 
-  const slotsVisible = await page.getByTestId("slot-10:00").isVisible().catch(() => false);
+  const slotsVisible = await page
+    .getByTestId("slot-10:00")
+    .isVisible()
+    .catch(() => false);
   check(slotsVisible, "step 3: the roster produces a slot grid");
   await page.screenshot({ path: path.join(SHOTS, "flow1-4-slot-grid.png") });
 
@@ -409,7 +467,10 @@ try {
     check(text.includes("Booked"), "step 3: the appointment is booked");
     check(/A\d{6}/.test(text), "an appointment number is issued");
     // wall-clock time, not the server's instant.
-    check(text.includes("10:30 am"), "the booked time reads back as 10:30, not shifted");
+    check(
+      text.includes("10:30 am"),
+      "the booked time reads back as 10:30, not shifted",
+    );
     await page.screenshot({ path: path.join(SHOTS, "flow1-5-booked.png") });
   }
 
@@ -433,14 +494,23 @@ try {
   check(takenVisible, "AP-01: the booked slot is still LISTED, not hidden");
   if (takenVisible) {
     const slotText = await takenSlot.innerText();
-    check(slotText.includes("Fully booked"), "and it says why it cannot be picked");
-    check(await takenSlot.isDisabled().catch(() => true), "and it cannot be selected");
+    check(
+      slotText.includes("Fully booked"),
+      "and it says why it cannot be picked",
+    );
+    check(
+      await takenSlot.isDisabled().catch(() => true),
+      "and it cannot be selected",
+    );
   }
 
   // -- Step 4: mark them arrived on the OPD queue ---------------------------
   await page.getByRole("link", { name: "OPD queue" }).first().click();
   await page.waitForTimeout(1800);
-  check((await page.innerText("body")).includes("OPD queue"), "step 4: the queue board opens");
+  check(
+    (await page.innerText("body")).includes("OPD queue"),
+    "step 4: the queue board opens",
+  );
   await page.screenshot({ path: path.join(SHOTS, "flow1-6-opd-queue.png") });
 
   // the booking is for a future tuesday, so today's queue is empty — a walk-in
@@ -471,17 +541,25 @@ try {
   await page.waitForTimeout(1800);
 
   text = await page.innerText("body");
-  check(text.includes("Kamala Devi"), "step 4: the walk-in appears on the queue");
-  check(text.includes("Waiting") || text.includes("arrived"), "and is shown as waiting");
+  check(
+    text.includes("Kamala Devi"),
+    "step 4: the walk-in appears on the queue",
+  );
+  check(
+    text.includes("Waiting") || text.includes("arrived"),
+    "and is shown as waiting",
+  );
   check(/\bwaiting\b/i.test(text), "with a waiting time");
-  await page.screenshot({ path: path.join(SHOTS, "flow1-7-queue-with-patient.png") });
+  await page.screenshot({
+    path: path.join(SHOTS, "flow1-7-queue-with-patient.png"),
+  });
 
   // -- Access: a doctor must not be able to register or book ----------------
   await page.evaluate(() => {
     try {
       localStorage.removeItem("hms-auth-storage");
     } catch {
-    /* nothing to clear */
+      /* nothing to clear */
     }
   });
   await page.goto(WEB, { waitUntil: "networkidle" });
@@ -492,27 +570,54 @@ try {
   await page.waitForTimeout(2400);
 
   text = await page.innerText("body");
-  check(/Good (morning|afternoon|evening), Rajesh/.test(text), "doctor signs in");
-  check(!text.includes("Register patient"), "section 6.2: a doctor sees no Register patient");
-  check(text.includes("My schedule"), "a doctor sees their own schedule instead");
-  await page.screenshot({ path: path.join(SHOTS, "flow1-8-doctor-sidebar.png") });
+  check(
+    /Good (morning|afternoon|evening), Rajesh/.test(text),
+    "doctor signs in",
+  );
+  check(
+    !text.includes("Register patient"),
+    "section 6.2: a doctor sees no Register patient",
+  );
+  check(
+    text.includes("My schedule"),
+    "a doctor sees their own schedule instead",
+  );
+  await page.screenshot({
+    path: path.join(SHOTS, "flow1-8-doctor-sidebar.png"),
+  });
 
   // -- Health of the whole journey ------------------------------------------
-  console.log(`\n  (HTTP non-2xx seen: ${httpFailures.join(", ") || "none"})\n`);
-  const jsErrors = consoleErrors.filter((e) => !/Failed to load resource/i.test(e));
-  check(jsErrors.length === 0, "no JavaScript errors", jsErrors.slice(0, 2).join(" | "));
+  console.log(
+    `\n  (HTTP non-2xx seen: ${httpFailures.join(", ") || "none"})\n`,
+  );
+  const jsErrors = consoleErrors.filter(
+    (e) => !/Failed to load resource/i.test(e),
+  );
+  check(
+    jsErrors.length === 0,
+    "no JavaScript errors",
+    jsErrors.slice(0, 2).join(" | "),
+  );
   const unexpected = httpFailures.filter((f) => !/^40[139] /.test(f));
-  check(unexpected.length === 0, "no unexpected HTTP failures", unexpected.join(", "));
+  check(
+    unexpected.length === 0,
+    "no unexpected HTTP failures",
+    unexpected.join(", "),
+  );
 
   // -- Phone ----------------------------------------------------------------
-  const phone = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const phone = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+  });
   const pPage = await phone.newPage();
   // the live-update socket is not under test; blocked so the gate never reaches
   // the dev port baked into the build.
   await pPage.route("**/socket.io/**", (route) => route.abort());
   await pPage.route("**/api/v1/**", async (route) => {
     const url = new URL(route.request().url());
-    const response = await route.fetch({ url: `${API}${url.pathname}${url.search}` });
+    const response = await route.fetch({
+      url: `${API}${url.pathname}${url.search}`,
+    });
     await route.fulfill({ response });
   });
   await pPage.goto(WEB, { waitUntil: "networkidle" });
@@ -523,7 +628,9 @@ try {
   await pPage.waitForTimeout(2400);
 
   const overflow = await pPage.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    () =>
+      document.documentElement.scrollWidth -
+      document.documentElement.clientWidth,
   );
   check(overflow <= 1, "phone: no horizontal overflow", `${overflow}px`);
   await pPage.screenshot({ path: path.join(SHOTS, "flow1-9-phone.png") });
@@ -531,7 +638,9 @@ try {
 } catch (err) {
   console.error("\nJourney threw:", err.message);
   failures.push(`exception: ${err.message}`);
-  await page.screenshot({ path: path.join(SHOTS, "flow1-FAILURE.png") }).catch(() => {});
+  await page
+    .screenshot({ path: path.join(SHOTS, "flow1-FAILURE.png") })
+    .catch(() => {});
 } finally {
   await browser.close();
   web.close();
@@ -541,7 +650,9 @@ try {
 }
 
 if (failures.length) {
-  console.error(`\n${failures.length} check(s) failed:\n - ${failures.join("\n - ")}\n`);
+  console.error(
+    `\n${failures.length} check(s) failed:\n - ${failures.join("\n - ")}\n`,
+  );
   process.exit(1);
 }
 console.log("\nFlow 1 passes end to end. Screenshots in docs/shots/\n");

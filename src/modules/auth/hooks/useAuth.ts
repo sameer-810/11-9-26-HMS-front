@@ -39,9 +39,11 @@ export const useChangePassword = () => {
   });
 };
 
-export const useForgotPassword = () => useMutation({ mutationFn: authApi.forgotPassword });
+export const useForgotPassword = () =>
+  useMutation({ mutationFn: authApi.forgotPassword });
 
-export const useResetPassword = () => useMutation({ mutationFn: authApi.resetPassword });
+export const useResetPassword = () =>
+  useMutation({ mutationFn: authApi.resetPassword });
 
 export const useMe = () => {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);

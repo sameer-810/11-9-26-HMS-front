@@ -11,16 +11,25 @@ const retryUnlessRefused = (failureCount: number, err: unknown) => {
 };
 
 export const useReportCatalogue = () =>
-  useQuery({ queryKey: ["reports"], queryFn: reportsApi.available, staleTime: 5 * 60_000 });
+  useQuery({
+    queryKey: ["reports"],
+    queryFn: reportsApi.available,
+    staleTime: 5 * 60_000,
+  });
 
-export const useReport = (key: string | undefined, filters: ReportFilters, enabled = true) =>
+export const useReport = (
+  key: string | undefined,
+  filters: ReportFilters,
+  enabled = true,
+) =>
   useQuery({
     queryKey: ["report", key, filters],
     queryFn: () => reportsApi.run(key!, filters),
     enabled: Boolean(key) && enabled,
     // Keep the previous result while a new range loads, but only for the same report,
     // so no figure is briefly shown under the wrong report.
-    placeholderData: (previous) => (previous?.key === key ? previous : undefined),
+    placeholderData: (previous) =>
+      previous?.key === key ? previous : undefined,
     retry: retryUnlessRefused,
   });
 
@@ -44,13 +53,26 @@ function saveBlob(blob: Blob, filename: string) {
  */
 export const useExportReport = () =>
   useMutation({
-    mutationFn: async ({ key, filters, format }: { key: string; filters: ReportFilters; format: ExportFormat }) => {
+    mutationFn: async ({
+      key,
+      filters,
+      format,
+    }: {
+      key: string;
+      filters: ReportFilters;
+      format: ExportFormat;
+    }) => {
       if (Platform.OS === "web") {
-        const { blob, filename } = await reportsApi.exportFile(key, filters, format);
+        const { blob, filename } = await reportsApi.exportFile(
+          key,
+          filters,
+          format,
+        );
         saveBlob(blob, filename);
         return { filename, format };
       }
-      const { shareReportOnDevice } = await import("@modules/reports/api/deviceExport");
+      const { shareReportOnDevice } =
+        await import("@modules/reports/api/deviceExport");
       return { ...(await shareReportOnDevice(key, filters, format)), format };
     },
   });

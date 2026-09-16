@@ -10,7 +10,10 @@ import { ControlledTextField } from "@shared/form/ControlledTextField";
 import { apiErrorMessage } from "@api/apiClient";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { useChangePassword } from "@modules/auth/hooks/useAuth";
-import { changePasswordSchema, type ChangePasswordForm } from "@modules/auth/auth.validation";
+import {
+  changePasswordSchema,
+  type ChangePasswordForm,
+} from "@modules/auth/auth.validation";
 
 interface Props {
   /** Set when the server is refusing everything until this is done. */
@@ -31,7 +34,11 @@ export default function ChangePasswordScreen({ forced }: Props) {
   const { control, handleSubmit, reset } = useForm<ChangePasswordForm>({
     resolver: zodResolver(changePasswordSchema),
     mode: "onTouched",
-    defaultValues: { currentPassword: "", newPassword: "", confirmPassword: "" },
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
   });
 
   const submit = handleSubmit(async (values) => {
@@ -49,11 +56,19 @@ export default function ChangePasswordScreen({ forced }: Props) {
   });
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.content} role="main">
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={styles.content}
+      role="main"
+    >
       <VStack gap={20} style={{ width: "100%", maxWidth: 420 }}>
         <HStack gap={12} align="center">
           <View style={styles.mark}>
-            <KeyRound size={20} color={palette.clinical[700]} strokeWidth={2.2} />
+            <KeyRound
+              size={20}
+              color={palette.clinical[700]}
+              strokeWidth={2.2}
+            />
           </View>
           <VStack gap={2} flex={1}>
             <Text variant="h1" tone="primary" heading={1}>
@@ -75,8 +90,16 @@ export default function ChangePasswordScreen({ forced }: Props) {
           />
         ) : null}
 
-        {done ? <Banner tone="success" message="Your password has been changed." /> : null}
-        {error ? <Banner tone="danger" message={error} onDismiss={() => setError(null)} /> : null}
+        {done ? (
+          <Banner tone="success" message="Your password has been changed." />
+        ) : null}
+        {error ? (
+          <Banner
+            tone="danger"
+            message={error}
+            onDismiss={() => setError(null)}
+          />
+        ) : null}
 
         <VStack gap={14}>
           <ControlledTextField
@@ -127,7 +150,9 @@ export default function ChangePasswordScreen({ forced }: Props) {
             label="Sign out instead"
             variant="ghost"
             size="sm"
-            icon={<LogOut size={15} color={palette.text.accent} strokeWidth={2} />}
+            icon={
+              <LogOut size={15} color={palette.text.accent} strokeWidth={2} />
+            }
             onPress={() => logout()}
           />
         ) : null}
@@ -138,7 +163,12 @@ export default function ChangePasswordScreen({ forced }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: palette.surface.secondary },
-  content: { flexGrow: 1, alignItems: "center", justifyContent: "center", padding: 24 },
+  content: {
+    flexGrow: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
   mark: {
     width: 40,
     height: 40,

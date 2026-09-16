@@ -49,14 +49,21 @@ export function Pagination({
                 onPress={() => onLimitChange(l)}
                 accessibilityRole="button"
                 accessibilityLabel={`Show ${l} per page`}
-                accessibilityState={Platform.OS === "web" ? undefined : { selected: l === limit }}
+                accessibilityState={
+                  Platform.OS === "web" ? undefined : { selected: l === limit }
+                }
                 {...webAria({ pressed: l === limit })}
                 style={[styles.limit, l === limit && styles.limitActive]}
               >
                 <Text
                   variant="label-sm"
                   tabular
-                  style={{ color: l === limit ? palette.clinical[700] : palette.text.tertiary }}
+                  style={{
+                    color:
+                      l === limit
+                        ? palette.clinical[700]
+                        : palette.text.tertiary,
+                  }}
                 >
                   {l}
                 </Text>
@@ -94,7 +101,9 @@ export function Pagination({
         >
           <ChevronRight
             size={16}
-            color={page >= totalPages ? palette.text.disabled : palette.text.primary}
+            color={
+              page >= totalPages ? palette.text.disabled : palette.text.primary
+            }
             strokeWidth={2.2}
           />
         </Pressable>

@@ -53,7 +53,12 @@ interface AuthState {
   isHydrated: boolean;
   isAuthChecked: boolean;
 
-  setAuth: (user: AuthUser, hospital: Hospital, token: string, refreshToken: string) => void;
+  setAuth: (
+    user: AuthUser,
+    hospital: Hospital,
+    token: string,
+    refreshToken: string,
+  ) => void;
   updateUser: (patch: Partial<AuthUser>) => void;
   updateTokens: (token: string, refreshToken: string) => void;
   logout: () => Promise<void>;
@@ -101,7 +106,7 @@ const secureStorage: StateStorage = {
       try {
         localStorage.setItem(name, value);
       } catch {
-      /* private window, quota — the session just will not persist */
+        /* private window, quota — the session just will not persist */
       }
       return;
     }
@@ -112,7 +117,7 @@ const secureStorage: StateStorage = {
       try {
         localStorage.removeItem(name);
       } catch {
-      /* nothing to do */
+        /* nothing to do */
       }
       return;
     }
@@ -140,9 +145,12 @@ export const useAuthStore = create<AuthState>()(
         set({ user, hospital, token, refreshToken, isAuthenticated: true }),
 
       updateUser: (patch) =>
-        set((state) => ({ user: state.user ? { ...state.user, ...patch } : null })),
+        set((state) => ({
+          user: state.user ? { ...state.user, ...patch } : null,
+        })),
 
-      updateTokens: (token, refreshToken) => set({ token, refreshToken, isAuthenticated: true }),
+      updateTokens: (token, refreshToken) =>
+        set({ token, refreshToken, isAuthenticated: true }),
 
       logout: async () => {
         const { refreshToken } = get();
@@ -160,9 +168,13 @@ export const useAuthStore = create<AuthState>()(
         await Promise.all([secureStorage.removeItem(STORAGE_KEY), wiping]);
         if (refreshToken) {
           try {
-            await axios.post(`${environment.apiUrl}/auth/logout`, { refreshToken }, { timeout: 10_000 });
+            await axios.post(
+              `${environment.apiUrl}/auth/logout`,
+              { refreshToken },
+              { timeout: 10_000 },
+            );
           } catch {
-          // The session TTL reclaims the slot regardless.
+            // The session TTL reclaims the slot regardless.
           }
         }
       },
@@ -171,7 +183,10 @@ export const useAuthStore = create<AuthState>()(
         const { user } = get();
         if (!user) return false;
         // No admin short-circuit: as on the server, admins hold no clinical permissions.
-        return Array.isArray(user.permissions) && user.permissions.includes(permission);
+        return (
+          Array.isArray(user.permissions) &&
+          user.permissions.includes(permission)
+        );
       },
 
       hasAnyPermission: (...permissions) => {
@@ -192,18 +207,31 @@ export const useAuthStore = create<AuthState>()(
               await logout();
               return null;
             }
-            const rs = await axios.post(`${environment.apiUrl}/auth/refresh`, { refreshToken });
+            const rs = await axios.post(`${environment.apiUrl}/auth/refresh`, {
+              refreshToken,
+            });
             const { accessToken, refreshToken: newRefresh } = rs.data.data;
             updateTokens(accessToken, newRefresh);
             return accessToken;
           } catch (err) {
             // Only a 401/403 clears the session; a network failure must not sign anyone out.
-            const response = (err as { response?: { status?: number; data?: { error?: { code?: string; message?: string } } } })
-              ?.response;
+            const response = (
+              err as {
+                response?: {
+                  status?: number;
+                  data?: { error?: { code?: string; message?: string } };
+                };
+              }
+            )?.response;
             const status = response?.status;
             // Signed out by the server for inactivity: say so on the sign-in screen.
             if (response?.data?.error?.code === "SESSION_IDLE") {
-              useSessionNotice.getState().setNotice(response.data.error.message ?? "You were signed out after a period without activity.");
+              useSessionNotice
+                .getState()
+                .setNotice(
+                  response.data.error.message ??
+                    "You were signed out after a period without activity.",
+                );
             }
             if (status === 401 || status === 403) await get().logout();
             return null;

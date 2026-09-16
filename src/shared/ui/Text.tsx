@@ -120,7 +120,12 @@ export function Text({
         style,
       ]}
       {...rest}
-      {...(heading ? { accessibilityRole: "header" as const, ...webAria({ level: heading }) } : null)}
+      {...(heading
+        ? {
+            accessibilityRole: "header" as const,
+            ...webAria({ level: heading }),
+          }
+        : null)}
     >
       {children}
     </RNText>

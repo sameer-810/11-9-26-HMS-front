@@ -1,7 +1,16 @@
 import React, { useState } from "react";
 import { View, Pressable, StyleSheet } from "react-native";
 import { palette, radius, signal, layout } from "@shared/designSystem";
-import { Text, HStack, VStack, Card, SectionHeader, TextField, Button, Banner } from "@shared/ui";
+import {
+  Text,
+  HStack,
+  VStack,
+  Card,
+  SectionHeader,
+  TextField,
+  Button,
+  Banner,
+} from "@shared/ui";
 import { checkable } from "@shared/ui/a11y";
 import { apiErrorMessage } from "@api/apiClient";
 import { useSaveResults } from "@modules/laboratory/hooks/useLaboratory";
@@ -25,18 +34,25 @@ export function ResultEntryForm({ order }: { order: LabOrder }) {
     setEdited(true);
   };
 
-  const invalid = order.parameters.filter((p) => previewFlag(p, values[p.code] ?? "") === "invalid");
+  const invalid = order.parameters.filter(
+    (p) => previewFlag(p, values[p.code] ?? "") === "invalid",
+  );
 
   // What the server said about the last save, read from the order itself.
   const saved = Boolean(order.resultsEnteredAt) && !edited;
   const critical = order.results.filter((r) => r.isCritical).map((r) => r.name);
   const entered = new Set(order.results.map((r) => r.code));
-  const missing = order.parameters.filter((p) => p.required && !entered.has(p.code)).map((p) => p.name);
+  const missing = order.parameters
+    .filter((p) => p.required && !entered.has(p.code))
+    .map((p) => p.name);
 
   return (
     <Card testID="result-entry">
       <VStack gap={14}>
-        <SectionHeader title="Enter results" subtitle="Ranges shown are for this patient's age and sex" />
+        <SectionHeader
+          title="Enter results"
+          subtitle="Ranges shown are for this patient's age and sex"
+        />
 
         {order.parameters.map((p) => (
           <ParameterField
@@ -69,7 +85,11 @@ export function ResultEntryForm({ order }: { order: LabOrder }) {
           </View>
         ) : null}
         {saved && missing.length > 0 ? (
-          <Banner tone="warning" title="Saved, not complete" message={`Still to enter: ${missing.join(", ")}.`} />
+          <Banner
+            tone="warning"
+            title="Saved, not complete"
+            message={`Still to enter: ${missing.join(", ")}.`}
+          />
         ) : null}
         {saved && order.significantDeltas.length > 0 ? (
           <Banner
@@ -81,7 +101,12 @@ export function ResultEntryForm({ order }: { order: LabOrder }) {
         {saved && critical.length === 0 && missing.length === 0 ? (
           <Banner tone="success" message="Results saved." />
         ) : null}
-        {save.isError ? <Banner tone="danger" message={apiErrorMessage(save.error, "Results not saved")} /> : null}
+        {save.isError ? (
+          <Banner
+            tone="danger"
+            message={apiErrorMessage(save.error, "Results not saved")}
+          />
+        ) : null}
 
         <Button
           label="Save results"
@@ -121,7 +146,9 @@ function ParameterField({
             {p.name}
             {p.required ? "" : " (optional)"}
           </Text>
-          {preview && preview !== "invalid" ? <LabFlagGlyph flag={preview} /> : null}
+          {preview && preview !== "invalid" ? (
+            <LabFlagGlyph flag={preview} />
+          ) : null}
         </HStack>
         <HStack gap={6} wrap>
           {p.choices.map((choice) => {
@@ -135,13 +162,21 @@ function ParameterField({
               <Pressable
                 key={choice}
                 onPress={() => onChange(selected ? "" : choice)}
-                style={[styles.choice, selected ? { backgroundColor: tier.bg, borderColor: tier.border } : null]}
+                style={[
+                  styles.choice,
+                  selected
+                    ? { backgroundColor: tier.bg, borderColor: tier.border }
+                    : null,
+                ]}
                 accessibilityRole="radio"
                 accessibilityState={{ checked: selected }}
                 {...checkable(selected, () => onChange(selected ? "" : choice))}
                 testID={`param-${p.code}-${choice}`}
               >
-                <Text variant="label-sm" style={selected ? { color: tier.text } : undefined}>
+                <Text
+                  variant="label-sm"
+                  style={selected ? { color: tier.text } : undefined}
+                >
                   {choice}
                 </Text>
               </Pressable>
@@ -158,7 +193,9 @@ function ParameterField({
   }
 
   const flagText =
-    preview && preview !== "invalid" && preview !== "normal" ? flagPresentation(preview).label : "";
+    preview && preview !== "invalid" && preview !== "normal"
+      ? flagPresentation(preview).label
+      : "";
 
   return (
     <View style={styles.numericRow} testID={`param-${p.code}`}>
@@ -170,14 +207,27 @@ function ParameterField({
           value={value}
           onChangeText={onChange}
           hint={`${rangeLine}${panic.length ? ` · critical ${panic.join(" or ")}` : ""}`}
-          error={preview === "invalid" ? "Not a number. Enter the value alone — no units or commas." : undefined}
+          error={
+            preview === "invalid"
+              ? "Not a number. Enter the value alone — no units or commas."
+              : undefined
+          }
           testID={`param-${p.code}-input`}
         />
       </View>
       <VStack gap={2} align="center" style={styles.previewCell}>
-        {preview && preview !== "invalid" ? <LabFlagGlyph flag={preview} testID={`param-${p.code}-preview`} /> : null}
+        {preview && preview !== "invalid" ? (
+          <LabFlagGlyph flag={preview} testID={`param-${p.code}-preview`} />
+        ) : null}
         {flagText ? (
-          <Text variant="caption" style={{ color: preview?.startsWith("critical") ? signal.critical.text : palette.text.secondary }}>
+          <Text
+            variant="caption"
+            style={{
+              color: preview?.startsWith("critical")
+                ? signal.critical.text
+                : palette.text.secondary,
+            }}
+          >
             {flagText}
           </Text>
         ) : null}

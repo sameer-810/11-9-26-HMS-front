@@ -15,8 +15,15 @@ import {
   StatusChip,
 } from "@shared/ui";
 import { apiErrorMessage } from "@api/apiClient";
-import { useHospitalProfile, useUpdateHospital } from "@modules/admin/hooks/useAdmin";
-import type { HospitalAddress, HospitalPatch, HospitalProfile } from "@modules/admin/types";
+import {
+  useHospitalProfile,
+  useUpdateHospital,
+} from "@modules/admin/hooks/useAdmin";
+import type {
+  HospitalAddress,
+  HospitalPatch,
+  HospitalProfile,
+} from "@modules/admin/types";
 
 type TopKey =
   | "name"
@@ -44,7 +51,14 @@ const TOP: TopKey[] = [
   "timezone",
   "currency",
 ];
-const ADDRESS: AddressKey[] = ["line1", "line2", "city", "state", "pincode", "country"];
+const ADDRESS: AddressKey[] = [
+  "line1",
+  "line2",
+  "city",
+  "state",
+  "pincode",
+  "country",
+];
 
 const GSTIN = /^\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}Z[A-Z\d]{1}$/;
 const PHONE = /^(\+?\d{1,3}[- ]?)?\d{10}$/;
@@ -70,10 +84,14 @@ function toFlat(h: HospitalProfile): Flat {
 function validate(f: Flat): Partial<Record<keyof Flat, string>> {
   const e: Partial<Record<keyof Flat, string>> = {};
   if (f.name.trim().length < 2) e.name = "At least 2 characters";
-  if (f.phone.trim() && !PHONE.test(f.phone.trim())) e.phone = "Enter a valid 10-digit number";
-  if (f.email.trim() && !EMAIL.test(f.email.trim())) e.email = "Enter a valid email address";
-  if (f.gstin.trim() && !GSTIN.test(f.gstin.trim().toUpperCase())) e.gstin = "Not a valid GSTIN";
-  if (f.currency.trim().length !== 3) e.currency = "A 3-letter code, such as INR";
+  if (f.phone.trim() && !PHONE.test(f.phone.trim()))
+    e.phone = "Enter a valid 10-digit number";
+  if (f.email.trim() && !EMAIL.test(f.email.trim()))
+    e.email = "Enter a valid email address";
+  if (f.gstin.trim() && !GSTIN.test(f.gstin.trim().toUpperCase()))
+    e.gstin = "Not a valid GSTIN";
+  if (f.currency.trim().length !== 3)
+    e.currency = "A 3-letter code, such as INR";
   if (f.pincode.trim().length > 10) e.pincode = "At most 10 characters";
   return e;
 }
@@ -114,7 +132,9 @@ function Form({ hospital }: { hospital: HospitalProfile }) {
   const [original, setOriginal] = useState<Flat>(() => toFlat(hospital));
   const [form, setForm] = useState<Flat>(original);
   // A number, kept apart from the text fields the patch builder trims.
-  const [idleOriginal, setIdleOriginal] = useState(String(hospital.sessionIdleMinutes ?? 30));
+  const [idleOriginal, setIdleOriginal] = useState(
+    String(hospital.sessionIdleMinutes ?? 30),
+  );
   const [idle, setIdle] = useState(idleOriginal);
   const [attempted, setAttempted] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -130,7 +150,9 @@ function Form({ hospital }: { hospital: HospitalProfile }) {
   };
   const patch: HospitalPatch = {
     ...buildPatch(form, original),
-    ...(!idleError && idle.trim() !== idleOriginal ? { sessionIdleMinutes: idleValue } : {}),
+    ...(!idleError && idle.trim() !== idleOriginal
+      ? { sessionIdleMinutes: idleValue }
+      : {}),
   };
   // An invalid timeout is still a change: saving must be pressable so the
   // error can be shown, rather than a disabled button with no reason given.
@@ -140,11 +162,23 @@ function Form({ hospital }: { hospital: HospitalProfile }) {
     setSaved(false);
     setForm((f) => ({ ...f, [k]: v }));
   };
-  const err = (k: keyof Flat | "sessionIdleMinutes") => (attempted ? errors[k] : undefined);
+  const err = (k: keyof Flat | "sessionIdleMinutes") =>
+    attempted ? errors[k] : undefined;
 
-  const field = (k: keyof Flat, label: string, extra: Partial<React.ComponentProps<typeof TextField>> = {}) => (
+  const field = (
+    k: keyof Flat,
+    label: string,
+    extra: Partial<React.ComponentProps<typeof TextField>> = {},
+  ) => (
     <View style={{ flex: 1, minWidth: 220 }}>
-      <TextField label={label} value={form[k]} onChangeText={set(k)} error={err(k)} testID={`hospital-${k}`} {...extra} />
+      <TextField
+        label={label}
+        value={form[k]}
+        onChangeText={set(k)}
+        error={err(k)}
+        testID={`hospital-${k}`}
+        {...extra}
+      />
     </View>
   );
 
@@ -168,19 +202,37 @@ function Form({ hospital }: { hospital: HospitalProfile }) {
     <VStack gap={14} testID="hospital-profile">
       {update.isError ? (
         <View testID="hospital-error">
-          <Banner tone="danger" message={apiErrorMessage(update.error, "Could not save the hospital details")} />
+          <Banner
+            tone="danger"
+            message={apiErrorMessage(
+              update.error,
+              "Could not save the hospital details",
+            )}
+          />
         </View>
       ) : null}
       {saved ? (
         <View testID="hospital-saved">
-          <Banner tone="success" message="Hospital details saved. New slips and receipts use them straight away." />
+          <Banner
+            tone="success"
+            message="Hospital details saved. New slips and receipts use them straight away."
+          />
         </View>
       ) : null}
 
       <Card>
         <SectionHeader
           title="Identity"
-          right={<StatusChip status={hospital.approvalStatus === "approved" ? "active" : hospital.approvalStatus} size="sm" />}
+          right={
+            <StatusChip
+              status={
+                hospital.approvalStatus === "approved"
+                  ? "active"
+                  : hospital.approvalStatus
+              }
+              size="sm"
+            />
+          }
         />
         <VStack gap={14}>
           <HStack gap={12} wrap>
@@ -197,14 +249,20 @@ function Form({ hospital }: { hospital: HospitalProfile }) {
           </HStack>
           <HStack gap={12} wrap>
             {field("registrationNumber", "Registration number")}
-            {field("hfrId", "Health Facility Registry ID", { hint: "When the hospital is registered with ABDM." })}
+            {field("hfrId", "Health Facility Registry ID", {
+              hint: "When the hospital is registered with ABDM.",
+            })}
           </HStack>
           <HStack gap={12} wrap>
-            {field("gstin", "GSTIN", { autoCapitalize: "characters", hint: "Printed on bills and receipts." })}
+            {field("gstin", "GSTIN", {
+              autoCapitalize: "characters",
+              hint: "Printed on bills and receipts.",
+            })}
             {field("logoUrl", "Logo URL", { autoCapitalize: "none" })}
           </HStack>
           <Text variant="caption" tone="tertiary">
-            Plan: {hospital.subscription.planCode} ({hospital.subscription.status})
+            Plan: {hospital.subscription.planCode} (
+            {hospital.subscription.status})
           </Text>
         </VStack>
       </Card>
@@ -214,7 +272,10 @@ function Form({ hospital }: { hospital: HospitalProfile }) {
         <VStack gap={14}>
           <HStack gap={12} wrap>
             {field("phone", "Phone", { keyboardType: "phone-pad" })}
-            {field("email", "Email", { keyboardType: "email-address", autoCapitalize: "none" })}
+            {field("email", "Email", {
+              keyboardType: "email-address",
+              autoCapitalize: "none",
+            })}
             {field("website", "Website", { autoCapitalize: "none" })}
           </HStack>
           <HStack gap={12} wrap>
@@ -236,8 +297,14 @@ function Form({ hospital }: { hospital: HospitalProfile }) {
           subtitle="The timezone decides which calendar day an appointment or a drug round falls on."
         />
         <HStack gap={12} wrap>
-          {field("timezone", "Timezone", { autoCapitalize: "none", hint: "IANA name, such as Asia/Kolkata." })}
-          {field("currency", "Currency", { autoCapitalize: "characters", maxLength: 3 })}
+          {field("timezone", "Timezone", {
+            autoCapitalize: "none",
+            hint: "IANA name, such as Asia/Kolkata.",
+          })}
+          {field("currency", "Currency", {
+            autoCapitalize: "characters",
+            maxLength: 3,
+          })}
         </HStack>
       </Card>
 

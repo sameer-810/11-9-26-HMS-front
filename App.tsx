@@ -170,7 +170,10 @@ const linking: LinkingOptions<RootParamList> = {
           },
           PharmacyQueue: {
             path: "pharmacy",
-            screens: { PharmacyQueueList: "prescriptions", Dispense: "dispense/:prescriptionId" },
+            screens: {
+              PharmacyQueueList: "prescriptions",
+              Dispense: "dispense/:prescriptionId",
+            },
           },
           MedicineStock: {
             path: "pharmacy/stock",

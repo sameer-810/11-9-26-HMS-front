@@ -3,17 +3,32 @@ import { StyleSheet, View } from "react-native";
 import { ClipboardList, TriangleAlert } from "lucide-react-native";
 
 import { palette, radius, signal } from "@shared/designSystem";
-import { Banner, Button, Card, HStack, SectionHeader, Select, Text, TextField, VStack } from "@shared/ui";
+import {
+  Banner,
+  Button,
+  Card,
+  HStack,
+  SectionHeader,
+  Select,
+  Text,
+  TextField,
+  VStack,
+} from "@shared/ui";
 import { apiErrorMessage } from "@api/apiClient";
 import { formatDateTime } from "@shared/format";
-import { useAdmissionRequests, useCloseAdmissionRequest } from "@modules/inpatient/hooks/useInpatient";
+import {
+  useAdmissionRequests,
+  useCloseAdmissionRequest,
+} from "@modules/inpatient/hooks/useInpatient";
 import {
   REQUEST_CLOSURE_LABELS,
   type AdmissionRequest,
   type RequestClosureOutcome,
 } from "@modules/inpatient/types";
 
-const OUTCOMES = (Object.keys(REQUEST_CLOSURE_LABELS) as RequestClosureOutcome[]).map((value) => ({
+const OUTCOMES = (
+  Object.keys(REQUEST_CLOSURE_LABELS) as RequestClosureOutcome[]
+).map((value) => ({
   value,
   label: REQUEST_CLOSURE_LABELS[value],
 }));
@@ -22,14 +37,22 @@ const OUTCOMES = (Object.keys(REQUEST_CLOSURE_LABELS) as RequestClosureOutcome[]
  * US-17: pending admission recommendations on the admitted board; renders nothing when empty.
  * "Admit" prefills the form (linking and clearing the request); declined ones close with a reason.
  */
-export function AdmissionRequests({ onAdmit }: { onAdmit: (request: AdmissionRequest) => void }) {
+export function AdmissionRequests({
+  onAdmit,
+}: {
+  onAdmit: (request: AdmissionRequest) => void;
+}) {
   const requests = useAdmissionRequests();
   const rows = requests.data ?? [];
 
   if (requests.isError) {
     return (
       <View testID="admission-requests-error">
-        <Banner tone="warning" title="Couldn't load the admission requests" message={apiErrorMessage(requests.error)} />
+        <Banner
+          tone="warning"
+          title="Couldn't load the admission requests"
+          message={apiErrorMessage(requests.error)}
+        />
       </View>
     );
   }
@@ -43,17 +66,28 @@ export function AdmissionRequests({ onAdmit }: { onAdmit: (request: AdmissionReq
       />
       <VStack gap={10}>
         {rows.map((row) => (
-          <RequestRow key={row.consultationId} row={row} onAdmit={() => onAdmit(row)} />
+          <RequestRow
+            key={row.consultationId}
+            row={row}
+            onAdmit={() => onAdmit(row)}
+          />
         ))}
       </VStack>
     </Card>
   );
 }
 
-function RequestRow({ row, onAdmit }: { row: AdmissionRequest; onAdmit: () => void }) {
+function RequestRow({
+  row,
+  onAdmit,
+}: {
+  row: AdmissionRequest;
+  onAdmit: () => void;
+}) {
   const close = useCloseAdmissionRequest();
   const [closing, setClosing] = useState(false);
-  const [outcome, setOutcome] = useState<RequestClosureOutcome>("patient_declined");
+  const [outcome, setOutcome] =
+    useState<RequestClosureOutcome>("patient_declined");
   const [note, setNote] = useState("");
   const patient = row.patient;
 
@@ -73,7 +107,8 @@ function RequestRow({ row, onAdmit }: { row: AdmissionRequest; onAdmit: () => vo
             <HStack gap={4} align="center">
               <TriangleAlert size={12} color={signal.critical.text} />
               <Text variant="caption" style={{ color: signal.critical.text }}>
-                Allergic to {patient.allergies.map((a) => a.substance).join(", ")}
+                Allergic to{" "}
+                {patient.allergies.map((a) => a.substance).join(", ")}
               </Text>
             </HStack>
           ) : (
@@ -89,7 +124,8 @@ function RequestRow({ row, onAdmit }: { row: AdmissionRequest; onAdmit: () => vo
 
         {row.restricted ? (
           <Text variant="body-sm" tone="secondary">
-            Restricted record — the reason is on the consultation, for the treating team.
+            Restricted record — the reason is on the consultation, for the
+            treating team.
           </Text>
         ) : (
           <VStack gap={2}>
@@ -104,7 +140,8 @@ function RequestRow({ row, onAdmit }: { row: AdmissionRequest; onAdmit: () => vo
 
         <Text variant="caption" tone="tertiary">
           Recommended by {row.doctor?.fullName ?? "a doctor"}
-          {row.department ? `, ${row.department.name}` : ""} · {formatDateTime(row.recommendedAt)} · {row.consultationNumber}
+          {row.department ? `, ${row.department.name}` : ""} ·{" "}
+          {formatDateTime(row.recommendedAt)} · {row.consultationNumber}
         </Text>
 
         {closing ? (
@@ -126,22 +163,40 @@ function RequestRow({ row, onAdmit }: { row: AdmissionRequest; onAdmit: () => vo
               hint="One sentence the next person can act on."
               testID="request-close-note"
             />
-            {close.isError ? <Banner tone="danger" message={apiErrorMessage(close.error)} /> : null}
+            {close.isError ? (
+              <Banner tone="danger" message={apiErrorMessage(close.error)} />
+            ) : null}
             <HStack gap={8} wrap>
               <Button
                 label="Close recommendation"
                 size="sm"
                 disabled={note.trim().length < 3}
                 loading={close.isPending}
-                onPress={() => close.mutate({ consultationId: row.consultationId, outcome, note: note.trim() })}
+                onPress={() =>
+                  close.mutate({
+                    consultationId: row.consultationId,
+                    outcome,
+                    note: note.trim(),
+                  })
+                }
                 testID="request-close-submit"
               />
-              <Button label="Cancel" size="sm" variant="ghost" onPress={() => setClosing(false)} />
+              <Button
+                label="Cancel"
+                size="sm"
+                variant="ghost"
+                onPress={() => setClosing(false)}
+              />
             </HStack>
           </VStack>
         ) : (
           <HStack gap={8} wrap>
-            <Button label="Admit" size="sm" onPress={onAdmit} testID={`request-admit-${row.consultationNumber}`} />
+            <Button
+              label="Admit"
+              size="sm"
+              onPress={onAdmit}
+              testID={`request-admit-${row.consultationNumber}`}
+            />
             <Button
               label="Not admitting"
               size="sm"

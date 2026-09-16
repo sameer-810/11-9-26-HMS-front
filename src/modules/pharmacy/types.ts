@@ -7,11 +7,21 @@ export type StockStatus = "in_stock" | "low_stock" | "out_of_stock";
 export interface PrescriptionHeader {
   id: string;
   prescriptionNumber: string;
-  status: "created" | "pending_dispensing" | "partially_dispensed" | "dispensed" | "cancelled";
+  status:
+    | "created"
+    | "pending_dispensing"
+    | "partially_dispensed"
+    | "dispensed"
+    | "cancelled";
   urgency: "routine" | "urgent" | "stat";
   createdAt: string;
   notes: string;
-  doctor: { id: string; fullName: string; designation: string; registrationNumber: string };
+  doctor: {
+    id: string;
+    fullName: string;
+    designation: string;
+    registrationNumber: string;
+  };
   allergySnapshot: { substance: string; severity: string }[];
   allergiesWereRecorded: boolean;
 }
@@ -67,11 +77,21 @@ export interface DispenseLine {
   overrideReason: string;
   overriddenByName: string;
   currentAlerts: SafetyAlert[];
-  item: { id: string; code: string; unit: string; unitPrice: number | null } | null;
+  item: {
+    id: string;
+    code: string;
+    unit: string;
+    unitPrice: number | null;
+  } | null;
   stock: { status: StockStatus; label: string; note: string };
   usableQuantity: number;
   suggested: {
-    allocations: { batchId: string; batchNumber: string; expiryDate: string; quantity: number }[];
+    allocations: {
+      batchId: string;
+      batchNumber: string;
+      expiryDate: string;
+      quantity: number;
+    }[];
     shortBy: number;
   };
   batches: DispenseBatch[];
@@ -110,7 +130,12 @@ export interface Dispensing {
     acknowledgedAt: string;
     allergiesRecorded: boolean;
     allergies: { substance: string; severity: string }[];
-    overridesShown: { medicineName: string; substance: string; overrideReason: string; overriddenByName: string }[];
+    overridesShown: {
+      medicineName: string;
+      substance: string;
+      overrideReason: string;
+      overriddenByName: string;
+    }[];
     note: string;
   };
   billed: boolean;

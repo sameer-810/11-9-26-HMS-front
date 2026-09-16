@@ -23,7 +23,17 @@ import { formatRupees } from "@shared/format";
 import { palette } from "@shared/designSystem";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { ROLE_LABELS } from "@shared/permissions";
-import { Screen, StatTile, HStack, VStack, SectionHeader, Card, Text, Skeleton, ErrorState } from "@shared/ui";
+import {
+  Screen,
+  StatTile,
+  HStack,
+  VStack,
+  SectionHeader,
+  Card,
+  Text,
+  Skeleton,
+  ErrorState,
+} from "@shared/ui";
 import { useDashboardSummary } from "@modules/dashboard/hooks/useDashboard";
 import { useVisibleNavItems } from "@navigation/navItems";
 
@@ -43,7 +53,8 @@ export default function DashboardScreen() {
   const navigation = useNavigation<any>();
   const user = useAuthStore((s) => s.user);
   const hospital = useAuthStore((s) => s.hospital);
-  const { data, isLoading, isError, error, refetch, isRefetching } = useDashboardSummary();
+  const { data, isLoading, isError, error, refetch, isRefetching } =
+    useDashboardSummary();
   const reachable = new Set(useVisibleNavItems().map((i) => i.name));
 
   const greeting = (() => {
@@ -57,7 +68,9 @@ export default function DashboardScreen() {
 
   /** The first target this user can reach, as tile props. */
   const open = (...targets: (Target | false | null | undefined)[]) => {
-    const target = targets.find((t): t is Target => Boolean(t) && reachable.has((t as Target).route));
+    const target = targets.find(
+      (t): t is Target => Boolean(t) && reachable.has((t as Target).route),
+    );
     if (!target) return {};
     return {
       onPress: () => navigation.navigate(target.route, target.params),
@@ -83,10 +96,17 @@ export default function DashboardScreen() {
     >
       <VStack gap={24}>
         {isError ? (
-          <ErrorState error={error} title="Couldn't load your dashboard" onRetry={refetch} />
+          <ErrorState
+            error={error}
+            title="Couldn't load your dashboard"
+            onRetry={refetch}
+          />
         ) : (
           <View>
-            <SectionHeader title="Today" subtitle="Decided by your role. Tap a card to open the list behind it." />
+            <SectionHeader
+              title="Today"
+              subtitle="Decided by your role. Tap a card to open the list behind it."
+            />
             {isLoading ? (
               <HStack gap={12} wrap>
                 {[0, 1, 2].map((i) => (
@@ -108,22 +128,35 @@ export default function DashboardScreen() {
                     icon={Users}
                     accent="clinical"
                     testID="tile-patients"
-                    {...open({ route: "Patients", hint: "Opens patient search" }, report("registrations", "patient registrations"))}
+                    {...open(
+                      { route: "Patients", hint: "Opens patient search" },
+                      report("registrations", "patient registrations"),
+                    )}
                   />
                 ) : null}
 
                 {appts ? (
                   <>
                     <StatTile
-                      label={appts.mine ? "My appointments today" : "Today's appointments"}
+                      label={
+                        appts.mine
+                          ? "My appointments today"
+                          : "Today's appointments"
+                      }
                       value={appts.total}
                       sublabel={`${appts.scheduled} still to come · ${appts.cancelled + appts.noShow} cancelled or missed`}
                       icon={CalendarDays}
                       accent="violet"
                       testID="tile-appointments"
                       {...open(
-                        appts.mine && { route: "MyAppointments", hint: "Opens your schedule" },
-                        { route: "Appointments", hint: "Opens the appointment list" },
+                        appts.mine && {
+                          route: "MyAppointments",
+                          hint: "Opens your schedule",
+                        },
+                        {
+                          route: "Appointments",
+                          hint: "Opens the appointment list",
+                        },
                         { route: "OpdQueue", hint: "Opens the OPD queue" },
                         report("opd", "OPD activity"),
                       )}
@@ -137,7 +170,10 @@ export default function DashboardScreen() {
                       testID="tile-opd"
                       {...open(
                         { route: "OpdQueue", hint: "Opens the OPD queue" },
-                        appts.mine && { route: "MyAppointments", hint: "Opens your schedule" },
+                        appts.mine && {
+                          route: "MyAppointments",
+                          hint: "Opens your schedule",
+                        },
                         report("opd", "OPD activity"),
                       )}
                     />
@@ -153,7 +189,10 @@ export default function DashboardScreen() {
                     accent="clinical"
                     testID="tile-inpatients"
                     {...open(
-                      { route: "AdmittedPatients", hint: "Opens the admitted patients list" },
+                      {
+                        route: "AdmittedPatients",
+                        hint: "Opens the admitted patients list",
+                      },
                       { route: "Beds", hint: "Opens bed management" },
                     )}
                   />
@@ -167,7 +206,10 @@ export default function DashboardScreen() {
                     icon={HeartPulse}
                     accent="teal"
                     testID="tile-my-patients"
-                    {...open({ route: "NursingPatients", hint: "Opens your ward list" })}
+                    {...open({
+                      route: "NursingPatients",
+                      hint: "Opens your ward list",
+                    })}
                   />
                 ) : null}
 
@@ -180,7 +222,10 @@ export default function DashboardScreen() {
                     accent="violet"
                     attention={tiles.admissionRequests.pending > 0}
                     testID="tile-admission-requests"
-                    {...open({ route: "AdmittedPatients", hint: "Opens the admission requests" })}
+                    {...open({
+                      route: "AdmittedPatients",
+                      hint: "Opens the admission requests",
+                    })}
                   />
                 ) : null}
 
@@ -203,7 +248,10 @@ export default function DashboardScreen() {
                       icon={Activity}
                       accent="clinical"
                       testID="tile-occupancy"
-                      {...open({ route: "Beds", hint: "Opens bed management" }, report("bed_occupancy", "bed occupancy"))}
+                      {...open(
+                        { route: "Beds", hint: "Opens bed management" },
+                        report("bed_occupancy", "bed occupancy"),
+                      )}
                     />
                   </>
                 ) : null}
@@ -212,11 +260,18 @@ export default function DashboardScreen() {
                   <StatTile
                     label="Active staff"
                     value={tiles.staff.active}
-                    sublabel={tiles.staff.inactive ? `${tiles.staff.inactive} deactivated` : undefined}
+                    sublabel={
+                      tiles.staff.inactive
+                        ? `${tiles.staff.inactive} deactivated`
+                        : undefined
+                    }
                     icon={Users}
                     accent="violet"
                     testID="tile-staff"
-                    {...open({ route: "UserManagement", hint: "Opens users and access" })}
+                    {...open({
+                      route: "UserManagement",
+                      hint: "Opens users and access",
+                    })}
                   />
                 ) : null}
 
@@ -234,7 +289,7 @@ export default function DashboardScreen() {
                         { route: "LabReports", hint: "Opens lab reports" },
                       )}
                     />
-                    { /* Shown beside the pending count, never instead of it. */ }
+                    {/* Shown beside the pending count, never instead of it. */}
                     <StatTile
                       label="Critical, unacknowledged"
                       value={tiles.lab.criticalOpen}
@@ -258,7 +313,10 @@ export default function DashboardScreen() {
                     icon={Pill}
                     accent="violet"
                     testID="tile-pharmacy"
-                    {...open({ route: "PharmacyQueue", hint: "Opens the prescription queue" })}
+                    {...open({
+                      route: "PharmacyQueue",
+                      hint: "Opens the prescription queue",
+                    })}
                   />
                 ) : null}
 
@@ -273,11 +331,19 @@ export default function DashboardScreen() {
                       attention={tiles.inventory.lowStock > 0}
                       testID="tile-low-stock"
                       {...open(
-                        { route: "Inventory", params: { screen: "LowStock" }, hint: "Opens low stock" },
-                        { route: "MedicineStock", params: { screen: "LowStock" }, hint: "Opens low stock" },
+                        {
+                          route: "Inventory",
+                          params: { screen: "LowStock" },
+                          hint: "Opens low stock",
+                        },
+                        {
+                          route: "MedicineStock",
+                          params: { screen: "LowStock" },
+                          hint: "Opens low stock",
+                        },
                       )}
                     />
-                    { /* Separate tile: expired stock is a different problem from low stock. */ }
+                    {/* Separate tile: expired stock is a different problem from low stock. */}
                     <StatTile
                       label="Expired on the shelf"
                       value={tiles.inventory.expiredOnShelf}
@@ -288,7 +354,10 @@ export default function DashboardScreen() {
                       testID="tile-expired"
                       {...open(
                         { route: "Inventory", hint: "Opens inventory" },
-                        { route: "MedicineStock", hint: "Opens medicine stock" },
+                        {
+                          route: "MedicineStock",
+                          hint: "Opens medicine stock",
+                        },
                       )}
                     />
                   </>
@@ -304,7 +373,10 @@ export default function DashboardScreen() {
                       accent="clinical"
                       attention={tiles.emergency.waitingTriage > 0}
                       testID="tile-emergency"
-                      {...open({ route: "Emergency", hint: "Opens the emergency board" })}
+                      {...open({
+                        route: "Emergency",
+                        hint: "Opens the emergency board",
+                      })}
                     />
                     <StatTile
                       label="Past triage target"
@@ -314,7 +386,10 @@ export default function DashboardScreen() {
                       accent="clinical"
                       attention={tiles.emergency.overTarget > 0}
                       testID="tile-emergency-target"
-                      {...open({ route: "Emergency", hint: "Opens the emergency board" })}
+                      {...open({
+                        route: "Emergency",
+                        hint: "Opens the emergency board",
+                      })}
                     />
                   </>
                 ) : null}
@@ -323,7 +398,9 @@ export default function DashboardScreen() {
                   <>
                     <StatTile
                       label="Collected today"
-                      value={formatRupees(tiles.billing.collectedTodayPaise / 100)}
+                      value={formatRupees(
+                        tiles.billing.collectedTodayPaise / 100,
+                      )}
                       icon={Receipt}
                       accent="green"
                       testID="tile-collected"
@@ -337,7 +414,11 @@ export default function DashboardScreen() {
                       accent="violet"
                       attention={tiles.billing.outstandingBills > 0}
                       testID="tile-outstanding"
-                      {...open({ route: "Bills", params: { screen: "Outstanding" }, hint: "Opens outstanding bills" })}
+                      {...open({
+                        route: "Bills",
+                        params: { screen: "Outstanding" },
+                        hint: "Opens outstanding bills",
+                      })}
                     />
                   </>
                 ) : null}
@@ -349,14 +430,18 @@ export default function DashboardScreen() {
                     icon={Building2}
                     accent="teal"
                     testID="tile-departments"
-                    {...open({ route: "HospitalConfig", hint: "Opens hospital setup" })}
+                    {...open({
+                      route: "HospitalConfig",
+                      hint: "Opens hospital setup",
+                    })}
                   />
                 ) : null}
 
                 {!tiles || Object.keys(tiles).length === 0 ? (
                   <Card style={{ flex: 1 }}>
                     <Text variant="body-sm" tone="tertiary">
-                      Your role has no figures on the dashboard. Your work is in the menu.
+                      Your role has no figures on the dashboard. Your work is in
+                      the menu.
                     </Text>
                   </Card>
                 ) : null}
@@ -367,15 +452,19 @@ export default function DashboardScreen() {
 
         <Card>
           <HStack gap={12} align="flex-start">
-            <ShieldCheck size={18} color={palette.clinical[600]} strokeWidth={2} />
+            <ShieldCheck
+              size={18}
+              color={palette.clinical[600]}
+              strokeWidth={2}
+            />
             <VStack gap={4} flex={1}>
               <Text variant="h3" tone="primary">
                 Everything here is recorded
               </Text>
               <Text variant="body-sm" tone="secondary">
-                Every record you open, and every change you make, is written to an audit trail with
-                your name and the time. That trail cannot be edited by anyone, including
-                administrators.
+                Every record you open, and every change you make, is written to
+                an audit trail with your name and the time. That trail cannot be
+                edited by anyone, including administrators.
               </Text>
             </VStack>
           </HStack>

@@ -37,17 +37,25 @@ export function ChipsRow({ chips, active, onChange }: Props) {
             accessibilityRole="tab"
             accessibilityState={{ selected: isActive }}
             {...webAria({ selected: isActive })}
-            accessibilityLabel={c.count !== undefined ? `${c.label}, ${c.count}` : c.label}
+            accessibilityLabel={
+              c.count !== undefined ? `${c.label}, ${c.count}` : c.label
+            }
             style={[
               styles.chip,
               isActive && styles.chipActive,
-              c.accentColor && !isActive ? { borderColor: c.accentColor } : null,
+              c.accentColor && !isActive
+                ? { borderColor: c.accentColor }
+                : null,
             ]}
           >
             <Text
               variant="label"
               weight={isActive ? "600" : "500"}
-              style={{ color: isActive ? palette.clinical[700] : palette.text.secondary }}
+              style={{
+                color: isActive
+                  ? palette.clinical[700]
+                  : palette.text.secondary,
+              }}
             >
               {c.label}
             </Text>
@@ -56,7 +64,9 @@ export function ChipsRow({ chips, active, onChange }: Props) {
                 style={[
                   styles.count,
                   {
-                    backgroundColor: c.accentColor ?? (isActive ? palette.clinical[100] : palette.ink[100]),
+                    backgroundColor:
+                      c.accentColor ??
+                      (isActive ? palette.clinical[100] : palette.ink[100]),
                   },
                 ]}
               >

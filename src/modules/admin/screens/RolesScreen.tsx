@@ -26,8 +26,16 @@ import { apiErrorMessage } from "@api/apiClient";
 import { formatDateTime } from "@shared/format";
 import { TabChips } from "@modules/admin/components/TabChips";
 import { ToggleRow } from "@modules/admin/components/ToggleRow";
-import { useResetRole, useRoles, useSaveRole } from "@modules/admin/hooks/useAdmin";
-import { ROLE_SUMMARIES, type RoleChange, type RoleSet } from "@modules/admin/types";
+import {
+  useResetRole,
+  useRoles,
+  useSaveRole,
+} from "@modules/admin/hooks/useAdmin";
+import {
+  ROLE_SUMMARIES,
+  type RoleChange,
+  type RoleSet,
+} from "@modules/admin/types";
 
 const CATALOGUE = Object.values(PERMISSIONS) as string[];
 const label = (p: string) => PERMISSION_META[p]?.label ?? p;
@@ -37,7 +45,9 @@ function describe(change: RoleChange) {
   const parts: string[] = [];
   if (change.added.length) parts.push(`added ${listOf(change.added)}`);
   if (change.removed.length) parts.push(`removed ${listOf(change.removed)}`);
-  const what = parts.length ? `${change.label}: ${parts.join("; ")}.` : `${change.label}: nothing changed.`;
+  const what = parts.length
+    ? `${change.label}: ${parts.join("; ")}.`
+    : `${change.label}: nothing changed.`;
   const who = change.applyToStaff
     ? ` Applied to the ${change.staffUpdated} ${change.staffUpdated === 1 ? "person" : "people"} in this role, from their next action.`
     : " People already in this role keep their current access; new staff start with this set.";
@@ -68,11 +78,18 @@ export default function RolesScreen() {
       {roles.isLoading ? (
         <Skeleton height={320} />
       ) : roles.isError ? (
-        <ErrorState error={roles.error} title="Couldn't load the roles" onRetry={roles.refetch} />
+        <ErrorState
+          error={roles.error}
+          title="Couldn't load the roles"
+          onRetry={roles.refetch}
+        />
       ) : (
         <VStack gap={14}>
           <TabChips
-            chips={list.map((r) => ({ key: r.role, label: r.customised ? `${r.label} (changed)` : r.label }))}
+            chips={list.map((r) => ({
+              key: r.role,
+              label: r.customised ? `${r.label} (changed)` : r.label,
+            }))}
             active={active}
             onChange={(k) => {
               setActive(k as Role);
@@ -119,7 +136,12 @@ function RoleEditor({
   const changed = added.length + removed.length > 0;
 
   const groups = [...PERMISSION_GROUPS, "Other"]
-    .map((group) => ({ group, perms: CATALOGUE.filter((p) => (PERMISSION_META[p]?.group ?? "Other") === group) }))
+    .map((group) => ({
+      group,
+      perms: CATALOGUE.filter(
+        (p) => (PERMISSION_META[p]?.group ?? "Other") === group,
+      ),
+    }))
     .filter((g) => g.perms.length > 0);
 
   const error = save.error ?? reset.error;
@@ -127,7 +149,10 @@ function RoleEditor({
   if (!role.editable) {
     return (
       <Card testID="role-editor">
-        <SectionHeader title={role.label} subtitle={ROLE_SUMMARIES[role.role]} />
+        <SectionHeader
+          title={role.label}
+          subtitle={ROLE_SUMMARIES[role.role]}
+        />
         <VStack gap={12}>
           <Banner
             tone="info"
@@ -165,12 +190,19 @@ function RoleEditor({
 
         {error ? (
           <View testID="role-error">
-            <Banner tone="danger" message={apiErrorMessage(error, "Could not save the role")} />
+            <Banner
+              tone="danger"
+              message={apiErrorMessage(error, "Could not save the role")}
+            />
           </View>
         ) : null}
         {result ? (
           <View testID="role-saved">
-            <Banner tone="success" message={describe(result)} onDismiss={() => setResult(null)} />
+            <Banner
+              tone="success"
+              message={describe(result)}
+              onDismiss={() => setResult(null)}
+            />
           </View>
         ) : null}
 
@@ -205,7 +237,13 @@ function RoleEditor({
                       label={meta?.label ?? p}
                       description={meta?.description}
                       note={note}
-                      noteTone={!canGrant || adminOnly ? "warning" : meta?.clinical ? "danger" : "tertiary"}
+                      noteTone={
+                        !canGrant || adminOnly
+                          ? "warning"
+                          : meta?.clinical
+                            ? "danger"
+                            : "tertiary"
+                      }
                       checked={on}
                       disabled={isDashboard || adminOnly || (!canGrant && !on)}
                       onChange={(next) => toggle(p, next)}
@@ -220,7 +258,12 @@ function RoleEditor({
 
         {changed ? (
           <Text variant="body-sm" tone="secondary" testID="role-diff">
-            {[added.length ? `Adding ${listOf(added)}.` : "", removed.length ? `Removing ${listOf(removed)}.` : ""].filter(Boolean).join(" ")}
+            {[
+              added.length ? `Adding ${listOf(added)}.` : "",
+              removed.length ? `Removing ${listOf(removed)}.` : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
           </Text>
         ) : null}
 

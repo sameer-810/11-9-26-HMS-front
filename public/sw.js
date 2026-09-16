@@ -18,7 +18,13 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((key) => key !== VERSION).map((key) => caches.delete(key))))
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== VERSION)
+            .map((key) => caches.delete(key)),
+        ),
+      )
       .then(() => self.clients.claim()),
   );
 });
@@ -30,7 +36,11 @@ self.addEventListener("message", (event) => {
   const urls = data.urls.filter((u) => {
     try {
       const url = new URL(u);
-      return url.origin === self.location.origin && !url.pathname.startsWith("/api/") && !url.pathname.startsWith("/socket.io/");
+      return (
+        url.origin === self.location.origin &&
+        !url.pathname.startsWith("/api/") &&
+        !url.pathname.startsWith("/socket.io/")
+      );
     } catch {
       return false;
     }
@@ -43,7 +53,9 @@ self.addEventListener("message", (event) => {
             (hit) =>
               hit ||
               fetch(u)
-                .then((response) => (storable(response) ? cache.put(u, response) : undefined))
+                .then((response) =>
+                  storable(response) ? cache.put(u, response) : undefined,
+                )
                 .catch(() => undefined),
           ),
         ),
@@ -54,7 +66,9 @@ self.addEventListener("message", (event) => {
 
 /** Honours no-store/private even same-origin, in case patient data is ever served here. */
 function storable(response) {
-  const cacheControl = (response.headers.get("Cache-Control") || "").toLowerCase();
+  const cacheControl = (
+    response.headers.get("Cache-Control") || ""
+  ).toLowerCase();
   return response.ok && !/\b(no-store|private)\b/.test(cacheControl);
 }
 
@@ -67,7 +81,11 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   // Other origins — the API, the socket, anything third-party — pass straight through.
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/socket.io/")) return;
+  if (
+    url.pathname.startsWith("/api/") ||
+    url.pathname.startsWith("/socket.io/")
+  )
+    return;
 
   if (request.mode === "navigate") {
     event.respondWith(
@@ -75,11 +93,15 @@ self.addEventListener("fetch", (event) => {
         .then((response) => {
           if (storable(response)) {
             const copy = response.clone();
-            caches.open(VERSION).then((cache) => cache.put("/index.html", copy));
+            caches
+              .open(VERSION)
+              .then((cache) => cache.put("/index.html", copy));
           }
           return response;
         })
-        .catch(() => caches.match("/index.html").then((hit) => hit || caches.match("/"))),
+        .catch(() =>
+          caches.match("/index.html").then((hit) => hit || caches.match("/")),
+        ),
     );
     return;
   }

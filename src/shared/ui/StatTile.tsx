@@ -49,7 +49,12 @@ export function StatTile({
     >
       <VStack gap={8}>
         <HStack gap={8} align="center" justify="space-between">
-          <Text variant="label-sm" tone="tertiary" numberOfLines={1} style={{ flex: 1 }}>
+          <Text
+            variant="label-sm"
+            tone="tertiary"
+            numberOfLines={1}
+            style={{ flex: 1 }}
+          >
             {label}
           </Text>
           {Icon ? (

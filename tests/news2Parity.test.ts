@@ -5,18 +5,28 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { calculateNews2 } from "../src/shared/clinical/news2";
 
-
 /**
  * the device NEWS2 (used when charting offline) must match the server's exactly;
  * both run over the same inputs and any difference fails.
  */
 const here = path.dirname(fileURLToPath(import.meta.url));
-const serverFile = path.resolve(here, "..", "..", "11-9-26-HMS-back", "src", "modules", "nursing", "news2.js");
+const serverFile = path.resolve(
+  here,
+  "..",
+  "..",
+  "11-9-26-HMS-back",
+  "src",
+  "modules",
+  "nursing",
+  "news2.js",
+);
 
 type Calc = (input: unknown) => unknown;
 
 async function server(): Promise<Calc> {
-  const mod = (await import(pathToFileURL(serverFile).href)) as { calculateNews2: Calc };
+  const mod = (await import(pathToFileURL(serverFile).href)) as {
+    calculateNews2: Calc;
+  };
   return mod.calculateNews2;
 }
 
@@ -67,7 +77,15 @@ test("device and server NEWS2 agree across thousands of observation sets", async
 
 test("each threshold, one parameter at a time, on both scales", async () => {
   const serverCalc = await server();
-  const base = { respiratoryRate: 16, spo2: 97, onOxygen: false, systolic: 120, pulse: 70, consciousness: "alert", temperatureC: 37 };
+  const base = {
+    respiratoryRate: 16,
+    spo2: 97,
+    onOxygen: false,
+    systolic: 120,
+    pulse: 70,
+    consciousness: "alert",
+    temperatureC: 37,
+  };
   const sweeps: Record<string, unknown[]> = {
     respiratoryRate: RR,
     spo2: SPO2,

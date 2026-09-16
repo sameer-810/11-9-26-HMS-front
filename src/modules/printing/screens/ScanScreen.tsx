@@ -5,12 +5,20 @@ import { Camera, ScanLine } from "lucide-react-native";
 import { palette, signal } from "@shared/designSystem";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { PERMISSIONS } from "@shared/permissions";
-import { Banner, Button, Card, HStack, Screen, Text, TextField, VStack } from "@shared/ui";
+import {
+  Banner,
+  Button,
+  Card,
+  HStack,
+  Screen,
+  Text,
+  TextField,
+  VStack,
+} from "@shared/ui";
 import { apiErrorCode, apiErrorMessage } from "@api/apiClient";
 import { useScanCode } from "@modules/printing/hooks/usePrinting";
 import { CameraScanner } from "@modules/printing/components/CameraScanner";
 import type { ScanResult } from "@modules/printing/types";
-
 
 /**
  * Scan a wristband or tube and open it. USB scanners type and press Enter, so the field
@@ -47,20 +55,26 @@ export default function ScanScreen() {
       setScanned(null);
       setCode("");
       setFieldKey((k) => k + 1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []),
   );
 
   const open = (result: ScanResult) => {
     if (result.kind === "specimen" && result.orderId && opensLabOrder) {
-      navigation.navigate("LabQueue", { screen: "LabOrder", params: { orderId: result.orderId } });
+      navigation.navigate("LabQueue", {
+        screen: "LabOrder",
+        params: { orderId: result.orderId },
+      });
       return;
     }
     if (opensRecord) {
       navigation.navigate("MedicalRecord", { patientId: result.patient.id });
       return;
     }
-    navigation.navigate("Patients", { screen: "PatientDetail", params: { id: result.patient.id } });
+    navigation.navigate("Patients", {
+      screen: "PatientDetail",
+      params: { id: result.patient.id },
+    });
   };
 
   const submit = (value: string) => {
@@ -78,13 +92,24 @@ export default function ScanScreen() {
   const errorCode = scan.isError ? apiErrorCode(scan.error) : undefined;
 
   return (
-    <Screen overline="Identification" title="Scan" subtitle="Wristband or specimen label" testID="scan-screen">
+    <Screen
+      overline="Identification"
+      title="Scan"
+      subtitle="Wristband or specimen label"
+      testID="scan-screen"
+    >
       <VStack gap={14} style={{ maxWidth: 640 }}>
         <Card>
           <VStack gap={12}>
             <HStack gap={8} align="center">
-              <ScanLine size={18} color={palette.text.secondary} strokeWidth={2.2} />
-              <Text variant="label">Scan now, or type the number and press Enter</Text>
+              <ScanLine
+                size={18}
+                color={palette.text.secondary}
+                strokeWidth={2.2}
+              />
+              <Text variant="label">
+                Scan now, or type the number and press Enter
+              </Text>
             </HStack>
             <TextField
               key={fieldKey}
@@ -117,13 +142,21 @@ export default function ScanScreen() {
                   variant="secondary"
                   size="sm"
                   fullWidth={false}
-                  icon={<Camera size={14} color={palette.text.primary} strokeWidth={2.2} />}
+                  icon={
+                    <Camera
+                      size={14}
+                      color={palette.text.primary}
+                      strokeWidth={2.2}
+                    />
+                  }
                   onPress={() => setCamera(true)}
                   testID="scan-camera"
                 />
               ) : null}
             </HStack>
-            {camera ? <CameraScanner onCode={submit} onClose={() => setCamera(false)} /> : null}
+            {camera ? (
+              <CameraScanner onCode={submit} onClose={() => setCamera(false)} />
+            ) : null}
           </VStack>
         </Card>
 
@@ -132,15 +165,20 @@ export default function ScanScreen() {
             <VStack gap={6}>
               <Text variant="h3">No patient matches this code</Text>
               <Text variant="body-sm" tone="secondary">
-                Scanned: {scanned}. Check the band or label belongs to this hospital, and find the patient by name
-                instead. Do not treat anyone on the strength of a band that does not scan.
+                Scanned: {scanned}. Check the band or label belongs to this
+                hospital, and find the patient by name instead. Do not treat
+                anyone on the strength of a band that does not scan.
               </Text>
             </VStack>
           </Card>
         ) : scan.isError ? (
           <Banner
             tone="danger"
-            title={errorCode === "SCAN_MALFORMED" ? "Not a code from this system" : "Could not look that up"}
+            title={
+              errorCode === "SCAN_MALFORMED"
+                ? "Not a code from this system"
+                : "Could not look that up"
+            }
             message={apiErrorMessage(scan.error)}
           />
         ) : null}

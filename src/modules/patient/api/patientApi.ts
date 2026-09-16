@@ -18,7 +18,9 @@ export interface PatientListParams {
 
 export const patientApi = {
   list: async (params?: PatientListParams) => {
-    const res = await apiClient.get<Paginated<Patient>>("/patients", { params });
+    const res = await apiClient.get<Paginated<Patient>>("/patients", {
+      params,
+    });
     return res.data;
   },
 
@@ -29,7 +31,9 @@ export const patientApi = {
 
   /** The identity band. Cheap enough to fetch on every clinical screen. */
   banner: async (id: string) => {
-    const res = await apiClient.get<{ data: PatientBanner }>(`/patients/${id}/banner`);
+    const res = await apiClient.get<{ data: PatientBanner }>(
+      `/patients/${id}/banner`,
+    );
     return res.data.data;
   },
 
@@ -63,16 +67,22 @@ export const patientApi = {
   },
 
   update: async (id: string, payload: Partial<RegisterPatientPayload>) => {
-    const res = await apiClient.patch<{ data: Patient }>(`/patients/${id}`, payload);
+    const res = await apiClient.patch<{ data: Patient }>(
+      `/patients/${id}`,
+      payload,
+    );
     return res.data.data;
   },
 
   /** `recorded: true` with an empty list is how "asked, and none" is said. */
   setAllergies: async (id: string, allergies: Allergy[], recorded = true) => {
-    const res = await apiClient.put<{ data: Patient }>(`/patients/${id}/allergies`, {
-      allergies,
-      recorded,
-    });
+    const res = await apiClient.put<{ data: Patient }>(
+      `/patients/${id}/allergies`,
+      {
+        allergies,
+        recorded,
+      },
+    );
     return res.data.data;
   },
 };

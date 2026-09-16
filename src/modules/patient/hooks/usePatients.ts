@@ -4,7 +4,10 @@ import {
   useQueryClient,
   keepPreviousData,
 } from "@tanstack/react-query";
-import { patientApi, type PatientListParams } from "@modules/patient/api/patientApi";
+import {
+  patientApi,
+  type PatientListParams,
+} from "@modules/patient/api/patientApi";
 import type { Allergy, RegisterPatientPayload } from "@modules/patient/types";
 
 export const usePatients = (params?: PatientListParams) =>
@@ -38,7 +41,8 @@ export const useCheckDuplicates = () =>
 export const useRegisterPatient = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: RegisterPatientPayload) => patientApi.register(payload),
+    mutationFn: (payload: RegisterPatientPayload) =>
+      patientApi.register(payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["patients"] });
       qc.invalidateQueries({ queryKey: ["dashboard-summary"] });
@@ -49,7 +53,8 @@ export const useRegisterPatient = () => {
 export const useUpdatePatient = (id: string) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: Partial<RegisterPatientPayload>) => patientApi.update(id, payload),
+    mutationFn: (payload: Partial<RegisterPatientPayload>) =>
+      patientApi.update(id, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["patients"] });
       qc.invalidateQueries({ queryKey: ["patient", id] });
@@ -61,8 +66,13 @@ export const useUpdatePatient = (id: string) => {
 export const useSetAllergies = (id: string) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ allergies, recorded }: { allergies: Allergy[]; recorded?: boolean }) =>
-      patientApi.setAllergies(id, allergies, recorded),
+    mutationFn: ({
+      allergies,
+      recorded,
+    }: {
+      allergies: Allergy[];
+      recorded?: boolean;
+    }) => patientApi.setAllergies(id, allergies, recorded),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["patient", id] });
       // The band is on screen right now. It has to reflect this immediately —

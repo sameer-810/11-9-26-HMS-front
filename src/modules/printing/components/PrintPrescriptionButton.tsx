@@ -51,7 +51,8 @@ export function PrintPrescriptionButton({ ctx }: { ctx: DispenseContext }) {
               instructions: l.instructions,
               quantity: l.quantity,
             })),
-          cancelledLineCount: ctx.lines.filter((l) => l.status === "cancelled").length,
+          cancelledLineCount: ctx.lines.filter((l) => l.status === "cancelled")
+            .length,
           printedBy,
           printedAt: new Date(),
         })

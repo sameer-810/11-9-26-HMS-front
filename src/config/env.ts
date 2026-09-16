@@ -3,11 +3,15 @@
  * Nothing secret belongs here: everything in this file ships inside the app.
  */
 
-const DEV_API = process.env.EXPO_PUBLIC_API_URL_DEV || "http://localhost:5003/api/v1";
-const PROD_API = process.env.EXPO_PUBLIC_API_URL || "http://localhost:5003/api/v1";
+const DEV_API =
+  process.env.EXPO_PUBLIC_API_URL_DEV || "http://localhost:5003/api/v1";
+const PROD_API =
+  process.env.EXPO_PUBLIC_API_URL || "http://localhost:5003/api/v1";
 
-const DEV_SOCKET = process.env.EXPO_PUBLIC_SOCKET_URL_DEV || "http://localhost:5003";
-const PROD_SOCKET = process.env.EXPO_PUBLIC_SOCKET_URL || "http://localhost:5003";
+const DEV_SOCKET =
+  process.env.EXPO_PUBLIC_SOCKET_URL_DEV || "http://localhost:5003";
+const PROD_SOCKET =
+  process.env.EXPO_PUBLIC_SOCKET_URL || "http://localhost:5003";
 
 export const environment = {
   apiUrl: __DEV__ ? DEV_API : PROD_API,

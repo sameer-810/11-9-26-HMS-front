@@ -16,19 +16,31 @@ interface Props {
  * possible duplicates with their reasons (not a score), each openable to use the existing record.
  * deliberately not a modal: a blocking dialog mid-form trains people to dismiss it unread.
  */
-export function DuplicateWarning({ matches, mustConfirm, onOpenExisting }: Props) {
+export function DuplicateWarning({
+  matches,
+  mustConfirm,
+  onOpenExisting,
+}: Props) {
   if (matches.length === 0) return null;
 
   const tone = mustConfirm ? signal.critical : signal.caution;
 
   return (
     <View
-      style={[styles.wrap, { backgroundColor: tone.bg, borderColor: tone.border }]}
+      style={[
+        styles.wrap,
+        { backgroundColor: tone.bg, borderColor: tone.border },
+      ]}
       accessibilityRole="alert"
       testID="duplicate-warning"
     >
       <HStack gap={9} align="flex-start">
-        <Users size={17} color={tone.color} strokeWidth={2.2} style={{ marginTop: 1 }} />
+        <Users
+          size={17}
+          color={tone.color}
+          strokeWidth={2.2}
+          style={{ marginTop: 1 }}
+        />
         <VStack gap={3} flex={1}>
           <Text variant="label" weight="600" style={{ color: tone.text }}>
             {mustConfirm
@@ -52,7 +64,10 @@ export function DuplicateWarning({ matches, mustConfirm, onOpenExisting }: Props
             onPress={onOpenExisting ? () => onOpenExisting(m) : undefined}
             accessibilityRole={onOpenExisting ? "button" : undefined}
             accessibilityLabel={`${m.fullName}, ${m.patientId}. ${m.reasons.join(". ")}`}
-            style={({ pressed }) => [styles.match, pressed ? { opacity: 0.75 } : null]}
+            style={({ pressed }) => [
+              styles.match,
+              pressed ? { opacity: 0.75 } : null,
+            ]}
           >
             <VStack gap={2} flex={1}>
               <HStack gap={7} align="center" wrap>
@@ -66,13 +81,17 @@ export function DuplicateWarning({ matches, mustConfirm, onOpenExisting }: Props
                   {m.age} · {m.gender}
                 </Text>
               </HStack>
-              
+
               <Text variant="caption" style={{ color: tone.text }}>
                 {m.reasons.join(" · ")}
               </Text>
             </VStack>
             {onOpenExisting ? (
-              <ChevronRight size={15} color={palette.text.tertiary} strokeWidth={2} />
+              <ChevronRight
+                size={15}
+                color={palette.text.tertiary}
+                strokeWidth={2}
+              />
             ) : null}
           </Pressable>
         ))}

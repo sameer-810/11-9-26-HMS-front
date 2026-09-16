@@ -67,15 +67,23 @@ export function Screen({
         wrap={!isWide}
         style={{ marginBottom: title || subtitle ? 16 : 0 }}
       >
-        { /* Shrinks on narrow screens so long subtitles wrap (WCAG 1.4.10). */ }
-        <VStack gap={2} flex={isWide ? 1 : undefined} style={isWide ? undefined : { flexShrink: 1, minWidth: 0 }}>
+        {/* Shrinks on narrow screens so long subtitles wrap (WCAG 1.4.10). */}
+        <VStack
+          gap={2}
+          flex={isWide ? 1 : undefined}
+          style={isWide ? undefined : { flexShrink: 1, minWidth: 0 }}
+        >
           {overline ? (
             <Text variant="overline" tone="tertiary">
               {overline}
             </Text>
           ) : null}
           {title ? (
-            <Text variant={isWide ? "display-sm" : "h1"} tone="primary" heading={1}>
+            <Text
+              variant={isWide ? "display-sm" : "h1"}
+              tone="primary"
+              heading={1}
+            >
               {title}
             </Text>
           ) : null}
@@ -135,10 +143,14 @@ export function Screen({
     // The main landmark wraps the band, banners and footer too.
     <View style={styles.root} testID={testID} role="main">
       {patient ? (
-        <PatientBanner patient={patient} right={patientRight} onPress={onPatientPress} />
+        <PatientBanner
+          patient={patient}
+          right={patientRight}
+          onPress={onPatientPress}
+        />
       ) : null}
       {banner}
-      { /* No KeyboardAvoidingView on web: the browser adjusts itself (avoids a double jump). */ }
+      {/* No KeyboardAvoidingView on web: the browser adjusts itself (avoids a double jump). */}
       {Platform.OS === "web" ? (
         body
       ) : (
@@ -150,7 +162,9 @@ export function Screen({
         </KeyboardAvoidingView>
       )}
       {footer ? (
-        <View style={[styles.footer, { paddingBottom: insets.bottom + 10 }]}>{footer}</View>
+        <View style={[styles.footer, { paddingBottom: insets.bottom + 10 }]}>
+          {footer}
+        </View>
       ) : null}
     </View>
   );

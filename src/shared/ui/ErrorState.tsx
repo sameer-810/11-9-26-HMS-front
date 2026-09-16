@@ -16,7 +16,13 @@ interface Props {
 }
 
 /** Error panel showing the server's own message, since different failures need different responses. */
-export function ErrorState({ error, title = "Couldn't load this", onRetry, retrying, style }: Props) {
+export function ErrorState({
+  error,
+  title = "Couldn't load this",
+  onRetry,
+  retrying,
+  style,
+}: Props) {
   return (
     <View style={[styles.wrap, style]} accessibilityRole="alert">
       <VStack gap={10} align="center">
@@ -24,7 +30,12 @@ export function ErrorState({ error, title = "Couldn't load this", onRetry, retry
         <Text variant="h3" tone="primary" center>
           {title}
         </Text>
-        <Text variant="body-sm" tone="secondary" center style={{ maxWidth: 420 }}>
+        <Text
+          variant="body-sm"
+          tone="secondary"
+          center
+          style={{ maxWidth: 420 }}
+        >
           {apiErrorMessage(error)}
         </Text>
         {onRetry ? (

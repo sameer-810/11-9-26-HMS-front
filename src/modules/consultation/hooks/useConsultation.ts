@@ -14,7 +14,8 @@ export const useClinicalContext = (patientId?: string) =>
     enabled: Boolean(patientId),
     // Always fresh: a stale allergy list here is a clinical risk.
     staleTime: 0,
-    retry: (count, err) => apiErrorCode(err) !== "RECORD_RESTRICTED" && count < 1,
+    retry: (count, err) =>
+      apiErrorCode(err) !== "RECORD_RESTRICTED" && count < 1,
   });
 
 export const useConsultation = (id?: string) =>
@@ -71,8 +72,10 @@ export const useAddAddendum = (id: string) => {
 };
 
 export const useMyDrafts = () =>
-  useQuery({ queryKey: ["consultation-drafts"], queryFn: consultationApi.myDrafts });
-
+  useQuery({
+    queryKey: ["consultation-drafts"],
+    queryFn: consultationApi.myDrafts,
+  });
 
 // ---- Prescribing ------------------------------------------------------------
 export const useMedicineSearch = (search: string) =>
@@ -84,10 +87,16 @@ export const useMedicineSearch = (search: string) =>
   });
 
 /** Live prescribing safety check; a mutation so it runs on line changes, not renders. */
-export const useSafetyCheck = () => useMutation({ mutationFn: ({ patientId, lines }: {
-  patientId: string;
-  lines: { id: string; medicineId: string }[];
-}) => prescriptionApi.check(patientId, lines) });
+export const useSafetyCheck = () =>
+  useMutation({
+    mutationFn: ({
+      patientId,
+      lines,
+    }: {
+      patientId: string;
+      lines: { id: string; medicineId: string }[];
+    }) => prescriptionApi.check(patientId, lines),
+  });
 
 export const useCreatePrescription = () => {
   const qc = useQueryClient();
@@ -101,12 +110,14 @@ export const useCreatePrescription = () => {
   });
 };
 
-export const usePrescriptions = (params?: { patientId?: string; status?: string }) =>
+export const usePrescriptions = (params?: {
+  patientId?: string;
+  status?: string;
+}) =>
   useQuery({
     queryKey: ["prescriptions", params],
     queryFn: () => prescriptionApi.list(params),
   });
-
 
 // ---- The record -------------------------------------------------------------
 export const useMedicalRecord = (patientId?: string) =>
@@ -115,19 +126,28 @@ export const useMedicalRecord = (patientId?: string) =>
     queryFn: () => recordApi.forPatient(patientId!),
     enabled: Boolean(patientId),
     // Do not retry a restriction refusal; it only delays the break-glass prompt.
-    retry: (count, err) => apiErrorCode(err) !== "RECORD_RESTRICTED" && count < 1,
+    retry: (count, err) =>
+      apiErrorCode(err) !== "RECORD_RESTRICTED" && count < 1,
   });
 
 /** On success both chart reads are refetched, so the record opens under the new grant. */
 export const useBreakGlass = (patientId: string) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: { category: string; reason: string }) => recordApi.breakGlass(patientId, body),
+    mutationFn: (body: { category: string; reason: string }) =>
+      recordApi.breakGlass(patientId, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["medical-record", patientId] });
       qc.invalidateQueries({ queryKey: ["clinical-context", patientId] });
       // Ward queries are keyed by admission, not patient, so reload them all.
-      for (const key of ["bedside", "observations", "nursing-notes", "drug-round", "handovers", "admission"]) {
+      for (const key of [
+        "bedside",
+        "observations",
+        "nursing-notes",
+        "drug-round",
+        "handovers",
+        "admission",
+      ]) {
         qc.invalidateQueries({ queryKey: [key] });
       }
     },

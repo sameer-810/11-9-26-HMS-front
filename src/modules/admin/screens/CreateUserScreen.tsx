@@ -124,7 +124,9 @@ export default function CreateUserScreen() {
             <Button
               label="Open their account"
               fullWidth={false}
-              onPress={() => navigation.replace("UserDetail", { userId: issued.user.id })}
+              onPress={() =>
+                navigation.replace("UserDetail", { userId: issued.user.id })
+              }
               testID="user-created-open"
             />
             <Button
@@ -149,7 +151,11 @@ export default function CreateUserScreen() {
 
   const departmentOptions = [
     { value: "", label: "No department" },
-    ...departments.map((d) => ({ value: d.id, label: d.name, sublabel: d.code })),
+    ...departments.map((d) => ({
+      value: d.id,
+      label: d.name,
+      sublabel: d.code,
+    })),
   ];
 
   return (
@@ -172,7 +178,13 @@ export default function CreateUserScreen() {
       <VStack gap={14} style={{ maxWidth: 760 }}>
         {create.isError ? (
           <View testID="user-create-error">
-            <Banner tone="danger" message={apiErrorMessage(create.error, "Could not create the account")} />
+            <Banner
+              tone="danger"
+              message={apiErrorMessage(
+                create.error,
+                "Could not create the account",
+              )}
+            />
           </View>
         ) : null}
 
@@ -213,7 +225,12 @@ export default function CreateUserScreen() {
                 />
               </View>
               <View style={{ flex: 1, minWidth: 200 }}>
-                <ControlledTextField control={control} name="lastName" label="Last name" testID="user-lastName" />
+                <ControlledTextField
+                  control={control}
+                  name="lastName"
+                  label="Last name"
+                  testID="user-lastName"
+                />
               </View>
             </HStack>
             <HStack gap={12} wrap>
@@ -285,7 +302,11 @@ export default function CreateUserScreen() {
               </View>
             </HStack>
             {role ? (
-              <Text variant="caption" tone="tertiary" testID="user-role-summary">
+              <Text
+                variant="caption"
+                tone="tertiary"
+                testID="user-role-summary"
+              >
                 {ROLE_SUMMARIES[role as Role]}
               </Text>
             ) : null}

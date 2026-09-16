@@ -32,7 +32,10 @@ export const authApi = {
    * Hospitals these credentials open, for the picker.
    * The server needs the password so an email alone cannot reveal where someone works.
    */
-  hospitalsForEmail: async (params: { identifier: string; password: string }) => {
+  hospitalsForEmail: async (params: {
+    identifier: string;
+    password: string;
+  }) => {
     const res = await apiClient.post<{ data: { hospitals: HospitalChoice[] } }>(
       "/auth/hospitals",
       params,
@@ -41,7 +44,11 @@ export const authApi = {
   },
 
   /** `identifier` is an email address or an employee ID. */
-  login: async (params: { identifier: string; password: string; hospitalId?: string }) => {
+  login: async (params: {
+    identifier: string;
+    password: string;
+    hospitalId?: string;
+  }) => {
     const res = await apiClient.post<{ data: LoginResult }>("/auth/login", {
       ...params,
       deviceId: await getDeviceId(),
@@ -64,13 +71,16 @@ export const authApi = {
   },
 
   me: async () => {
-    const res = await apiClient.get<{ data: { user: AuthUser; hospital: Hospital } }>(
-      "/auth/me",
-    );
+    const res = await apiClient.get<{
+      data: { user: AuthUser; hospital: Hospital };
+    }>("/auth/me");
     return res.data.data;
   },
 
-  changePassword: async (params: { currentPassword: string; newPassword: string }) => {
+  changePassword: async (params: {
+    currentPassword: string;
+    newPassword: string;
+  }) => {
     const res = await apiClient.post<{
       data: { message: string; accessToken?: string; refreshToken?: string };
     }>("/auth/change-password", {
@@ -102,7 +112,9 @@ export const authApi = {
   },
 
   listSessions: async () => {
-    const res = await apiClient.get<{ data: SessionSummary[] }>("/auth/sessions");
+    const res = await apiClient.get<{ data: SessionSummary[] }>(
+      "/auth/sessions",
+    );
     return res.data.data;
   },
 

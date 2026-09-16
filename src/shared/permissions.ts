@@ -105,7 +105,8 @@ export const PERMISSION_META: Record<
   [PERMISSIONS.PATIENTS_VIEW]: {
     label: "Search patients",
     group: "Front office",
-    description: "Find patients and see name, age, contact and visit history. No clinical detail.",
+    description:
+      "Find patients and see name, age, contact and visit history. No clinical detail.",
   },
   [PERMISSIONS.PATIENTS_MANAGE]: {
     label: "Register and edit patients",
@@ -125,7 +126,8 @@ export const PERMISSION_META: Record<
   [PERMISSIONS.OPD_QUEUE_MANAGE]: {
     label: "Manage the OPD queue",
     group: "Front office",
-    description: "Mark patients arrived and move them through the waiting queue.",
+    description:
+      "Mark patients arrived and move them through the waiting queue.",
   },
 
   [PERMISSIONS.RECORD_VIEW]: {
@@ -139,7 +141,8 @@ export const PERMISSION_META: Record<
     label: "Record consultations",
     group: "Clinical",
     clinical: true,
-    description: "Record symptoms, examination and diagnosis. Saved consultations cannot be edited.",
+    description:
+      "Record symptoms, examination and diagnosis. Saved consultations cannot be edited.",
   },
   [PERMISSIONS.PRESCRIPTION_CREATE]: {
     label: "Prescribe medicine",
@@ -157,13 +160,15 @@ export const PERMISSION_META: Record<
     label: "Admit and transfer patients",
     group: "Clinical",
     clinical: true,
-    description: "Admit a patient to a ward and bed, and move them between beds.",
+    description:
+      "Admit a patient to a ward and bed, and move them between beds.",
   },
   [PERMISSIONS.DISCHARGE_MANAGE]: {
     label: "Discharge patients",
     group: "Clinical",
     clinical: true,
-    description: "Complete a discharge with summary, medication and follow-up. Frees the bed.",
+    description:
+      "Complete a discharge with summary, medication and follow-up. Frees the bed.",
   },
   [PERMISSIONS.ICU_ACCESS]: {
     label: "ICU workspace",
@@ -176,19 +181,22 @@ export const PERMISSION_META: Record<
   [PERMISSIONS.NURSING_PATIENTS_VIEW]: {
     label: "See assigned patients",
     group: "Nursing",
-    description: "See the patients assigned to this nurse for the current shift.",
+    description:
+      "See the patients assigned to this nurse for the current shift.",
   },
   [PERMISSIONS.VITALS_RECORD]: {
     label: "Record vital signs",
     group: "Nursing",
     clinical: true,
-    description: "Chart vitals. Out-of-range readings are flagged to the treating doctor.",
+    description:
+      "Chart vitals. Out-of-range readings are flagged to the treating doctor.",
   },
   [PERMISSIONS.NURSING_NOTES_MANAGE]: {
     label: "Write nursing notes",
     group: "Nursing",
     clinical: true,
-    description: "Add care observations. Notes are appended, never overwritten.",
+    description:
+      "Add care observations. Notes are appended, never overwritten.",
   },
   [PERMISSIONS.MEDICATION_ADMINISTER]: {
     label: "Record medication given",
@@ -205,7 +213,8 @@ export const PERMISSION_META: Record<
   [PERMISSIONS.BEDS_VIEW]: {
     label: "View bed status",
     group: "Wards",
-    description: "See which beds are free, occupied, reserved or out of service.",
+    description:
+      "See which beds are free, occupied, reserved or out of service.",
   },
   [PERMISSIONS.BEDS_MANAGE]: {
     label: "Configure beds",
@@ -228,7 +237,8 @@ export const PERMISSION_META: Record<
     label: "Enter results",
     group: "Laboratory",
     clinical: true,
-    description: "Move tests through their stages and enter results. A reported result is final.",
+    description:
+      "Move tests through their stages and enter results. A reported result is final.",
   },
   [PERMISSIONS.LAB_REPORTS_VIEW]: {
     label: "View lab reports",
@@ -246,7 +256,8 @@ export const PERMISSION_META: Record<
     label: "Dispense medicine",
     group: "Pharmacy",
     clinical: true,
-    description: "Dispense against batch and expiry. Deducts stock and posts the charge.",
+    description:
+      "Dispense against batch and expiry. Deducts stock and posts the charge.",
   },
   [PERMISSIONS.PHARMACY_STOCK_VIEW]: {
     label: "View medicine stock",
@@ -284,7 +295,8 @@ export const PERMISSION_META: Record<
   [PERMISSIONS.REPORTS_VIEW]: {
     label: "View reports",
     group: "Oversight",
-    description: "Run activity reports for the areas this user can already see.",
+    description:
+      "Run activity reports for the areas this user can already see.",
   },
   [PERMISSIONS.AUDIT_VIEW]: {
     label: "View the audit trail",

@@ -38,7 +38,8 @@ export function Avatar({ name, uri, size = 36 }: Props) {
   }
 
   let hash = 0;
-  for (let i = 0; i < name.length; i += 1) hash = (hash * 31 + name.charCodeAt(i)) % 1000;
+  for (let i = 0; i < name.length; i += 1)
+    hash = (hash * 31 + name.charCodeAt(i)) % 1000;
   const tint = TINTS[hash % TINTS.length];
 
   return (
@@ -46,10 +47,20 @@ export function Avatar({ name, uri, size = 36 }: Props) {
       accessibilityLabel={name}
       style={[
         styles.wrap,
-        { width: size, height: size, borderRadius: radius.full, backgroundColor: tint },
+        {
+          width: size,
+          height: size,
+          borderRadius: radius.full,
+          backgroundColor: tint,
+        },
       ]}
     >
-      <Text variant="label" weight="600" tone="secondary" style={{ fontSize: size * 0.38 }}>
+      <Text
+        variant="label"
+        weight="600"
+        tone="secondary"
+        style={{ fontSize: size * 0.38 }}
+      >
         {initials || "?"}
       </Text>
     </View>

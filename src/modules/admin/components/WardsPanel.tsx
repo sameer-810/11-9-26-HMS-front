@@ -1,6 +1,11 @@
 import React, { useMemo, useState } from "react";
 import { View, StyleSheet } from "react-native";
-import { BedDouble, ChevronDown, ChevronRight, Plus } from "lucide-react-native";
+import {
+  BedDouble,
+  ChevronDown,
+  ChevronRight,
+  Plus,
+} from "lucide-react-native";
 
 import { bedState, palette, radius } from "@shared/designSystem";
 import {
@@ -47,36 +52,51 @@ import {
 
 const CODE = /^[A-Z0-9-]{2,10}$/;
 
-const WARD_TYPE_OPTIONS = (Object.keys(WARD_TYPE_LABELS) as WardType[]).map((t) => ({
-  value: t,
-  label: WARD_TYPE_LABELS[t],
-  sublabel: t === "icu" || t === "hdu" ? "Appears in the ICU workspace" : undefined,
-}));
-const GENDER_OPTIONS = (Object.keys(WARD_GENDER_LABELS) as WardGender[]).map((g) => ({
-  value: g,
-  label: WARD_GENDER_LABELS[g],
-}));
-const ROOM_TYPE_OPTIONS = (Object.keys(ROOM_TYPE_LABELS) as RoomType[]).map((t) => ({
-  value: t,
-  label: ROOM_TYPE_LABELS[t],
-}));
+const WARD_TYPE_OPTIONS = (Object.keys(WARD_TYPE_LABELS) as WardType[]).map(
+  (t) => ({
+    value: t,
+    label: WARD_TYPE_LABELS[t],
+    sublabel:
+      t === "icu" || t === "hdu" ? "Appears in the ICU workspace" : undefined,
+  }),
+);
+const GENDER_OPTIONS = (Object.keys(WARD_GENDER_LABELS) as WardGender[]).map(
+  (g) => ({
+    value: g,
+    label: WARD_GENDER_LABELS[g],
+  }),
+);
+const ROOM_TYPE_OPTIONS = (Object.keys(ROOM_TYPE_LABELS) as RoomType[]).map(
+  (t) => ({
+    value: t,
+    label: ROOM_TYPE_LABELS[t],
+  }),
+);
 
 /** "" means "not given", which the API reads as the model default. */
 function parseCharge(v: string): { value?: number; error?: string } {
   if (v.trim() === "") return {};
   const n = Number(v);
-  if (!Number.isFinite(n) || n < 0 || n > 1_000_000) return { error: "Between 0 and 10,00,000" };
+  if (!Number.isFinite(n) || n < 0 || n > 1_000_000)
+    return { error: "Between 0 and 10,00,000" };
   return { value: n };
 }
 
-const natural = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true });
+const natural = (a: string, b: string) =>
+  a.localeCompare(b, undefined, { numeric: true });
 
 /**
  * Ward -> room -> bed setup, in that order (a bed's ward comes from its room).
  * Beds are bulk-created by range; existing numbers are skipped.
  */
 export function WardsPanel() {
-  const { data: wards = [], isLoading, isError, error, refetch } = useAdminWards();
+  const {
+    data: wards = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useAdminWards();
   const setActive = useSetWardActive();
   const [creating, setCreating] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
@@ -91,8 +111,13 @@ export function WardsPanel() {
       { id: w.id, active },
       {
         onSuccess: () =>
-          setNotice(active ? `${w.name} is active again.` : `${w.name} is deactivated and its beds leave the board.`),
-        onError: (e) => setFailure(apiErrorMessage(e, `Could not change ${w.name}`)),
+          setNotice(
+            active
+              ? `${w.name} is active again.`
+              : `${w.name} is deactivated and its beds leave the board.`,
+          ),
+        onError: (e) =>
+          setFailure(apiErrorMessage(e, `Could not change ${w.name}`)),
         onSettled: () => setConfirm(null),
       },
     );
@@ -102,7 +127,8 @@ export function WardsPanel() {
     <VStack gap={12} testID="wards-panel">
       <HStack gap={8} align="center" justify="space-between" wrap>
         <Text variant="body-sm" tone="tertiary">
-          {wards.length} ward{wards.length === 1 ? "" : "s"}. Open one to add rooms and beds.
+          {wards.length} ward{wards.length === 1 ? "" : "s"}. Open one to add
+          rooms and beds.
         </Text>
         {!creating ? (
           <Button
@@ -121,7 +147,11 @@ export function WardsPanel() {
 
       {failure ? (
         <View testID="ward-error">
-          <Banner tone="danger" message={failure} onDismiss={() => setFailure(null)} />
+          <Banner
+            tone="danger"
+            message={failure}
+            onDismiss={() => setFailure(null)}
+          />
         </View>
       ) : null}
       {notice ? (
@@ -136,7 +166,9 @@ export function WardsPanel() {
           onDone={(w) => {
             setCreating(false);
             setOpen(w.id);
-            setNotice(`Ward "${w.name}" (${w.code}) added. Add its rooms below.`);
+            setNotice(
+              `Ward "${w.name}" (${w.code}) added. Add its rooms below.`,
+            );
           }}
         />
       ) : null}
@@ -149,7 +181,11 @@ export function WardsPanel() {
       ) : isError ? (
         <ErrorState error={error} onRetry={refetch} />
       ) : wards.length === 0 ? (
-        <EmptyState icon={BedDouble} title="No wards yet" message="Add a ward, then its rooms, then the beds in each room." />
+        <EmptyState
+          icon={BedDouble}
+          title="No wards yet"
+          message="Add a ward, then its rooms, then the beds in each room."
+        />
       ) : (
         <VStack gap={8}>
           {wards.map((w) => {
@@ -164,12 +200,17 @@ export function WardsPanel() {
                         <Text variant="caption" tone="tertiary">
                           {w.code}
                         </Text>
-                        <StatusChip status={w.isActive ? "active" : "inactive"} size="sm" />
+                        <StatusChip
+                          status={w.isActive ? "active" : "inactive"}
+                          size="sm"
+                        />
                       </HStack>
                       <Text variant="body-sm" tone="secondary">
-                        {WARD_TYPE_LABELS[w.type]} · {WARD_GENDER_LABELS[w.gender]}
+                        {WARD_TYPE_LABELS[w.type]} ·{" "}
+                        {WARD_GENDER_LABELS[w.gender]}
                         {w.floor ? ` · floor ${w.floor}` : ""}
-                        {w.department ? ` · ${w.department.name}` : ""} · {formatRupees(w.dailyCharge)} a day
+                        {w.department ? ` · ${w.department.name}` : ""} ·{" "}
+                        {formatRupees(w.dailyCharge)} a day
                       </Text>
                     </VStack>
                     <HStack gap={6}>
@@ -178,7 +219,13 @@ export function WardsPanel() {
                         size="xs"
                         variant="secondary"
                         fullWidth={false}
-                        icon={isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                        icon={
+                          isOpen ? (
+                            <ChevronDown size={14} />
+                          ) : (
+                            <ChevronRight size={14} />
+                          )
+                        }
                         onPress={() => setOpen(isOpen ? null : w.id)}
                         testID={`ward-open-${w.code}`}
                       />
@@ -197,7 +244,10 @@ export function WardsPanel() {
                           size="xs"
                           variant="ghost"
                           fullWidth={false}
-                          loading={setActive.isPending && setActive.variables?.id === w.id}
+                          loading={
+                            setActive.isPending &&
+                            setActive.variables?.id === w.id
+                          }
                           onPress={() => toggleActive(w, true)}
                           testID={`ward-activate-${w.code}`}
                         />
@@ -226,7 +276,13 @@ export function WardsPanel() {
   );
 }
 
-function WardCreateForm({ onDone, onCancel }: { onDone: (w: Ward) => void; onCancel: () => void }) {
+function WardCreateForm({
+  onDone,
+  onCancel,
+}: {
+  onDone: (w: Ward) => void;
+  onCancel: () => void;
+}) {
   const create = useCreateWard();
   const { data: departments = [] } = useDepartments();
   const [name, setName] = useState("");
@@ -241,7 +297,9 @@ function WardCreateForm({ onDone, onCancel }: { onDone: (w: Ward) => void; onCan
   const parsed = parseCharge(charge);
   const errors = {
     name: name.trim().length < 2 ? "At least 2 characters" : undefined,
-    code: !CODE.test(code.trim()) ? "2–10 letters, digits or hyphens" : undefined,
+    code: !CODE.test(code.trim())
+      ? "2–10 letters, digits or hyphens"
+      : undefined,
     floor: floor.trim().length > 20 ? "At most 20 characters" : undefined,
     charge: parsed.error,
   };
@@ -270,11 +328,22 @@ function WardCreateForm({ onDone, onCancel }: { onDone: (w: Ward) => void; onCan
       <VStack gap={12}>
         {create.isError ? (
           <View testID="ward-create-error">
-            <Banner tone="danger" message={apiErrorMessage(create.error, "Could not add the ward")} />
+            <Banner
+              tone="danger"
+              message={apiErrorMessage(create.error, "Could not add the ward")}
+            />
           </View>
         ) : null}
         <HStack gap={12} wrap>
-          <TextField label="Name" required value={name} onChangeText={setName} error={show(errors.name)} containerStyle={{ flex: 2, minWidth: 220 }} testID="ward-create-name" />
+          <TextField
+            label="Name"
+            required
+            value={name}
+            onChangeText={setName}
+            error={show(errors.name)}
+            containerStyle={{ flex: 2, minWidth: 220 }}
+            testID="ward-create-name"
+          />
           <TextField
             label="Code"
             required
@@ -289,7 +358,12 @@ function WardCreateForm({ onDone, onCancel }: { onDone: (w: Ward) => void; onCan
         </HStack>
         <HStack gap={12} wrap>
           <View style={{ flex: 1, minWidth: 200 }} testID="ward-create-type">
-            <Select label="Type" value={type} options={WARD_TYPE_OPTIONS} onChange={(v) => setType(v as WardType)} />
+            <Select
+              label="Type"
+              value={type}
+              options={WARD_TYPE_OPTIONS}
+              onChange={(v) => setType(v as WardType)}
+            />
           </View>
           <View style={{ flex: 1, minWidth: 200 }} testID="ward-create-gender">
             <Select
@@ -302,15 +376,32 @@ function WardCreateForm({ onDone, onCancel }: { onDone: (w: Ward) => void; onCan
           </View>
         </HStack>
         <HStack gap={12} wrap>
-          <View style={{ flex: 2, minWidth: 220 }} testID="ward-create-department">
+          <View
+            style={{ flex: 2, minWidth: 220 }}
+            testID="ward-create-department"
+          >
             <Select
               label="Department"
               value={departmentId}
-              options={[{ value: "", label: "No department" }, ...departments.map((d) => ({ value: d.id, label: d.name, sublabel: d.code }))]}
+              options={[
+                { value: "", label: "No department" },
+                ...departments.map((d) => ({
+                  value: d.id,
+                  label: d.name,
+                  sublabel: d.code,
+                })),
+              ]}
               onChange={setDepartmentId}
             />
           </View>
-          <TextField label="Floor" value={floor} onChangeText={setFloor} error={show(errors.floor)} containerStyle={{ flex: 1, minWidth: 120 }} testID="ward-create-floor" />
+          <TextField
+            label="Floor"
+            value={floor}
+            onChangeText={setFloor}
+            error={show(errors.floor)}
+            containerStyle={{ flex: 1, minWidth: 120 }}
+            testID="ward-create-floor"
+          />
           <TextField
             label="Daily charge"
             numericField
@@ -323,8 +414,20 @@ function WardCreateForm({ onDone, onCancel }: { onDone: (w: Ward) => void; onCan
           />
         </HStack>
         <HStack gap={8} wrap>
-          <Button label="Add ward" fullWidth={false} loading={create.isPending} onPress={submit} testID="ward-create-submit" />
-          <Button label="Cancel" variant="ghost" fullWidth={false} onPress={onCancel} testID="ward-create-cancel" />
+          <Button
+            label="Add ward"
+            fullWidth={false}
+            loading={create.isPending}
+            onPress={submit}
+            testID="ward-create-submit"
+          />
+          <Button
+            label="Cancel"
+            variant="ghost"
+            fullWidth={false}
+            onPress={onCancel}
+            testID="ward-create-cancel"
+          />
         </HStack>
       </VStack>
     </Card>
@@ -342,11 +445,14 @@ function WardEstate({ ward }: { ward: Ward }) {
       const key = b.room?.id ?? "";
       map.set(key, [...(map.get(key) ?? []), b]);
     }
-    for (const list of map.values()) list.sort((a, b) => natural(a.number, b.number));
+    for (const list of map.values())
+      list.sort((a, b) => natural(a.number, b.number));
     return map;
   }, [beds.data]);
 
-  const roomList = [...(rooms.data ?? [])].sort((a, b) => natural(a.number, b.number));
+  const roomList = [...(rooms.data ?? [])].sort((a, b) =>
+    natural(a.number, b.number),
+  );
 
   return (
     <VStack gap={10} style={styles.estate} testID={`ward-estate-${ward.code}`}>
@@ -366,7 +472,9 @@ function WardEstate({ ward }: { ward: Ward }) {
             room={room}
             beds={bedsByRoom.get(room.id) ?? []}
             adding={addingTo === room.id}
-            onToggleAdding={() => setAddingTo(addingTo === room.id ? null : room.id)}
+            onToggleAdding={() =>
+              setAddingTo(addingTo === room.id ? null : room.id)
+            }
           />
         ))
       )}
@@ -389,13 +497,20 @@ function RoomBlock({
   onToggleAdding: () => void;
 }) {
   return (
-    <VStack gap={8} style={styles.room} testID={`room-row-${ward.code}-${room.number}`}>
+    <VStack
+      gap={8}
+      style={styles.room}
+      testID={`room-row-${ward.code}-${room.number}`}
+    >
       <HStack gap={8} align="center" wrap>
         <VStack gap={1} style={{ flex: 1, minWidth: 180 }}>
           <Text variant="label">Room {room.number}</Text>
           <Text variant="caption" tone="tertiary">
-            {ROOM_TYPE_LABELS[room.type]} · {beds.length} bed{beds.length === 1 ? "" : "s"}
-            {room.dailyCharge ? ` · ${formatRupees(room.dailyCharge)} a day` : ""}
+            {ROOM_TYPE_LABELS[room.type]} · {beds.length} bed
+            {beds.length === 1 ? "" : "s"}
+            {room.dailyCharge
+              ? ` · ${formatRupees(room.dailyCharge)} a day`
+              : ""}
           </Text>
         </VStack>
         <Button
@@ -411,14 +526,21 @@ function RoomBlock({
         <HStack gap={6} wrap>
           {beds.map((b) => {
             const s = bedState[b.status];
-            const kit = [b.features.oxygen && "O₂", b.features.ventilator && "vent", b.features.monitor && "mon"]
+            const kit = [
+              b.features.oxygen && "O₂",
+              b.features.ventilator && "vent",
+              b.features.monitor && "mon",
+            ]
               .filter(Boolean)
               .join(" ");
             return (
               <View
                 key={b.id}
                 accessibilityLabel={`Bed ${b.number}, ${s.label}`}
-                style={[styles.bedChip, { backgroundColor: s.bg, borderColor: s.border }]}
+                style={[
+                  styles.bedChip,
+                  { backgroundColor: s.bg, borderColor: s.border },
+                ]}
                 testID={`config-bed-${ward.code}-${b.number}`}
               >
                 <Text variant="label-sm" style={{ color: s.color }} tabular>
@@ -446,25 +568,44 @@ function RoomCreateForm({ ward }: { ward: Ward }) {
   const [charge, setCharge] = useState("");
   const [added, setAdded] = useState<string | null>(null);
   const parsed = parseCharge(charge);
-  const ready = number.trim().length >= 1 && number.trim().length <= 20 && !parsed.error;
+  const ready =
+    number.trim().length >= 1 && number.trim().length <= 20 && !parsed.error;
 
   return (
     <VStack gap={8} style={styles.subform} testID={`room-create-${ward.code}`}>
       <Text variant="label">Add a room to {ward.name}</Text>
       {create.isError ? (
         <View testID="room-create-error">
-          <Banner tone="danger" message={apiErrorMessage(create.error, "Could not add the room")} />
+          <Banner
+            tone="danger"
+            message={apiErrorMessage(create.error, "Could not add the room")}
+          />
         </View>
       ) : null}
       {added ? (
         <View testID="room-create-notice">
-          <Banner tone="success" message={`Room ${added} added. Use "Add beds" on it next.`} />
+          <Banner
+            tone="success"
+            message={`Room ${added} added. Use "Add beds" on it next.`}
+          />
         </View>
       ) : null}
       <HStack gap={8} wrap align="flex-start">
-        <TextField label="Room number" value={number} onChangeText={setNumber} maxLength={20} containerStyle={{ width: 140 }} testID="room-create-number" />
+        <TextField
+          label="Room number"
+          value={number}
+          onChangeText={setNumber}
+          maxLength={20}
+          containerStyle={{ width: 140 }}
+          testID="room-create-number"
+        />
         <View style={{ flex: 1, minWidth: 180 }} testID="room-create-type">
-          <Select label="Room type" value={type} options={ROOM_TYPE_OPTIONS} onChange={(v) => setType(v as RoomType)} />
+          <Select
+            label="Room type"
+            value={type}
+            options={ROOM_TYPE_OPTIONS}
+            onChange={(v) => setType(v as RoomType)}
+          />
         </View>
         <TextField
           label="Daily charge"
@@ -486,7 +627,12 @@ function RoomCreateForm({ ward }: { ward: Ward }) {
         onPress={() => {
           setAdded(null);
           create.mutate(
-            { wardId: ward.id, number: number.trim(), type, dailyCharge: parsed.value },
+            {
+              wardId: ward.id,
+              number: number.trim(),
+              type,
+              dailyCharge: parsed.value,
+            },
             {
               onSuccess: (room) => {
                 setAdded(room.number);
@@ -528,7 +674,12 @@ function BulkBedsForm({ room }: { room: Room }) {
             ? "Add at most 200 beds at a time"
             : undefined;
   const parsed = parseCharge(charge);
-  const ready = from.trim() !== "" && to.trim() !== "" && !rangeError && !parsed.error && prefix.trim().length <= 10;
+  const ready =
+    from.trim() !== "" &&
+    to.trim() !== "" &&
+    !rangeError &&
+    !parsed.error &&
+    prefix.trim().length <= 10;
   const p = prefix.trim();
 
   return (
@@ -536,7 +687,10 @@ function BulkBedsForm({ room }: { room: Room }) {
       <Text variant="label">Add beds to room {room.number}</Text>
       {bulk.isError ? (
         <View testID="beds-bulk-error">
-          <Banner tone="danger" message={apiErrorMessage(bulk.error, "Could not add the beds")} />
+          <Banner
+            tone="danger"
+            message={apiErrorMessage(bulk.error, "Could not add the beds")}
+          />
         </View>
       ) : null}
       {result ? (
@@ -548,9 +702,32 @@ function BulkBedsForm({ room }: { room: Room }) {
         </View>
       ) : null}
       <HStack gap={8} wrap align="flex-start">
-        <TextField label="Prefix" placeholder="B" value={prefix} onChangeText={setPrefix} maxLength={10} containerStyle={{ width: 110 }} testID="beds-bulk-prefix" />
-        <TextField label="From" numericField value={from} onChangeText={setFrom} containerStyle={{ width: 100 }} testID="beds-bulk-from" />
-        <TextField label="To" numericField value={to} onChangeText={setTo} error={rangeError} containerStyle={{ width: 160 }} testID="beds-bulk-to" />
+        <TextField
+          label="Prefix"
+          placeholder="B"
+          value={prefix}
+          onChangeText={setPrefix}
+          maxLength={10}
+          containerStyle={{ width: 110 }}
+          testID="beds-bulk-prefix"
+        />
+        <TextField
+          label="From"
+          numericField
+          value={from}
+          onChangeText={setFrom}
+          containerStyle={{ width: 100 }}
+          testID="beds-bulk-from"
+        />
+        <TextField
+          label="To"
+          numericField
+          value={to}
+          onChangeText={setTo}
+          error={rangeError}
+          containerStyle={{ width: 160 }}
+          testID="beds-bulk-to"
+        />
         <TextField
           label="Daily charge"
           numericField
@@ -564,15 +741,31 @@ function BulkBedsForm({ room }: { room: Room }) {
         />
       </HStack>
       <HStack gap={4} wrap>
-        <ToggleRow label="Oxygen" checked={oxygen} onChange={setOxygen} testID="beds-bulk-oxygen" />
-        <ToggleRow label="Ventilator" checked={ventilator} onChange={setVentilator} testID="beds-bulk-ventilator" />
-        <ToggleRow label="Monitor" checked={monitor} onChange={setMonitor} testID="beds-bulk-monitor" />
+        <ToggleRow
+          label="Oxygen"
+          checked={oxygen}
+          onChange={setOxygen}
+          testID="beds-bulk-oxygen"
+        />
+        <ToggleRow
+          label="Ventilator"
+          checked={ventilator}
+          onChange={setVentilator}
+          testID="beds-bulk-ventilator"
+        />
+        <ToggleRow
+          label="Monitor"
+          checked={monitor}
+          onChange={setMonitor}
+          testID="beds-bulk-monitor"
+        />
       </HStack>
       {ready ? (
         <Text variant="caption" tone="tertiary" testID="beds-bulk-preview">
           Creates {p}
           {f} to {p}
-          {t} — {t - f + 1} bed{t - f === 0 ? "" : "s"}. Numbers that already exist in this room are skipped.
+          {t} — {t - f + 1} bed{t - f === 0 ? "" : "s"}. Numbers that already
+          exist in this room are skipped.
         </Text>
       ) : null}
       <Button
@@ -604,7 +797,11 @@ function BulkBedsForm({ room }: { room: Room }) {
 }
 
 const styles = StyleSheet.create({
-  estate: { paddingTop: 10, borderTopWidth: 1, borderTopColor: palette.border.subtle },
+  estate: {
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: palette.border.subtle,
+  },
   room: {
     padding: 10,
     borderRadius: radius.md,
@@ -612,7 +809,11 @@ const styles = StyleSheet.create({
     borderColor: palette.border.subtle,
     backgroundColor: palette.surface.secondary,
   },
-  subform: { paddingTop: 10, borderTopWidth: 1, borderTopColor: palette.border.subtle },
+  subform: {
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: palette.border.subtle,
+  },
   bedChip: {
     minWidth: 44,
     paddingHorizontal: 8,

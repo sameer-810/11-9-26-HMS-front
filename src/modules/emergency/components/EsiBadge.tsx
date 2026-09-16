@@ -9,7 +9,13 @@ import { SignalBadge, Text } from "@shared/ui";
  * ESI 4 and 5 share the "normal" tier on purpose: both can safely wait, and a
  * board with five colours stops being read. 1–3 each get their own shape.
  */
-const LEVEL_SIGNAL: Record<number, SignalLevel> = { 1: "critical", 2: "urgent", 3: "caution", 4: "normal", 5: "normal" };
+const LEVEL_SIGNAL: Record<number, SignalLevel> = {
+  1: "critical",
+  2: "urgent",
+  3: "caution",
+  4: "normal",
+  5: "normal",
+};
 
 export const UNTRIAGED_LABEL = "Triage now";
 
@@ -33,8 +39,16 @@ export function EsiBadge({ level, label, size = "md", testID }: Props) {
         accessibilityLabel="Not yet triaged. Triage now."
         style={[styles.untriaged, size === "sm" ? styles.sm : styles.md]}
       >
-        <ClipboardList size={size === "sm" ? 12 : 14} color={palette.text.inverse} strokeWidth={2.2} />
-        <Text variant={size === "sm" ? "label-sm" : "label"} weight="600" style={{ color: palette.text.inverse }}>
+        <ClipboardList
+          size={size === "sm" ? 12 : 14}
+          color={palette.text.inverse}
+          strokeWidth={2.2}
+        />
+        <Text
+          variant={size === "sm" ? "label-sm" : "label"}
+          weight="600"
+          style={{ color: palette.text.inverse }}
+        >
           {UNTRIAGED_LABEL}
         </Text>
       </View>

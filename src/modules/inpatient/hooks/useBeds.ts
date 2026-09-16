@@ -18,7 +18,10 @@ export interface SelectableBed {
 
 const bedsApi = {
   selectable: async (params: { wardId?: string; gender?: string } = {}) => {
-    const res = await apiClient.get<{ data: SelectableBed[] }>("/beds/selectable", { params });
+    const res = await apiClient.get<{ data: SelectableBed[] }>(
+      "/beds/selectable",
+      { params },
+    );
     return res.data.data;
   },
   board: async () => {
@@ -26,24 +29,30 @@ const bedsApi = {
     return res.data.data;
   },
   wards: async () => {
-    const res = await apiClient.get<{ data: { id: string; name: string; code: string; type: string }[] }>(
-      "/beds/wards",
-      { params: { limit: 100 } },
-    );
+    const res = await apiClient.get<{
+      data: { id: string; name: string; code: string; type: string }[];
+    }>("/beds/wards", { params: { limit: 100 } });
     return res.data.data;
   },
 };
 
-export const useWards = () => useQuery({ queryKey: ["wards"], queryFn: bedsApi.wards });
+export const useWards = () =>
+  useQuery({ queryKey: ["wards"], queryFn: bedsApi.wards });
 
 export const useBedBoard = () =>
-  useQuery({ queryKey: ["bed-board"], queryFn: bedsApi.board, refetchInterval: 60_000 });
+  useQuery({
+    queryKey: ["bed-board"],
+    queryFn: bedsApi.board,
+    refetchInterval: 60_000,
+  });
 
 /**
  * Beds as Select options; unavailable beds are shown disabled with a reason rather than hidden.
  * `staleTime: 0` so a cached "available" does not let two admissions race for one bed.
  */
-export const useSelectableBeds = (params: { wardId?: string; gender?: string } = {}) => {
+export const useSelectableBeds = (
+  params: { wardId?: string; gender?: string } = {},
+) => {
   const query = useQuery({
     queryKey: ["selectable-beds", params],
     queryFn: () => bedsApi.selectable(params),

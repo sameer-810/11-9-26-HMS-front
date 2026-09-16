@@ -26,7 +26,11 @@ apiClient.interceptors.request.use(async (config) => {
   const pinned = config as RetryableConfig;
   if (pinned._userId === undefined) pinned._userId = signedInAs();
   else if (pinned._userId !== signedInAs()) {
-    throw new CanceledError("The signed-in user changed before this request was sent", undefined, config);
+    throw new CanceledError(
+      "The signed-in user changed before this request was sent",
+      undefined,
+      config,
+    );
   }
   // read from the store directly so this also works outside a component tree.
   const token = useAuthStore.getState().token;
@@ -49,14 +53,18 @@ apiClient.interceptors.response.use(
     if (!originalRequest) return Promise.reject(error);
 
     // never try to refresh the refresh call, and never loop.
-    if (originalRequest.url?.includes("/auth/refresh") || originalRequest._retry) {
+    if (
+      originalRequest.url?.includes("/auth/refresh") ||
+      originalRequest._retry
+    ) {
       return Promise.reject(error);
     }
 
     const { token, refreshToken } = useAuthStore.getState();
     if (!token && !refreshToken) return Promise.reject(error);
     // a different user is signed in now, so there is nothing to refresh for this request.
-    if (originalRequest._userId && originalRequest._userId !== signedInAs()) return Promise.reject(error);
+    if (originalRequest._userId && originalRequest._userId !== signedInAs())
+      return Promise.reject(error);
 
     if (error.response?.status === 401) {
       originalRequest._retry = true;
@@ -73,18 +81,21 @@ apiClient.interceptors.response.use(
 
 /** the server's machine-readable error code, when it sent one. */
 export function apiErrorCode(err: unknown): string | undefined {
-  return (err as { response?: { data?: { error?: { code?: string } } } })?.response?.data?.error
-    ?.code;
+  return (err as { response?: { data?: { error?: { code?: string } } } })
+    ?.response?.data?.error?.code;
 }
 
 /** the structured detail the server attached to a refusal, when it sent any. */
 export function apiErrorDetails<T>(err: unknown): T | undefined {
-  return (err as { response?: { data?: { error?: { details?: T } } } })?.response?.data?.error?.details;
+  return (err as { response?: { data?: { error?: { details?: T } } } })
+    ?.response?.data?.error?.details;
 }
 
 /** turns a Zod issue path into a readable field label. */
 function fieldLabel(path: (string | number)[]) {
-  const parts = path.filter((p) => p !== "body" && p !== "query" && p !== "params");
+  const parts = path.filter(
+    (p) => p !== "body" && p !== "query" && p !== "params",
+  );
   const idx = parts.findIndex((p) => typeof p === "number");
   const name = parts.filter((p) => typeof p === "string").pop();
   if (!name) return "";
@@ -96,7 +107,10 @@ function fieldLabel(path: (string | number)[]) {
 }
 
 /** one readable sentence out of any failure shape; validation issues name the fields at fault. */
-export function apiErrorMessage(err: unknown, fallback = "Something went wrong") {
+export function apiErrorMessage(
+  err: unknown,
+  fallback = "Something went wrong",
+) {
   const e = err as {
     code?: string;
     message?: string;
@@ -104,7 +118,9 @@ export function apiErrorMessage(err: unknown, fallback = "Something went wrong")
       data?: {
         error?: {
           message?: string;
-          details?: { issues?: { path: (string | number)[]; message: string }[] };
+          details?: {
+            issues?: { path: (string | number)[]; message: string }[];
+          };
         };
       };
     };
@@ -112,14 +128,16 @@ export function apiErrorMessage(err: unknown, fallback = "Something went wrong")
 
   // no response at all means the request never arrived.
   if (!e?.response) {
-    if (e?.code === "ECONNABORTED") return "That took too long. Check the connection and try again.";
+    if (e?.code === "ECONNABORTED")
+      return "That took too long. Check the connection and try again.";
     if (err instanceof Error && /Network/i.test(err.message)) {
       return "No connection to the hospital server.";
     }
   }
 
   const error = e?.response?.data?.error;
-  const plain = !error && err instanceof Error && err.message ? err.message : "";
+  const plain =
+    !error && err instanceof Error && err.message ? err.message : "";
   const message = error?.message || plain || fallback;
 
   const issues = error?.details?.issues;

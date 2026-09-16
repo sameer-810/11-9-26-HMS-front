@@ -32,12 +32,16 @@ export function CameraScanner({ onCode, onClose }: CameraScannerProps) {
         const { BrowserMultiFormatReader } = await import("@zxing/browser");
         if (cancelled || !videoRef.current) return;
         const reader = new BrowserMultiFormatReader();
-        controls = await reader.decodeFromVideoDevice(undefined, videoRef.current, (result) => {
-          if (!result || delivered) return;
-          delivered = true;
-          controls?.stop();
-          onCodeRef.current(result.getText());
-        });
+        controls = await reader.decodeFromVideoDevice(
+          undefined,
+          videoRef.current,
+          (result) => {
+            if (!result || delivered) return;
+            delivered = true;
+            controls?.stop();
+            onCodeRef.current(result.getText());
+          },
+        );
         if (cancelled) controls.stop();
       } catch (err) {
         if (cancelled) return;
@@ -64,13 +68,25 @@ export function CameraScanner({ onCode, onClose }: CameraScannerProps) {
         <Banner tone="warning" message={error} />
       ) : (
         <View style={styles.frame}>
-          <video ref={videoRef} muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <video
+            ref={videoRef}
+            muted
+            playsInline
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
         </View>
       )}
       <Text variant="caption" tone="tertiary">
         Hold the square code or the barcode inside the frame, flat and well lit.
       </Text>
-      <Button label="Stop camera" variant="secondary" size="sm" fullWidth={false} onPress={onClose} testID="scan-camera-stop" />
+      <Button
+        label="Stop camera"
+        variant="secondary"
+        size="sm"
+        fullWidth={false}
+        onPress={onClose}
+        testID="scan-camera-stop"
+      />
     </VStack>
   );
 }

@@ -5,7 +5,14 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
-import { palette, radius, shadows, outline, motion, layout } from "../designSystem";
+import {
+  palette,
+  radius,
+  shadows,
+  outline,
+  motion,
+  layout,
+} from "../designSystem";
 import { haptic, type FeedbackTone } from "../touchFeedback";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -64,8 +71,14 @@ export function Card({
     borderRadius: radius.lg,
     borderWidth: outline.width,
     borderColor: outline.color,
-    padding: padded ? (compact ? layout.cardPaddingCompact : layout.cardPadding) : 0,
-    ...(accentColor ? { borderLeftWidth: 3, borderLeftColor: accentColor } : {}),
+    padding: padded
+      ? compact
+        ? layout.cardPaddingCompact
+        : layout.cardPadding
+      : 0,
+    ...(accentColor
+      ? { borderLeftWidth: 3, borderLeftColor: accentColor }
+      : {}),
     ...ELEV[level],
   };
 

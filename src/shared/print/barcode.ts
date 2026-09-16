@@ -2,7 +2,6 @@ import * as bwipjs from "bwip-js";
 
 import { fitModule, mm, THERMAL_DPI } from "./sizing";
 
-
 /**
  * Barcodes as inline SVG sized in mm from the module count. SVG, not PNG: driver
  * resampling makes bar widths uneven, and each module must be whole thermal dots.
@@ -25,26 +24,36 @@ export const CODE128_QUIET_MODULES = 10;
 /** ISO/IEC 16022 asks for one module; two survive a slightly misaligned label. */
 export const DATAMATRIX_QUIET_MODULES = 2;
 
-
 // Module counts come from the drawn SVG: `bwipjs.raw()` needs a canvas outside Node.
 function viewBox(svg: string) {
   const match = /^<svg viewBox="0 0 (\d+(?:\.\d+)?) (\d+(?:\.\d+)?)"/.exec(svg);
   if (!match) throw new Error("Unexpected barcode SVG from bwip-js");
-  return { open: match[0], unitsWide: Number(match[1]), unitsHigh: Number(match[2]) };
+  return {
+    open: match[0],
+    unitsWide: Number(match[1]),
+    unitsHigh: Number(match[2]),
+  };
 }
 
 function wholeModules(units: number, perModule: number, what: string): number {
   const modules = units / perModule;
   // Non-whole modules mean padding or text crept in; fail rather than print wrong widths.
-  if (!Number.isFinite(modules) || Math.abs(modules - Math.round(modules)) > 1e-6) {
-    throw new Error(`Barcode SVG ${what} is ${units} units, not a whole number of ${perModule}-unit modules`);
+  if (
+    !Number.isFinite(modules) ||
+    Math.abs(modules - Math.round(modules)) > 1e-6
+  ) {
+    throw new Error(
+      `Barcode SVG ${what} is ${units} units, not a whole number of ${perModule}-unit modules`,
+    );
   }
   return Math.round(modules);
 }
 
 /** Narrowest stroke is one module; the stop pattern always contains one. */
 function code128UnitsPerModule(svg: string): number {
-  const widths = [...svg.matchAll(/stroke-width="(\d+(?:\.\d+)?)"/g)].map((m) => Number(m[1]));
+  const widths = [...svg.matchAll(/stroke-width="(\d+(?:\.\d+)?)"/g)].map((m) =>
+    Number(m[1]),
+  );
   if (widths.length === 0) throw new Error("Code 128 SVG has no bars");
   return Math.min(...widths);
 }
@@ -66,7 +75,13 @@ function matrixUnitsPerModule(svg: string): number {
  * Stamps physical size onto the SVG. Axes are sized independently (bar height is free);
  * crispEdges stops anti-aliased grey bar edges.
  */
-function sized(svg: string, open: string, widthMm: number, heightMm: number, label: string): string {
+function sized(
+  svg: string,
+  open: string,
+  widthMm: number,
+  heightMm: number,
+  label: string,
+): string {
   const { unitsWide, unitsHigh } = viewBox(svg);
   return svg.replace(
     open,
@@ -77,12 +92,35 @@ function sized(svg: string, open: string, widthMm: number, heightMm: number, lab
 /** Code 128 of `text`, for generic scanners and analysers. Human-readable text is the caller's. */
 export function code128(
   text: string,
-  { heightMm, availableMm, maxDots, dpi = THERMAL_DPI }: { heightMm: number; availableMm: number; maxDots: number; dpi?: number },
+  {
+    heightMm,
+    availableMm,
+    maxDots,
+    dpi = THERMAL_DPI,
+  }: { heightMm: number; availableMm: number; maxDots: number; dpi?: number },
 ): RenderedSymbol {
-  const svg = bwipjs.toSVG({ bcid: "code128", text, scale: 1, height: 10, includetext: false, paddingwidth: 0, paddingheight: 0 });
+  const svg = bwipjs.toSVG({
+    bcid: "code128",
+    text,
+    scale: 1,
+    height: 10,
+    includetext: false,
+    paddingwidth: 0,
+    paddingheight: 0,
+  });
   const box = viewBox(svg);
-  const modules = wholeModules(box.unitsWide, code128UnitsPerModule(svg), "width");
-  const fit = fitModule({ modules, quietModules: CODE128_QUIET_MODULES, availableMm, maxDots, dpi });
+  const modules = wholeModules(
+    box.unitsWide,
+    code128UnitsPerModule(svg),
+    "width",
+  );
+  const fit = fitModule({
+    modules,
+    quietModules: CODE128_QUIET_MODULES,
+    availableMm,
+    maxDots,
+    dpi,
+  });
   return {
     svg: sized(svg, box.open, fit.symbolMm, heightMm, "Code 128 barcode"),
     widthMm: fit.symbolMm,
@@ -100,15 +138,31 @@ export function code128(
  */
 export function dataMatrix(
   text: string,
-  { availableMm, maxDots, dpi = THERMAL_DPI }: { availableMm: number; maxDots: number; dpi?: number },
+  {
+    availableMm,
+    maxDots,
+    dpi = THERMAL_DPI,
+  }: { availableMm: number; maxDots: number; dpi?: number },
 ): RenderedSymbol {
-  const svg = bwipjs.toSVG({ bcid: "datamatrix", text, scale: 1, paddingwidth: 0, paddingheight: 0 });
+  const svg = bwipjs.toSVG({
+    bcid: "datamatrix",
+    text,
+    scale: 1,
+    paddingwidth: 0,
+    paddingheight: 0,
+  });
   const box = viewBox(svg);
   const perModule = matrixUnitsPerModule(svg);
   const modulesWide = wholeModules(box.unitsWide, perModule, "width");
   const modulesHigh = wholeModules(box.unitsHigh, perModule, "height");
   const modules = Math.max(modulesWide, modulesHigh);
-  const fit = fitModule({ modules, quietModules: DATAMATRIX_QUIET_MODULES, availableMm, maxDots, dpi });
+  const fit = fitModule({
+    modules,
+    quietModules: DATAMATRIX_QUIET_MODULES,
+    availableMm,
+    maxDots,
+    dpi,
+  });
   const widthMm = modulesWide * fit.moduleMm;
   const heightMm = modulesHigh * fit.moduleMm;
   return {

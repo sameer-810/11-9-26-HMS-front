@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from "@tanstack/react-query";
 import { adminApi } from "@modules/admin/api/adminApi";
 import { useBedBoard } from "@modules/inpatient/hooks/useBeds";
 import { useAuthStore } from "@shared/store/useAuthStore";
@@ -29,7 +34,6 @@ export const adminKeys = {
   wardBeds: (wardId?: string) => ["admin", "ward-beds", wardId] as const,
   allBeds: ["admin", "all-beds"] as const,
 };
-
 
 // ---- Users ------------------------------------------------------------------
 
@@ -99,7 +103,6 @@ export const useResetCredential = (id: string) => {
   });
 };
 
-
 // ---- Roles (US-04) ----------------------------------------------------------
 
 /** A role change can change every account in the role, so every account view refetches. */
@@ -109,13 +112,21 @@ function afterRoleChange(qc: QueryClient) {
   }
 }
 
-export const useRoles = () => useQuery({ queryKey: adminKeys.roles, queryFn: adminApi.roles.list });
+export const useRoles = () =>
+  useQuery({ queryKey: adminKeys.roles, queryFn: adminApi.roles.list });
 
 export const useSaveRole = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ role, permissions, applyToStaff }: { role: string; permissions: string[]; applyToStaff: boolean }) =>
-      adminApi.roles.update(role, { permissions, applyToStaff }),
+    mutationFn: ({
+      role,
+      permissions,
+      applyToStaff,
+    }: {
+      role: string;
+      permissions: string[];
+      applyToStaff: boolean;
+    }) => adminApi.roles.update(role, { permissions, applyToStaff }),
     onSuccess: () => afterRoleChange(qc),
     onError: () => qc.invalidateQueries({ queryKey: adminKeys.roles }),
   });
@@ -124,11 +135,16 @@ export const useSaveRole = () => {
 export const useResetRole = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ role, applyToStaff }: { role: string; applyToStaff: boolean }) => adminApi.roles.reset(role, applyToStaff),
+    mutationFn: ({
+      role,
+      applyToStaff,
+    }: {
+      role: string;
+      applyToStaff: boolean;
+    }) => adminApi.roles.reset(role, applyToStaff),
     onSuccess: () => afterRoleChange(qc),
   });
 };
-
 
 // ---- Hospital ---------------------------------------------------------------
 export const useHospitalProfile = () =>
@@ -143,7 +159,11 @@ export const useUpdateHospital = () => {
       // Header name and idle timeout read from the auth store; update it so both apply now.
       useAuthStore.setState((s) => ({
         hospital: s.hospital
-          ? { ...s.hospital, name: hospital.name, sessionIdleMinutes: hospital.sessionIdleMinutes }
+          ? {
+              ...s.hospital,
+              name: hospital.name,
+              sessionIdleMinutes: hospital.sessionIdleMinutes,
+            }
           : s.hospital,
       }));
       qc.invalidateQueries({ queryKey: ["me"] });
@@ -151,12 +171,15 @@ export const useUpdateHospital = () => {
   });
 };
 
-
 // ---- Departments ------------------------------------------------------------
 
 /** The admin list shows inactive departments too; the pickers do not. */
 function afterDepartmentChange(qc: QueryClient) {
-  for (const key of [["admin", "departments"], ["departments"], ["dashboard-summary"]]) {
+  for (const key of [
+    ["admin", "departments"],
+    ["departments"],
+    ["dashboard-summary"],
+  ]) {
     qc.invalidateQueries({ queryKey: key });
   }
 }
@@ -197,7 +220,6 @@ export const useSetDepartmentActive = () => {
   });
 };
 
-
 // ---- Wards, rooms, beds -----------------------------------------------------
 
 /** Bed estate changes also show in the bed picker, ward list, bed board and occupancy figure. */
@@ -216,7 +238,8 @@ function afterBedEstateChange(qc: QueryClient) {
   }
 }
 
-export const useAdminWards = () => useQuery({ queryKey: adminKeys.wards, queryFn: adminApi.wards.list });
+export const useAdminWards = () =>
+  useQuery({ queryKey: adminKeys.wards, queryFn: adminApi.wards.list });
 
 export const useCreateWard = () => {
   const qc = useQueryClient();
@@ -245,8 +268,12 @@ export const useRooms = (wardId?: string) =>
 export const useCreateRoom = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: { wardId: string; number: string; type?: RoomType; dailyCharge?: number }) =>
-      adminApi.rooms.create(body),
+    mutationFn: (body: {
+      wardId: string;
+      number: string;
+      type?: RoomType;
+      dailyCharge?: number;
+    }) => adminApi.rooms.create(body),
     onSuccess: () => afterBedEstateChange(qc),
   });
 };

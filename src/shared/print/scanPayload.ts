@@ -8,7 +8,9 @@ export const SCAN_PAYLOAD_VERSION = "HMS1";
 const IDENTIFIER = /^[A-Z0-9][A-Z0-9-]{1,39}$/;
 
 function checked(id: string): string {
-  const value = String(id ?? "").trim().toUpperCase();
+  const value = String(id ?? "")
+    .trim()
+    .toUpperCase();
   if (!IDENTIFIER.test(value)) {
     throw new Error(`"${id}" cannot be encoded on a label`);
   }

@@ -70,7 +70,12 @@ export interface BreakGlassGrant {
   expiresAt: string;
   active: boolean;
   viewCount: number;
-  review: { status: GrantStatus; reviewedByName: string; reviewedAt: string | null; note: string };
+  review: {
+    status: GrantStatus;
+    reviewedByName: string;
+    reviewedAt: string | null;
+    note: string;
+  };
 }
 
 export interface GrantListResponse {

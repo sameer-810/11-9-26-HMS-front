@@ -26,20 +26,27 @@ export const appointmentApi = {
     from?: string;
     to?: string;
   }) => {
-    const res = await apiClient.get<Paginated<Appointment>>("/appointments", { params });
+    const res = await apiClient.get<Paginated<Appointment>>("/appointments", {
+      params,
+    });
     return res.data;
   },
 
   get: async (id: string) => {
-    const res = await apiClient.get<{ data: Appointment }>(`/appointments/${id}`);
+    const res = await apiClient.get<{ data: Appointment }>(
+      `/appointments/${id}`,
+    );
     return res.data.data;
   },
 
   /** AP-01. `date` is a calendar date, never an instant. */
   availability: async (doctorId: string, date: string) => {
-    const res = await apiClient.get<{ data: Availability }>("/appointments/availability", {
-      params: { doctorId, date },
-    });
+    const res = await apiClient.get<{ data: Availability }>(
+      "/appointments/availability",
+      {
+        params: { doctorId, date },
+      },
+    );
     return res.data.data;
   },
 
@@ -53,7 +60,10 @@ export const appointmentApi = {
   },
 
   book: async (payload: BookAppointmentPayload) => {
-    const res = await apiClient.post<{ data: Appointment }>("/appointments", payload);
+    const res = await apiClient.post<{ data: Appointment }>(
+      "/appointments",
+      payload,
+    );
     return res.data.data;
   },
 
@@ -63,7 +73,10 @@ export const appointmentApi = {
     departmentId?: string;
     reason?: string;
   }) => {
-    const res = await apiClient.post<{ data: Appointment }>("/appointments/walk-in", payload);
+    const res = await apiClient.post<{ data: Appointment }>(
+      "/appointments/walk-in",
+      payload,
+    );
     return res.data.data;
   },
 
@@ -79,36 +92,55 @@ export const appointmentApi = {
   },
 
   cancel: async (id: string, reason?: string) => {
-    const res = await apiClient.post<{ data: Appointment }>(`/appointments/${id}/cancel`, {
-      reason,
-    });
+    const res = await apiClient.post<{ data: Appointment }>(
+      `/appointments/${id}/cancel`,
+      {
+        reason,
+      },
+    );
     return res.data.data;
   },
 
   markArrived: async (id: string) => {
-    const res = await apiClient.post<{ data: Appointment }>(`/appointments/${id}/arrived`);
+    const res = await apiClient.post<{ data: Appointment }>(
+      `/appointments/${id}/arrived`,
+    );
     return res.data.data;
   },
 
   markNoShow: async (id: string) => {
-    const res = await apiClient.post<{ data: Appointment }>(`/appointments/${id}/no-show`);
+    const res = await apiClient.post<{ data: Appointment }>(
+      `/appointments/${id}/no-show`,
+    );
     return res.data.data;
   },
 
-  queue: async (params?: { doctorId?: string; departmentId?: string; date?: string }) => {
-    const res = await apiClient.get<QueueResponse>("/appointments/queue", { params });
-    return res.data;
-  },
-
-  mySchedule: async (date?: string) => {
-    const res = await apiClient.get<QueueResponse>("/appointments/my-schedule", {
-      params: date ? { date } : undefined,
+  queue: async (params?: {
+    doctorId?: string;
+    departmentId?: string;
+    date?: string;
+  }) => {
+    const res = await apiClient.get<QueueResponse>("/appointments/queue", {
+      params,
     });
     return res.data;
   },
 
+  mySchedule: async (date?: string) => {
+    const res = await apiClient.get<QueueResponse>(
+      "/appointments/my-schedule",
+      {
+        params: date ? { date } : undefined,
+      },
+    );
+    return res.data;
+  },
+
   listRoster: async (params?: { doctorId?: string; dayOfWeek?: number }) => {
-    const res = await apiClient.get<{ data: RosterRow[] }>("/appointments/roster", { params });
+    const res = await apiClient.get<{ data: RosterRow[] }>(
+      "/appointments/roster",
+      { params },
+    );
     return res.data.data;
   },
 };

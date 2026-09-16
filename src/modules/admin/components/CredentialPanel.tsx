@@ -18,7 +18,13 @@ interface Props {
  * the one moment a temporary password is visible; selectable text as there is no
  * clipboard dependency, set large and monospaced for reading aloud.
  */
-export function CredentialPanel({ name, employeeId, email, password, kind }: Props) {
+export function CredentialPanel({
+  name,
+  employeeId,
+  email,
+  password,
+  kind,
+}: Props) {
   return (
     <VStack gap={12} testID="user-credential">
       <Banner
@@ -30,7 +36,9 @@ export function CredentialPanel({ name, employeeId, email, password, kind }: Pro
         <HStack gap={8} align="center">
           <KeyRound size={16} color={palette.clinical[700]} strokeWidth={2.2} />
           <Text variant="label" tone="secondary">
-            {kind === "created" ? "Temporary password" : "New temporary password"}
+            {kind === "created"
+              ? "Temporary password"
+              : "New temporary password"}
           </Text>
         </HStack>
         <Text
@@ -43,8 +51,9 @@ export function CredentialPanel({ name, employeeId, email, password, kind }: Pro
           {password}
         </Text>
         <Text variant="caption" tone="tertiary">
-          Select the text to copy it. {name} signs in with {email} (employee ID {employeeId}) and
-          must choose their own password before anything else opens.
+          Select the text to copy it. {name} signs in with {email} (employee ID{" "}
+          {employeeId}) and must choose their own password before anything else
+          opens.
         </Text>
       </View>
     </VStack>

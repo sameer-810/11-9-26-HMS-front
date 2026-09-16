@@ -21,28 +21,53 @@ export interface DashboardSummary {
       noShow: number;
     };
     /** US-05 "Admitted patients". */
-    inpatients?: { admitted: number; admittedToday: number; dischargedToday: number };
+    inpatients?: {
+      admitted: number;
+      admittedToday: number;
+      dischargedToday: number;
+    };
     /** US-23: allocated to this nurse by name or by ward. */
     myPatients?: { count: number };
     /** US-17: recommendations to admit still waiting for a bed. */
     admissionRequests?: { pending: number };
-    beds?: { available: number; occupied: number; total: number; occupancyPercent: number };
+    beds?: {
+      available: number;
+      occupied: number;
+      total: number;
+      occupancyPercent: number;
+    };
     staff?: { active: number; inactive: number; total: number };
     departments?: number;
     /** Pending tests, and critical results nobody has acknowledged yet. */
     lab?: { pending: number; criticalOpen: number };
     pharmacy?: { pendingPrescriptions: number };
-    inventory?: { lowStock: number; expiringSoon: number; expiredOnShelf: number };
-    billing?: { draftBills: number; outstandingBills: number; outstandingPaise: number; collectedTodayPaise: number };
+    inventory?: {
+      lowStock: number;
+      expiringSoon: number;
+      expiredOnShelf: number;
+    };
+    billing?: {
+      draftBills: number;
+      outstandingBills: number;
+      outstandingPaise: number;
+      collectedTodayPaise: number;
+    };
     /** Over target: triaged, not yet seen by a doctor, past the level's time. */
-    emergency?: { expected: number; waitingTriage: number; inDepartment: number; overTarget: number };
+    emergency?: {
+      expected: number;
+      waitingTriage: number;
+      inDepartment: number;
+      overTarget: number;
+    };
   };
   pending: string[];
 }
 
 export const dashboardApi = {
   summary: async () => {
-    const res = await apiClient.get<{ data: DashboardSummary }>("/dashboard/summary");
+    const res = await apiClient.get<{ data: DashboardSummary }>(
+      "/dashboard/summary",
+    );
     return res.data.data;
   },
 };

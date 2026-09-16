@@ -23,7 +23,15 @@ export function addCalendarDays(dateStr: string, days: number): string {
   ).padStart(2, "0")}`;
 }
 
-const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const DAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
 
 /** weekday of a calendar date, read from the parts rather than a parsed Date. */
 export function calendarDayName(dateStr: string): string {
@@ -33,20 +41,35 @@ export function calendarDayName(dateStr: string): string {
 }
 
 /** "Tue 15 Sep 2026", or "Today" / "Tomorrow" when that is more useful. */
-export function formatCalendarDate(dateStr: string, now: Date = new Date()): string {
+export function formatCalendarDate(
+  dateStr: string,
+  now: Date = new Date(),
+): string {
   const m = DATE_RE.exec(dateStr);
   if (!m) return dateStr;
 
   const today = todayCalendarDate(now);
   if (dateStr === today) return `Today, ${shortDate(dateStr)}`;
-  if (dateStr === addCalendarDays(today, 1)) return `Tomorrow, ${shortDate(dateStr)}`;
-  if (dateStr === addCalendarDays(today, -1)) return `Yesterday, ${shortDate(dateStr)}`;
+  if (dateStr === addCalendarDays(today, 1))
+    return `Tomorrow, ${shortDate(dateStr)}`;
+  if (dateStr === addCalendarDays(today, -1))
+    return `Yesterday, ${shortDate(dateStr)}`;
   return `${calendarDayName(dateStr).slice(0, 3)}, ${shortDate(dateStr)}`;
 }
 
 const MONTHS = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
 ];
 
 export function shortDate(dateStr: string): string {

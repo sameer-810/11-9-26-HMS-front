@@ -12,7 +12,13 @@ interface Props {
 }
 
 /** The "show more" at the foot of a progressively rendered list. See useProgressiveList. */
-export function ShowMoreButton({ hidden, pageSize, onPress, noun, testID }: Props) {
+export function ShowMoreButton({
+  hidden,
+  pageSize,
+  onPress,
+  noun,
+  testID,
+}: Props) {
   if (hidden <= 0) return null;
   return (
     <Button

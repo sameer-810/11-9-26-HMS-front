@@ -15,9 +15,15 @@ import {
 } from "@shared/ui";
 import { checkable } from "@shared/ui/a11y";
 import { apiErrorMessage } from "@api/apiClient";
-import { useLabTests, useOrderTests } from "@modules/laboratory/hooks/useLaboratory";
-import type { DuplicateOrder, LabTest, LabUrgency } from "@modules/laboratory/types";
-
+import {
+  useLabTests,
+  useOrderTests,
+} from "@modules/laboratory/hooks/useLaboratory";
+import type {
+  DuplicateOrder,
+  LabTest,
+  LabUrgency,
+} from "@modules/laboratory/types";
 
 /**
  * order tests from inside a patient's record or consultation.
@@ -37,7 +43,13 @@ interface Props {
   onOrdered?: (summary: string) => void;
 }
 
-export function OrderTestsPanel({ patientId, consultationId, admissionId, disabled, onOrdered }: Props) {
+export function OrderTestsPanel({
+  patientId,
+  consultationId,
+  admissionId,
+  disabled,
+  onOrdered,
+}: Props) {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<LabTest[]>([]);
   const [indication, setIndication] = useState("");
@@ -55,7 +67,9 @@ export function OrderTestsPanel({ patientId, consultationId, admissionId, disabl
       .filter(
         (t) =>
           !selected.some((s) => s.id === t.id) &&
-          (t.name.toLowerCase().includes(q) || t.code.toLowerCase().includes(q) || t.category.toLowerCase().includes(q)),
+          (t.name.toLowerCase().includes(q) ||
+            t.code.toLowerCase().includes(q) ||
+            t.category.toLowerCase().includes(q)),
       )
       .slice(0, 8);
   }, [catalogue, search, selected]);
@@ -80,11 +94,23 @@ export function OrderTestsPanel({ patientId, consultationId, admissionId, disabl
         urgency,
         acknowledgeDuplicates,
       });
-      onOrdered?.(`${result.orders.map((o) => o.test.name).join(", ")} (${result.groupNumber})`);
+      onOrdered?.(
+        `${result.orders.map((o) => o.test.name).join(", ")} (${result.groupNumber})`,
+      );
       reset();
     } catch (err) {
-      const data = (err as { response?: { data?: { error?: { code?: string; details?: { duplicates?: DuplicateOrder[] } } } } })
-        ?.response?.data?.error;
+      const data = (
+        err as {
+          response?: {
+            data?: {
+              error?: {
+                code?: string;
+                details?: { duplicates?: DuplicateOrder[] };
+              };
+            };
+          };
+        }
+      )?.response?.data?.error;
       if (data?.code === "DUPLICATE_ORDER" && data.details?.duplicates) {
         setDuplicates(data.details.duplicates);
         return;
@@ -93,17 +119,24 @@ export function OrderTestsPanel({ patientId, consultationId, admissionId, disabl
     }
   };
 
-  const ready = selected.length > 0 && indication.trim().length >= 5 && !disabled;
-  const preparation = selected.filter((t) => t.preparation && !/^No fasting required\.?$/i.test(t.preparation));
+  const ready =
+    selected.length > 0 && indication.trim().length >= 5 && !disabled;
+  const preparation = selected.filter(
+    (t) => t.preparation && !/^No fasting required\.?$/i.test(t.preparation),
+  );
 
   return (
     <Card testID="order-tests-panel">
       <VStack gap={12}>
-        <SectionHeader title="Order laboratory tests" subtitle="Sent straight to the laboratory queue" />
+        <SectionHeader
+          title="Order laboratory tests"
+          subtitle="Sent straight to the laboratory queue"
+        />
 
         {disabled ? (
           <Text variant="caption" tone="tertiary">
-            This consultation is signed. Tests can still be ordered from the patient&apos;s record.
+            This consultation is signed. Tests can still be ordered from the
+            patient&apos;s record.
           </Text>
         ) : (
           <>
@@ -168,7 +201,9 @@ export function OrderTestsPanel({ patientId, consultationId, admissionId, disabl
               <Banner
                 tone="info"
                 title="Preparation"
-                message={preparation.map((t) => `${t.name}: ${t.preparation}`).join(" ")}
+                message={preparation
+                  .map((t) => `${t.name}: ${t.preparation}`)
+                  .join(" ")}
               />
             ) : null}
 
@@ -177,7 +212,12 @@ export function OrderTestsPanel({ patientId, consultationId, admissionId, disabl
               <HStack gap={8} wrap>
                 {URGENCIES.map((u) => {
                   const active = urgency === u.key;
-                  const s = u.key === "stat" ? signal.critical : u.key === "urgent" ? signal.urgent : null;
+                  const s =
+                    u.key === "stat"
+                      ? signal.critical
+                      : u.key === "urgent"
+                        ? signal.urgent
+                        : null;
                   return (
                     <Pressable
                       key={u.key}
@@ -187,7 +227,10 @@ export function OrderTestsPanel({ patientId, consultationId, admissionId, disabl
                         active
                           ? s
                             ? { borderColor: s.border, backgroundColor: s.bg }
-                            : { borderColor: palette.border.focus, backgroundColor: palette.surface.secondary }
+                            : {
+                                borderColor: palette.border.focus,
+                                backgroundColor: palette.surface.secondary,
+                              }
                           : null,
                       ]}
                       accessibilityRole="radio"
@@ -195,7 +238,10 @@ export function OrderTestsPanel({ patientId, consultationId, admissionId, disabl
                       {...checkable(active, () => setUrgency(u.key))}
                       testID={`lab-urgency-${u.key}`}
                     >
-                      <Text variant="label" style={active && s ? { color: s.text } : undefined}>
+                      <Text
+                        variant="label"
+                        style={active && s ? { color: s.text } : undefined}
+                      >
                         {u.label}
                       </Text>
                       <Text variant="caption" tone="tertiary">
@@ -221,11 +267,14 @@ export function OrderTestsPanel({ patientId, consultationId, admissionId, disabl
               <View style={styles.duplicate} testID="lab-duplicate-warning">
                 <VStack gap={8}>
                   <Text variant="label" style={{ color: signal.caution.text }}>
-                    {duplicates.length === 1 ? "Already ordered recently" : "Some of these were ordered recently"}
+                    {duplicates.length === 1
+                      ? "Already ordered recently"
+                      : "Some of these were ordered recently"}
                   </Text>
                   {duplicates.map((d) => (
                     <Text key={d.orderNumber} variant="body-sm">
-                      {d.testName} — {d.orderNumber}, ordered {d.ago} by {d.doctorName}. {d.statusLabel}.
+                      {d.testName} — {d.orderNumber}, ordered {d.ago} by{" "}
+                      {d.doctorName}. {d.statusLabel}.
                     </Text>
                   ))}
                   <Text variant="caption" tone="secondary">
@@ -240,16 +289,31 @@ export function OrderTestsPanel({ patientId, consultationId, admissionId, disabl
                       loading={order.isPending}
                       testID="lab-order-anyway"
                     />
-                    <Button label="Don't order" variant="ghost" size="sm" onPress={() => setDuplicates(null)} />
+                    <Button
+                      label="Don't order"
+                      variant="ghost"
+                      size="sm"
+                      onPress={() => setDuplicates(null)}
+                    />
                   </HStack>
                 </VStack>
               </View>
             ) : null}
 
-            {error ? <Banner tone="danger" message={error} onDismiss={() => setError(null)} /> : null}
+            {error ? (
+              <Banner
+                tone="danger"
+                message={error}
+                onDismiss={() => setError(null)}
+              />
+            ) : null}
 
             <Button
-              label={selected.length > 1 ? `Order ${selected.length} tests` : "Order test"}
+              label={
+                selected.length > 1
+                  ? `Order ${selected.length} tests`
+                  : "Order test"
+              }
               onPress={() => submit(false)}
               disabled={!ready || Boolean(duplicates)}
               loading={order.isPending && !duplicates}

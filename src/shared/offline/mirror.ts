@@ -2,8 +2,11 @@ import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Query, QueryClient, QueryKey } from "@tanstack/react-query";
 
-import { collectBreakGlassIds, isTainted, readViaBreakGlass } from "./mirrorPolicy";
-
+import {
+  collectBreakGlassIds,
+  isTainted,
+  readViaBreakGlass,
+} from "./mirrorPolicy";
 
 /**
  * Read-only offline mirror of clinical queries this user already opened, per user.
@@ -44,11 +47,14 @@ export const useMirrorStore = create<MirrorState>((set) => ({
   setSavedAt: (savedAt) => set({ savedAt }),
 }));
 
-const isMirroredKey = (key: QueryKey) => typeof key[0] === "string" && (MIRRORED as readonly string[]).includes(key[0]);
+const isMirroredKey = (key: QueryKey) =>
+  typeof key[0] === "string" &&
+  (MIRRORED as readonly string[]).includes(key[0]);
 
 function keepable(query: Query): boolean {
   if (!isMirroredKey(query.queryKey)) return false;
-  if (query.state.status !== "success" || query.state.data === undefined) return false;
+  if (query.state.status !== "success" || query.state.data === undefined)
+    return false;
   return !readViaBreakGlass(query.state.data);
 }
 
@@ -57,11 +63,17 @@ let generation = 0;
 
 const hash = (key: QueryKey) => JSON.stringify(key);
 
-async function read(storageKey: string): Promise<{ savedAt: number; entries: MirrorEntry[] } | null> {
+async function read(
+  storageKey: string,
+): Promise<{ savedAt: number; entries: MirrorEntry[] } | null> {
   try {
     const raw = await AsyncStorage.getItem(storageKey);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as { v?: number; savedAt: number; entries: MirrorEntry[] };
+    const parsed = JSON.parse(raw) as {
+      v?: number;
+      savedAt: number;
+      entries: MirrorEntry[];
+    };
     return parsed.v === 1 && Array.isArray(parsed.entries) ? parsed : null;
   } catch {
     return null;
@@ -79,38 +91,52 @@ export function startMirror(qc: QueryClient, userId: string): () => void {
   const tainted = new Set<string>();
 
   // Match gcTime to the mirror's age limit so records stay cached when the network drops.
-  for (const family of MIRRORED) qc.setQueryDefaults([family], { gcTime: MIRROR_MAX_AGE_MS });
+  for (const family of MIRRORED)
+    qc.setQueryDefaults([family], { gcTime: MIRROR_MAX_AGE_MS });
 
   const save = async () => {
     const now = Date.now();
     const stored = await read(storageKey);
     const merged = new Map<string, MirrorEntry>();
     // Entries already on disk survive even if their query left the cache.
-    for (const entry of stored?.entries ?? []) merged.set(hash(entry.key), entry);
+    for (const entry of stored?.entries ?? [])
+      merged.set(hash(entry.key), entry);
 
-    const mirrored = qc.getQueryCache().getAll().filter((q) => isMirroredKey(q.queryKey));
+    const mirrored = qc
+      .getQueryCache()
+      .getAll()
+      .filter((q) => isMirroredKey(q.queryKey));
     collectBreakGlassIds(
       mirrored.map((q) => ({ key: q.queryKey, data: q.state.data })),
       tainted,
     );
     for (const query of mirrored) {
       if (keepable(query)) {
-        merged.set(query.queryHash, { key: query.queryKey, data: query.state.data, updatedAt: query.state.dataUpdatedAt });
+        merged.set(query.queryHash, {
+          key: query.queryKey,
+          data: query.state.data,
+          updatedAt: query.state.dataUpdatedAt,
+        });
       }
     }
 
     // A patient read under break-the-glass loses every stored copy, including older ones.
     const entries = [...merged.values()]
-      .filter((e) => now - e.updatedAt < MIRROR_MAX_AGE_MS && !isTainted(e, tainted))
+      .filter(
+        (e) => now - e.updatedAt < MIRROR_MAX_AGE_MS && !isTainted(e, tainted),
+      )
       .sort((a, b) => b.updatedAt - a.updatedAt)
       .slice(0, MAX_ENTRIES);
 
     if (!current()) return;
     try {
-      await AsyncStorage.setItem(storageKey, JSON.stringify({ v: 1, savedAt: now, entries }));
+      await AsyncStorage.setItem(
+        storageKey,
+        JSON.stringify({ v: 1, savedAt: now, entries }),
+      );
       useMirrorStore.getState().setSavedAt(now);
     } catch {
-    // Storage full or unavailable; online use is unaffected.
+      // Storage full or unavailable; online use is unaffected.
     }
   };
 
@@ -153,7 +179,7 @@ export async function clearMirrors(): Promise<void> {
     const mine = keys.filter((k) => k.startsWith(PREFIX));
     if (mine.length) await AsyncStorage.multiRemove(mine);
   } catch {
-  /* nothing stored, or storage unavailable */
+    /* nothing stored, or storage unavailable */
   }
   useMirrorStore.getState().setSavedAt(null);
 }

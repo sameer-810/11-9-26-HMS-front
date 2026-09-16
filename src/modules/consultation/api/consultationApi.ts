@@ -36,24 +36,38 @@ export const consultationApi = {
     return res.data.data;
   },
 
-  open: async (body: { patientId: string; appointmentId?: string; type?: string }) => {
-    const res = await apiClient.post<{ data: Consultation }>("/consultations", body);
+  open: async (body: {
+    patientId: string;
+    appointmentId?: string;
+    type?: string;
+  }) => {
+    const res = await apiClient.post<{ data: Consultation }>(
+      "/consultations",
+      body,
+    );
     return res.data.data;
   },
 
   get: async (id: string) => {
-    const res = await apiClient.get<{ data: Consultation }>(`/consultations/${id}`);
+    const res = await apiClient.get<{ data: Consultation }>(
+      `/consultations/${id}`,
+    );
     return res.data.data;
   },
 
   update: async (id: string, patch: ConsultationPatch) => {
-    const res = await apiClient.patch<{ data: Consultation }>(`/consultations/${id}`, patch);
+    const res = await apiClient.patch<{ data: Consultation }>(
+      `/consultations/${id}`,
+      patch,
+    );
     return res.data.data;
   },
 
   /** OP-06. After this, the note is permanent. */
   sign: async (id: string) => {
-    const res = await apiClient.post<{ data: Consultation }>(`/consultations/${id}/sign`);
+    const res = await apiClient.post<{ data: Consultation }>(
+      `/consultations/${id}/sign`,
+    );
     return res.data.data;
   },
 
@@ -65,31 +79,48 @@ export const consultationApi = {
     return res.data.data;
   },
 
-  list: async (params?: { patientId?: string; page?: number; limit?: number }) => {
-    const res = await apiClient.get<Paginated<Consultation>>("/consultations", { params });
+  list: async (params?: {
+    patientId?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const res = await apiClient.get<Paginated<Consultation>>("/consultations", {
+      params,
+    });
     return res.data;
   },
 
   myDrafts: async () => {
-    const res = await apiClient.get<{ data: ConsultationDraft[] }>("/consultations/my-drafts");
+    const res = await apiClient.get<{ data: ConsultationDraft[] }>(
+      "/consultations/my-drafts",
+    );
     return res.data.data;
   },
 };
 
 export const prescriptionApi = {
   searchMedicines: async (search: string) => {
-    const res = await apiClient.get<Paginated<Medicine>>("/prescriptions/medicines", {
-      params: { search, limit: 20 },
-    });
+    const res = await apiClient.get<Paginated<Medicine>>(
+      "/prescriptions/medicines",
+      {
+        params: { search, limit: 20 },
+      },
+    );
     return res.data.data;
   },
 
   /** Safety check as each line is added, so alerts appear while prescribing. Writes nothing. */
-  check: async (patientId: string, lines: { id: string; medicineId: string }[]) => {
-    const res = await apiClient.post<{ data: SafetyResult }>("/prescriptions/check", {
-      patientId,
-      lines,
-    });
+  check: async (
+    patientId: string,
+    lines: { id: string; medicineId: string }[],
+  ) => {
+    const res = await apiClient.post<{ data: SafetyResult }>(
+      "/prescriptions/check",
+      {
+        patientId,
+        lines,
+      },
+    );
     return res.data.data;
   },
 
@@ -114,12 +145,20 @@ export const prescriptionApi = {
   },
 
   get: async (id: string) => {
-    const res = await apiClient.get<{ data: Prescription }>(`/prescriptions/${id}`);
+    const res = await apiClient.get<{ data: Prescription }>(
+      `/prescriptions/${id}`,
+    );
     return res.data.data;
   },
 
-  list: async (params?: { patientId?: string; status?: string; page?: number }) => {
-    const res = await apiClient.get<Paginated<Prescription>>("/prescriptions", { params });
+  list: async (params?: {
+    patientId?: string;
+    status?: string;
+    page?: number;
+  }) => {
+    const res = await apiClient.get<Paginated<Prescription>>("/prescriptions", {
+      params,
+    });
     return res.data;
   },
 };
@@ -127,13 +166,21 @@ export const prescriptionApi = {
 export const recordApi = {
   /** MR-01. The response scope says which view came back, so the UI can flag a partial record. */
   forPatient: async (patientId: string) => {
-    const res = await apiClient.get<{ data: MedicalRecord }>(`/records/${patientId}`);
+    const res = await apiClient.get<{ data: MedicalRecord }>(
+      `/records/${patientId}`,
+    );
     return res.data.data;
   },
 
   /** Break-glass access to a restricted record; the server refuses a short reason. */
-  breakGlass: async (patientId: string, body: { category: string; reason: string }) => {
-    const res = await apiClient.post<{ data: BreakGlassGrant }>(`/access/patients/${patientId}/break-glass`, body);
+  breakGlass: async (
+    patientId: string,
+    body: { category: string; reason: string },
+  ) => {
+    const res = await apiClient.post<{ data: BreakGlassGrant }>(
+      `/access/patients/${patientId}/break-glass`,
+      body,
+    );
     return res.data.data;
   },
 };

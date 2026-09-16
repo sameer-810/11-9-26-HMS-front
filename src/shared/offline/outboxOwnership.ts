@@ -14,7 +14,9 @@ export interface OwnedOp {
   hospitalId?: string;
 }
 
-export function ownerOf(user: { id?: string | null; hospitalId?: string | null } | null | undefined): OutboxOwner | null {
+export function ownerOf(
+  user: { id?: string | null; hospitalId?: string | null } | null | undefined,
+): OutboxOwner | null {
   if (!user?.id || !user.hospitalId) return null;
   return { userId: user.id, hospitalId: user.hospitalId };
 }
@@ -25,6 +27,11 @@ export function belongsTo(op: OwnedOp, owner: OutboxOwner | null): boolean {
   return op.hospitalId === undefined || op.hospitalId === owner.hospitalId;
 }
 
-export function sameOwner(a: OutboxOwner | null, b: OutboxOwner | null): boolean {
-  return Boolean(a && b && a.userId === b.userId && a.hospitalId === b.hospitalId);
+export function sameOwner(
+  a: OutboxOwner | null,
+  b: OutboxOwner | null,
+): boolean {
+  return Boolean(
+    a && b && a.userId === b.userId && a.hospitalId === b.hospitalId,
+  );
 }

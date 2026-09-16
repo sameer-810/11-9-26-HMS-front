@@ -1,11 +1,27 @@
 import React, { useState } from "react";
 import { View, StyleSheet } from "react-native";
-import { Clock, CircleCheck, CircleX, TriangleAlert } from "lucide-react-native";
+import {
+  Clock,
+  CircleCheck,
+  CircleX,
+  TriangleAlert,
+} from "lucide-react-native";
 import { palette, radius, signal, layout } from "@shared/designSystem";
-import { Text, HStack, VStack, Card, Button, Banner, TextField, Select } from "@shared/ui";
-import { useDrugRound, useAdminister } from "@modules/inpatient/hooks/useInpatient";
+import {
+  Text,
+  HStack,
+  VStack,
+  Card,
+  Button,
+  Banner,
+  TextField,
+  Select,
+} from "@shared/ui";
+import {
+  useDrugRound,
+  useAdminister,
+} from "@modules/inpatient/hooks/useInpatient";
 import type { DrugRoundSlot } from "@modules/inpatient/types";
-
 
 /**
  * NU-04 drug round: unsigned past slots show as overdue; a second signature is refused
@@ -32,7 +48,8 @@ export function DrugRoundPanel({ admissionId, date }: Props) {
 
   const conflict =
     administer.isError &&
-    (administer.error as { response?: { status?: number } })?.response?.status === 409
+    (administer.error as { response?: { status?: number } })?.response
+      ?.status === 409
       ? ((
           administer.error as {
             response?: { data?: { error?: { message?: string } } };
@@ -48,7 +65,9 @@ export function DrugRoundPanel({ admissionId, date }: Props) {
         prescriptionItemId: slot.prescriptionItemId,
         status: status as "given",
         reason,
-        ...(round && slot.time ? { dueDate: round.date, dueTime: slot.time } : {}),
+        ...(round && slot.time
+          ? { dueDate: round.date, dueTime: slot.time }
+          : {}),
       },
       {
         onSuccess: () => {
@@ -148,7 +167,7 @@ export function DrugRoundPanel({ admissionId, date }: Props) {
         </VStack>
       </Card>
 
-      { /* An omission cannot be saved without a reason. */ }
+      {/* An omission cannot be saved without a reason. */}
       {omitting ? (
         <Card testID="omission-form">
           <VStack gap={12}>
@@ -174,7 +193,11 @@ export function DrugRoundPanel({ admissionId, date }: Props) {
                 disabled={omitReason.trim().length < 3 || administer.isPending}
                 testID="omit-submit"
               />
-              <Button label="Cancel" variant="ghost" onPress={() => setOmitting(null)} />
+              <Button
+                label="Cancel"
+                variant="ghost"
+                onPress={() => setOmitting(null)}
+              />
             </HStack>
           </VStack>
         </Card>
@@ -196,11 +219,20 @@ function SlotRow({
 }) {
   const given = slot.administration?.status === "given";
   const notGiven = Boolean(slot.administration) && !given;
-  const tone = given ? signal.normal : notGiven ? signal.caution : slot.overdue ? signal.urgent : null;
+  const tone = given
+    ? signal.normal
+    : notGiven
+      ? signal.caution
+      : slot.overdue
+        ? signal.urgent
+        : null;
 
   return (
     <View
-      style={[styles.row, tone ? { borderColor: tone.border, backgroundColor: tone.bg } : null]}
+      style={[
+        styles.row,
+        tone ? { borderColor: tone.border, backgroundColor: tone.bg } : null,
+      ]}
       testID={`slot-${slot.prescriptionItemId}${slot.time ? `-${slot.time}` : ""}`}
     >
       <HStack gap={12} align="center" wrap>

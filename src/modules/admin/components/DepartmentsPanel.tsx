@@ -65,8 +65,13 @@ export function DepartmentsPanel() {
       { id: d.id, active },
       {
         onSuccess: () =>
-          setNotice(active ? `${d.name} is active again.` : `${d.name} is deactivated and no longer offered for booking.`),
-        onError: (e) => setFailure(apiErrorMessage(e, `Could not change ${d.name}`)),
+          setNotice(
+            active
+              ? `${d.name} is active again.`
+              : `${d.name} is deactivated and no longer offered for booking.`,
+          ),
+        onError: (e) =>
+          setFailure(apiErrorMessage(e, `Could not change ${d.name}`)),
         onSettled: () => setConfirm(null),
       },
     );
@@ -75,7 +80,13 @@ export function DepartmentsPanel() {
   return (
     <VStack gap={12} testID="departments-panel">
       <HStack gap={8} align="center" wrap>
-        <SearchInput value={search} onChangeText={setSearch} placeholder="Department name or code" style={{ flex: 1, minWidth: 220 }} testID="department-search" />
+        <SearchInput
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Department name or code"
+          style={{ flex: 1, minWidth: 220 }}
+          testID="department-search"
+        />
         {!creating ? (
           <Button
             label="Add department"
@@ -94,7 +105,11 @@ export function DepartmentsPanel() {
 
       {failure ? (
         <View testID="department-error">
-          <Banner tone="danger" message={failure} onDismiss={() => setFailure(null)} />
+          <Banner
+            tone="danger"
+            message={failure}
+            onDismiss={() => setFailure(null)}
+          />
         </View>
       ) : null}
       {notice ? (
@@ -110,7 +125,11 @@ export function DepartmentsPanel() {
             prefix="department-create"
             submitLabel="Add department"
             loading={create.isPending}
-            error={create.isError ? apiErrorMessage(create.error, "Could not add the department") : null}
+            error={
+              create.isError
+                ? apiErrorMessage(create.error, "Could not add the department")
+                : null
+            }
             onCancel={() => setCreating(false)}
             onSubmit={(body) =>
               create.mutate(body as DepartmentBody, {
@@ -148,7 +167,14 @@ export function DepartmentsPanel() {
                   initial={d}
                   submitLabel="Save department"
                   loading={update.isPending}
-                  error={update.isError ? apiErrorMessage(update.error, "Could not save the department") : null}
+                  error={
+                    update.isError
+                      ? apiErrorMessage(
+                          update.error,
+                          "Could not save the department",
+                        )
+                      : null
+                  }
                   onCancel={() => setEditing(null)}
                   onSubmit={(body) => {
                     if (Object.keys(body).length === 0) {
@@ -176,11 +202,16 @@ export function DepartmentsPanel() {
                       <Text variant="caption" tone="tertiary">
                         {d.code}
                       </Text>
-                      <StatusChip status={d.isActive ? "active" : "inactive"} size="sm" />
+                      <StatusChip
+                        status={d.isActive ? "active" : "inactive"}
+                        size="sm"
+                      />
                     </HStack>
                     <Text variant="body-sm" tone="secondary">
                       {d.isClinical ? "Clinical" : "Non-clinical"}
-                      {d.isClinical ? ` · consultation ${formatRupees(d.consultationFee)}` : ""}
+                      {d.isClinical
+                        ? ` · consultation ${formatRupees(d.consultationFee)}`
+                        : ""}
                       {d.opdTimings ? ` · ${d.opdTimings}` : ""}
                     </Text>
                     {d.description ? (
@@ -217,7 +248,10 @@ export function DepartmentsPanel() {
                         size="xs"
                         variant="ghost"
                         fullWidth={false}
-                        loading={setActive.isPending && setActive.variables?.id === d.id}
+                        loading={
+                          setActive.isPending &&
+                          setActive.variables?.id === d.id
+                        }
                         onPress={() => toggleActive(d, true)}
                         testID={`department-activate-${d.code}`}
                       />
@@ -255,11 +289,21 @@ interface FormProps {
 }
 
 /** Create and edit share one form. Edit submits only what changed. */
-function DepartmentForm({ prefix, initial, submitLabel, loading, error, onSubmit, onCancel }: FormProps) {
+function DepartmentForm({
+  prefix,
+  initial,
+  submitLabel,
+  loading,
+  error,
+  onSubmit,
+  onCancel,
+}: FormProps) {
   const [name, setName] = useState(initial?.name ?? "");
   const [code, setCode] = useState(initial?.code ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
-  const [fee, setFee] = useState(initial ? String(initial.consultationFee) : "");
+  const [fee, setFee] = useState(
+    initial ? String(initial.consultationFee) : "",
+  );
   const [timings, setTimings] = useState(initial?.opdTimings ?? "");
   const [clinical, setClinical] = useState(initial?.isClinical ?? true);
   const [attempted, setAttempted] = useState(false);
@@ -267,9 +311,15 @@ function DepartmentForm({ prefix, initial, submitLabel, loading, error, onSubmit
   const feeValue = fee.trim() === "" ? 0 : Number(fee);
   const errors = {
     name: name.trim().length < 2 ? "At least 2 characters" : undefined,
-    code: !CODE.test(code.trim().toUpperCase()) ? "2–10 letters, digits or hyphens" : undefined,
-    fee: !Number.isFinite(feeValue) || feeValue < 0 || feeValue > 1_000_000 ? "Between 0 and 10,00,000" : undefined,
-    description: description.trim().length > 300 ? "At most 300 characters" : undefined,
+    code: !CODE.test(code.trim().toUpperCase())
+      ? "2–10 letters, digits or hyphens"
+      : undefined,
+    fee:
+      !Number.isFinite(feeValue) || feeValue < 0 || feeValue > 1_000_000
+        ? "Between 0 and 10,00,000"
+        : undefined,
+    description:
+      description.trim().length > 300 ? "At most 300 characters" : undefined,
     timings: timings.trim().length > 200 ? "At most 200 characters" : undefined,
   };
   const valid = !Object.values(errors).some(Boolean);
@@ -292,10 +342,14 @@ function DepartmentForm({ prefix, initial, submitLabel, loading, error, onSubmit
     const patch: Partial<DepartmentBody> = {};
     if (next.name !== initial.name) patch.name = next.name;
     if (next.code !== initial.code) patch.code = next.code;
-    if (next.description !== initial.description) patch.description = next.description;
-    if (next.isClinical !== initial.isClinical) patch.isClinical = next.isClinical;
-    if (next.consultationFee !== initial.consultationFee) patch.consultationFee = next.consultationFee;
-    if (next.opdTimings !== initial.opdTimings) patch.opdTimings = next.opdTimings;
+    if (next.description !== initial.description)
+      patch.description = next.description;
+    if (next.isClinical !== initial.isClinical)
+      patch.isClinical = next.isClinical;
+    if (next.consultationFee !== initial.consultationFee)
+      patch.consultationFee = next.consultationFee;
+    if (next.opdTimings !== initial.opdTimings)
+      patch.opdTimings = next.opdTimings;
     onSubmit(patch);
   };
 
@@ -309,7 +363,15 @@ function DepartmentForm({ prefix, initial, submitLabel, loading, error, onSubmit
         </View>
       ) : null}
       <HStack gap={12} wrap>
-        <TextField label="Name" required value={name} onChangeText={setName} error={show(errors.name)} containerStyle={{ flex: 2, minWidth: 220 }} testID={`${prefix}-name`} />
+        <TextField
+          label="Name"
+          required
+          value={name}
+          onChangeText={setName}
+          error={show(errors.name)}
+          containerStyle={{ flex: 2, minWidth: 220 }}
+          testID={`${prefix}-name`}
+        />
         <TextField
           label="Code"
           required
@@ -318,12 +380,22 @@ function DepartmentForm({ prefix, initial, submitLabel, loading, error, onSubmit
           autoCapitalize="characters"
           maxLength={10}
           error={show(errors.code)}
-          hint={initial ? "Changing it does not rewrite numbers already issued." : "Used in identifiers and on slips."}
+          hint={
+            initial
+              ? "Changing it does not rewrite numbers already issued."
+              : "Used in identifiers and on slips."
+          }
           containerStyle={{ flex: 1, minWidth: 160 }}
           testID={`${prefix}-code`}
         />
       </HStack>
-      <TextField label="Description" value={description} onChangeText={setDescription} error={show(errors.description)} testID={`${prefix}-description`} />
+      <TextField
+        label="Description"
+        value={description}
+        onChangeText={setDescription}
+        error={show(errors.description)}
+        testID={`${prefix}-description`}
+      />
       <ToggleRow
         label="Clinical department"
         description="Clinical departments take patients and appear when booking and admitting. Non-clinical ones exist for staffing and stock."
@@ -356,8 +428,20 @@ function DepartmentForm({ prefix, initial, submitLabel, loading, error, onSubmit
         </HStack>
       ) : null}
       <HStack gap={8} wrap>
-        <Button label={submitLabel} fullWidth={false} loading={loading} onPress={submit} testID={`${prefix}-submit`} />
-        <Button label="Cancel" variant="ghost" fullWidth={false} onPress={onCancel} testID={`${prefix}-cancel`} />
+        <Button
+          label={submitLabel}
+          fullWidth={false}
+          loading={loading}
+          onPress={submit}
+          testID={`${prefix}-submit`}
+        />
+        <Button
+          label="Cancel"
+          variant="ghost"
+          fullWidth={false}
+          onPress={onCancel}
+          testID={`${prefix}-cancel`}
+        />
       </HStack>
     </VStack>
   );

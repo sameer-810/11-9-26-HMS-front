@@ -61,7 +61,11 @@ export function TextField({
           {required ? (
             // Decorative: "required" reaches assistive technology through
             // aria-required on the input, not by reading an asterisk aloud.
-            <Text variant="label" style={{ color: palette.danger.text }} aria-hidden>
+            <Text
+              variant="label"
+              style={{ color: palette.danger.text }}
+              aria-hidden
+            >
               *
             </Text>
           ) : null}
@@ -108,7 +112,11 @@ export function TextField({
           accessibilityHint={error ?? hint}
           // The web equivalent: the message is programmatically tied to the
           // field, and the field says it is invalid or required.
-          {...webAria({ describedBy: error || hint ? messageId : undefined, invalid: Boolean(error), required })}
+          {...webAria({
+            describedBy: error || hint ? messageId : undefined,
+            invalid: Boolean(error),
+            required,
+          })}
           style={[
             styles.input,
             numericField ? numeric : null,
@@ -131,7 +139,11 @@ export function TextField({
             style={{ marginLeft: 6 }}
           >
             {reveal ? (
-              <EyeOff size={16} color={palette.text.tertiary} strokeWidth={1.9} />
+              <EyeOff
+                size={16}
+                color={palette.text.tertiary}
+                strokeWidth={1.9}
+              />
             ) : (
               <Eye size={16} color={palette.text.tertiary} strokeWidth={1.9} />
             )}
@@ -144,7 +156,13 @@ export function TextField({
       {error ? (
         // An alert, so it is announced the moment it appears — after a submit
         // the user's focus is on the button, not on the field that failed.
-        <Text variant="caption" tone="danger" nativeID={messageId} accessibilityRole="alert" accessibilityLiveRegion="polite">
+        <Text
+          variant="caption"
+          tone="danger"
+          nativeID={messageId}
+          accessibilityRole="alert"
+          accessibilityLiveRegion="polite"
+        >
           {error}
         </Text>
       ) : hint ? (

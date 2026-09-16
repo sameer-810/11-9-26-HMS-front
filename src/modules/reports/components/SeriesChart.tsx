@@ -14,7 +14,11 @@ const TICK_WIDTH = 56;
 export function firstNumericField(series: ReportSeriesPoint[]): string | null {
   const sample = series[0];
   if (!sample) return null;
-  return Object.keys(sample).find((k) => k !== "date" && typeof sample[k] === "number") ?? null;
+  return (
+    Object.keys(sample).find(
+      (k) => k !== "date" && typeof sample[k] === "number",
+    ) ?? null
+  );
 }
 
 interface Props {
@@ -57,7 +61,12 @@ export function SeriesChart({ series, field, title, formatValue }: Props) {
                 style={[
                   styles.bar,
                   // Non-zero days get a minimum 2px sliver so they differ from zero.
-                  { height: max > 0 ? Math.max(v > 0 ? 2 : 0, (v / max) * PLOT_HEIGHT) : 0 },
+                  {
+                    height:
+                      max > 0
+                        ? Math.max(v > 0 ? 2 : 0, (v / max) * PLOT_HEIGHT)
+                        : 0,
+                  },
                 ]}
               />
             </View>
@@ -72,7 +81,12 @@ export function SeriesChart({ series, field, title, formatValue }: Props) {
                 variant="caption"
                 tone="tertiary"
                 numberOfLines={1}
-                style={[styles.tick, { left: `${((i + 0.5) / series.length) * 100}%` as `${number}%` }]}
+                style={[
+                  styles.tick,
+                  {
+                    left: `${((i + 0.5) / series.length) * 100}%` as `${number}%`,
+                  },
+                ]}
               >
                 {shortDate(p.date).replace(/ \d{4}$/, "")}
               </Text>
@@ -93,7 +107,16 @@ const styles = StyleSheet.create({
     borderBottomColor: palette.border.default,
   },
   column: { flex: 1, minWidth: 0, height: "100%", justifyContent: "flex-end" },
-  bar: { backgroundColor: chartSeries[0], borderTopLeftRadius: 2, borderTopRightRadius: 2 },
+  bar: {
+    backgroundColor: chartSeries[0],
+    borderTopLeftRadius: 2,
+    borderTopRightRadius: 2,
+  },
   axis: { height: 16 },
-  tick: { position: "absolute", width: TICK_WIDTH, marginLeft: -TICK_WIDTH / 2, textAlign: "center" },
+  tick: {
+    position: "absolute",
+    width: TICK_WIDTH,
+    marginLeft: -TICK_WIDTH / 2,
+    textAlign: "center",
+  },
 });

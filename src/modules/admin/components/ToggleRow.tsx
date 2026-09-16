@@ -40,7 +40,10 @@ export function ToggleRow({
       accessibilityState={{ checked, disabled: Boolean(disabled) }}
       {...checkable(checked, () => onChange(!checked), disabled)}
       testID={testID}
-      style={({ pressed }) => [styles.row, pressed && !disabled ? styles.pressed : null]}
+      style={({ pressed }) => [
+        styles.row,
+        pressed && !disabled ? styles.pressed : null,
+      ]}
     >
       <View
         style={[
@@ -66,7 +69,9 @@ export function ToggleRow({
           </Text>
         ) : null}
       </VStack>
-      {disabled ? <Lock size={14} color={palette.text.tertiary} strokeWidth={2} /> : null}
+      {disabled ? (
+        <Lock size={14} color={palette.text.tertiary} strokeWidth={2} />
+      ) : null}
     </Pressable>
   );
 }
@@ -93,5 +98,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  boxOn: { borderColor: palette.clinical[700], backgroundColor: palette.clinical[700] },
+  boxOn: {
+    borderColor: palette.clinical[700],
+    backgroundColor: palette.clinical[700],
+  },
 });

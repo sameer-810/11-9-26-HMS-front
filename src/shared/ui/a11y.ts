@@ -37,7 +37,11 @@ export function webAria(props: {
  * Web fix for checkbox/radio/switch Pressables: RNW omits `aria-checked` and Space-to-toggle.
  *   <Pressable accessibilityRole="checkbox" onPress={toggle} {...checkable(on, toggle)} />
  */
-export function checkable(checked: boolean, onToggle: () => void, disabled?: boolean): object {
+export function checkable(
+  checked: boolean,
+  onToggle: () => void,
+  disabled?: boolean,
+): object {
   if (Platform.OS !== "web") return {};
   return {
     "aria-checked": checked,
@@ -50,4 +54,5 @@ export function checkable(checked: boolean, onToggle: () => void, disabled?: boo
 }
 
 /** An id safe to use as a DOM id reference, from React's `useId()`. */
-export const domId = (reactId: string, suffix: string) => `a11y${reactId.replace(/[^a-zA-Z0-9_-]/g, "")}-${suffix}`;
+export const domId = (reactId: string, suffix: string) =>
+  `a11y${reactId.replace(/[^a-zA-Z0-9_-]/g, "")}-${suffix}`;

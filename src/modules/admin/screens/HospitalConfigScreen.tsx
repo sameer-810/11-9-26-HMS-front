@@ -26,7 +26,12 @@ export default function HospitalConfigScreen() {
       testID="config-screen"
     >
       <VStack gap={14}>
-        <TabChips chips={TABS} active={tab} onChange={(k) => setTab(k as Tab)} testIDPrefix="config-tab" />
+        <TabChips
+          chips={TABS}
+          active={tab}
+          onChange={(k) => setTab(k as Tab)}
+          testIDPrefix="config-tab"
+        />
         {tab === "hospital" ? <HospitalProfileForm /> : null}
         {tab === "departments" ? <DepartmentsPanel /> : null}
         {tab === "wards" ? <WardsPanel /> : null}

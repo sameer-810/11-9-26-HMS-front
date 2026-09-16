@@ -1,8 +1,15 @@
-import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import { appointmentApi } from "@modules/appointment/api/appointmentApi";
 import type { BookAppointmentPayload } from "@modules/appointment/types";
 
-export const useAppointments = (params?: Parameters<typeof appointmentApi.list>[0]) =>
+export const useAppointments = (
+  params?: Parameters<typeof appointmentApi.list>[0],
+) =>
   useQuery({
     queryKey: ["appointments", params],
     queryFn: () => appointmentApi.list(params),
@@ -49,7 +56,8 @@ function useBookingInvalidation() {
 export const useBookAppointment = () => {
   const invalidate = useBookingInvalidation();
   return useMutation({
-    mutationFn: (payload: BookAppointmentPayload) => appointmentApi.book(payload),
+    mutationFn: (payload: BookAppointmentPayload) =>
+      appointmentApi.book(payload),
     onSuccess: invalidate,
   });
 };
@@ -68,8 +76,13 @@ export const useReschedule = () => {
     mutationFn: ({
       id,
       ...payload
-    }: { id: string; date: string; time: string; doctorId?: string; reason?: string }) =>
-      appointmentApi.reschedule(id, payload),
+    }: {
+      id: string;
+      date: string;
+      time: string;
+      doctorId?: string;
+      reason?: string;
+    }) => appointmentApi.reschedule(id, payload),
     onSuccess: invalidate,
   });
 };
@@ -100,7 +113,11 @@ export const useMarkNoShow = () => {
 };
 
 /** OPD queue board; polls because it stays open on a screen all shift. */
-export const useOpdQueue = (params?: { doctorId?: string; departmentId?: string; date?: string }) =>
+export const useOpdQueue = (params?: {
+  doctorId?: string;
+  departmentId?: string;
+  date?: string;
+}) =>
   useQuery({
     queryKey: ["opd-queue", params],
     queryFn: () => appointmentApi.queue(params),

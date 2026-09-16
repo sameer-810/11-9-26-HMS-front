@@ -1,12 +1,23 @@
 import React, { useState } from "react";
 import { Modal, StyleSheet, View, TextInput, ScrollView } from "react-native";
 import { useReducedMotion } from "react-native-reanimated";
-import { OctagonAlert, TriangleAlert, Info, CircleCheck } from "lucide-react-native";
-import { signal, alertTier, palette, radius, shadows, type SignalLevel } from "../designSystem";
+import {
+  OctagonAlert,
+  TriangleAlert,
+  Info,
+  CircleCheck,
+} from "lucide-react-native";
+import {
+  signal,
+  alertTier,
+  palette,
+  radius,
+  shadows,
+  type SignalLevel,
+} from "../designSystem";
 import { Text } from "./Text";
 import { HStack, VStack } from "./Stack";
 import { Button } from "./Button";
-
 
 /**
  * Tiered clinical alert; every interrupting alert goes through here. Only critical and
@@ -65,10 +76,12 @@ export function ClinicalAlert({
   const needsReason = tier.requireReason;
 
   // Lower tiers never get a modal; a caller asking for one is a bug.
-  if (tier.presentation !== "blocking" && tier.presentation !== "confirm") return null;
+  if (tier.presentation !== "blocking" && tier.presentation !== "confirm")
+    return null;
 
   const reasonOk = reason.trim().length >= MIN_REASON;
-  const canOverride = Boolean(onOverride) && (!needsReason || !showReason || reasonOk);
+  const canOverride =
+    Boolean(onOverride) && (!needsReason || !showReason || reasonOk);
 
   const handleOverride = () => {
     if (!onOverride) return;
@@ -96,14 +109,19 @@ export function ClinicalAlert({
         >
           <ScrollView bounces={false}>
             <HStack gap={10} align="center">
-              <View style={[styles.iconWrap, { backgroundColor: s.bg, borderColor: s.border }]}>
+              <View
+                style={[
+                  styles.iconWrap,
+                  { backgroundColor: s.bg, borderColor: s.border },
+                ]}
+              >
                 <Icon size={20} color={s.color} strokeWidth={2.4} />
               </View>
               <VStack gap={1} flex={1}>
                 <Text variant="overline" style={{ color: s.text }}>
                   {s.label}
                 </Text>
-                { /* Sentence case, short. Never uppercased in code. */ }
+                {/* Sentence case, short. Never uppercased in code. */}
                 <Text variant="h2" tone="primary" heading={2}>
                   {title}
                 </Text>
@@ -115,10 +133,17 @@ export function ClinicalAlert({
             </Text>
 
             {details?.length ? (
-              <View style={[styles.details, { backgroundColor: s.bg, borderColor: s.border }]}>
+              <View
+                style={[
+                  styles.details,
+                  { backgroundColor: s.bg, borderColor: s.border },
+                ]}
+              >
                 {details.map((d) => (
                   <HStack key={d} gap={6} align="center">
-                    <View style={[styles.bullet, { backgroundColor: s.color }]} />
+                    <View
+                      style={[styles.bullet, { backgroundColor: s.color }]}
+                    />
                     <Text variant="body-sm" style={{ color: s.text, flex: 1 }}>
                       {d}
                     </Text>
@@ -160,7 +185,7 @@ export function ClinicalAlert({
               </Text>
             ) : null}
 
-            { /* Safe action is primary, on the right; the override is deliberately quieter. */ }
+            {/* Safe action is primary, on the right; the override is deliberately quieter. */}
             <HStack gap={10} justify="flex-end" style={{ marginTop: 18 }} wrap>
               {onOverride ? (
                 <Button

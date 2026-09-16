@@ -19,12 +19,32 @@ const StockModeContext = createContext<StockModeValue>({
   canIssue: true,
 });
 
-export function StockModeProvider({ mode, children }: { mode: StockMode; children: React.ReactNode }) {
+export function StockModeProvider({
+  mode,
+  children,
+}: {
+  mode: StockMode;
+  children: React.ReactNode;
+}) {
   const value: StockModeValue =
     mode === "pharmacy"
-      ? { mode, location: "pharmacy", receiveLocations: ["pharmacy"], canIssue: false }
-      : { mode, location: null, receiveLocations: ["main_store", "pharmacy"], canIssue: true };
-  return <StockModeContext.Provider value={value}>{children}</StockModeContext.Provider>;
+      ? {
+          mode,
+          location: "pharmacy",
+          receiveLocations: ["pharmacy"],
+          canIssue: false,
+        }
+      : {
+          mode,
+          location: null,
+          receiveLocations: ["main_store", "pharmacy"],
+          canIssue: true,
+        };
+  return (
+    <StockModeContext.Provider value={value}>
+      {children}
+    </StockModeContext.Provider>
+  );
 }
 
 export const useStockMode = () => useContext(StockModeContext);

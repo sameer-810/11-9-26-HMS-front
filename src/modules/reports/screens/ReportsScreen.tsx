@@ -1,7 +1,12 @@
 import React, { useMemo, useState } from "react";
 import { Platform, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { BarChart3, Download, FileSpreadsheet, FileText } from "lucide-react-native";
+import {
+  BarChart3,
+  Download,
+  FileSpreadsheet,
+  FileText,
+} from "lucide-react-native";
 
 import {
   Screen,
@@ -22,22 +27,59 @@ import {
   type Column,
 } from "@shared/ui";
 import { apiErrorMessage } from "@api/apiClient";
-import { addCalendarDays, formatNumber, formatRupees, shortDate, todayCalendarDate } from "@shared/format";
+import {
+  addCalendarDays,
+  formatNumber,
+  formatRupees,
+  shortDate,
+  todayCalendarDate,
+} from "@shared/format";
 import { useDepartments } from "@modules/appointment/hooks/useDirectory";
-import { useExportReport, useReport, useReportCatalogue } from "@modules/reports/hooks/useReports";
-import { EXPORT_TYPES, type ExportFormat } from "@modules/reports/api/reportsApi";
+import {
+  useExportReport,
+  useReport,
+  useReportCatalogue,
+} from "@modules/reports/hooks/useReports";
+import {
+  EXPORT_TYPES,
+  type ExportFormat,
+} from "@modules/reports/api/reportsApi";
 import { FilterChip } from "@modules/reports/components/FilterChip";
-import { SeriesChart, firstNumericField } from "@modules/reports/components/SeriesChart";
-import type { ReportCell, ReportResult, ReportRow, ReportSummaryItem } from "@modules/reports/types";
+import {
+  SeriesChart,
+  firstNumericField,
+} from "@modules/reports/components/SeriesChart";
+import type {
+  ReportCell,
+  ReportResult,
+  ReportRow,
+  ReportSummaryItem,
+} from "@modules/reports/types";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Calendar-string arithmetic, not `toISOString()`, which gives yesterday's UTC date early in IST. */
-const PRESETS: { key: string; label: string; range: (today: string) => { from: string; to: string } }[] = [
+const PRESETS: {
+  key: string;
+  label: string;
+  range: (today: string) => { from: string; to: string };
+}[] = [
   { key: "today", label: "Today", range: (t) => ({ from: t, to: t }) },
-  { key: "last-7-days", label: "Last 7 days", range: (t) => ({ from: addCalendarDays(t, -6), to: t }) },
-  { key: "last-30-days", label: "Last 30 days", range: (t) => ({ from: addCalendarDays(t, -29), to: t }) },
-  { key: "this-month", label: "This month", range: (t) => ({ from: `${t.slice(0, 8)}01`, to: t }) },
+  {
+    key: "last-7-days",
+    label: "Last 7 days",
+    range: (t) => ({ from: addCalendarDays(t, -6), to: t }),
+  },
+  {
+    key: "last-30-days",
+    label: "Last 30 days",
+    range: (t) => ({ from: addCalendarDays(t, -29), to: t }),
+  },
+  {
+    key: "this-month",
+    label: "This month",
+    range: (t) => ({ from: `${t.slice(0, 8)}01`, to: t }),
+  },
 ];
 
 /** What each report's day-by-day series counts. */
@@ -56,7 +98,11 @@ const SERIES_TITLES: Record<string, string> = {
 /** The only series the server sends in rupees. */
 const MONEY_SERIES_FIELDS = new Set(["collected"]);
 
-const EXPORT_BUTTONS: { format: ExportFormat; label: string; icon: typeof Download }[] = [
+const EXPORT_BUTTONS: {
+  format: ExportFormat;
+  label: string;
+  icon: typeof Download;
+}[] = [
   { format: "csv", label: "Export CSV", icon: Download },
   { format: "xlsx", label: "Excel", icon: FileSpreadsheet },
   { format: "pdf", label: "PDF", icon: FileText },
@@ -160,7 +206,10 @@ export default function ReportsScreen() {
   const [from, setFrom] = useState(() => addCalendarDays(today, -29));
   const [to, setTo] = useState(today);
   const [departmentId, setDepartmentId] = useState("");
-  const [notice, setNotice] = useState<{ tone: "info" | "success"; message: string } | null>(null);
+  const [notice, setNotice] = useState<{
+    tone: "info" | "success";
+    message: string;
+  } | null>(null);
 
   // A requested report wins until a chip is pressed, which clears the route param.
   const requested: string | undefined = route.params?.report;
@@ -170,10 +219,14 @@ export default function ReportsScreen() {
   };
 
   const reports = catalogue.data ?? [];
-  const active = reports.find((r) => r.key === (requested ?? selectedKey)) ?? reports[0];
+  const active =
+    reports.find((r) => r.key === (requested ?? selectedKey)) ?? reports[0];
   const fromValid = DATE_RE.test(from);
   const toValid = DATE_RE.test(to);
-  const filters = useMemo(() => ({ from, to, departmentId: departmentId || undefined }), [from, to, departmentId]);
+  const filters = useMemo(
+    () => ({ from, to, departmentId: departmentId || undefined }),
+    [from, to, departmentId],
+  );
 
   const report = useReport(active?.key, filters, fromValid && toValid);
   const exportReport = useExportReport();
@@ -194,13 +247,18 @@ export default function ReportsScreen() {
         onSuccess: ({ filename }) =>
           setNotice({
             tone: "success",
-            message: Platform.OS === "web" ? `Downloaded ${filename}` : `${filename} is ready to save or send`,
+            message:
+              Platform.OS === "web"
+                ? `Downloaded ${filename}`
+                : `${filename} is ready to save or send`,
           }),
       },
     );
   };
 
-  const seriesField = data?.series?.length ? firstNumericField(data.series) : null;
+  const seriesField = data?.series?.length
+    ? firstNumericField(data.series)
+    : null;
   const failedFormat = exportReport.variables?.format;
 
   return (
@@ -215,7 +273,12 @@ export default function ReportsScreen() {
       }}
       testID="reports-screen"
       right={
-        <HStack gap={6} wrap role="group" accessibilityLabel="Export this report">
+        <HStack
+          gap={6}
+          wrap
+          role="group"
+          accessibilityLabel="Export this report"
+        >
           {EXPORT_BUTTONS.map(({ format, label, icon: Icon }) => (
             <Button
               key={format}
@@ -224,8 +287,13 @@ export default function ReportsScreen() {
               variant="secondary"
               fullWidth={false}
               icon={<Icon size={15} />}
-              disabled={!active || !fromValid || !toValid || exportReport.isPending}
-              loading={exportReport.isPending && exportReport.variables?.format === format}
+              disabled={
+                !active || !fromValid || !toValid || exportReport.isPending
+              }
+              loading={
+                exportReport.isPending &&
+                exportReport.variables?.format === format
+              }
               onPress={() => onExport(format)}
               testID={`report-export-${format}`}
             />
@@ -236,7 +304,11 @@ export default function ReportsScreen() {
       {catalogue.isLoading ? (
         <Skeleton height={200} />
       ) : catalogue.isError ? (
-        <ErrorState error={catalogue.error} title="Couldn't load the list of reports" onRetry={catalogue.refetch} />
+        <ErrorState
+          error={catalogue.error}
+          title="Couldn't load the list of reports"
+          onRetry={catalogue.refetch}
+        />
       ) : reports.length === 0 || !active ? (
         <EmptyState
           icon={BarChart3}
@@ -245,7 +317,10 @@ export default function ReportsScreen() {
         />
       ) : (
         <VStack gap={16}>
-          <Banner tone="info" message="Reports are aggregate — counts, rates, times and amounts. No report names a patient." />
+          <Banner
+            tone="info"
+            message="Reports are aggregate — counts, rates, times and amounts. No report names a patient."
+          />
 
           <HStack gap={8} wrap role="tablist" accessibilityLabel="Report">
             {reports.map((r) => (
@@ -261,7 +336,12 @@ export default function ReportsScreen() {
 
           <Card>
             <VStack gap={12}>
-              <HStack gap={8} wrap role="tablist" accessibilityLabel="Date range">
+              <HStack
+                gap={8}
+                wrap
+                role="tablist"
+                accessibilityLabel="Date range"
+              >
                 {PRESETS.map((p) => (
                   <FilterChip
                     key={p.key}
@@ -301,15 +381,21 @@ export default function ReportsScreen() {
                   containerStyle={{ flex: 1, minWidth: 150 }}
                   testID="report-to"
                 />
-                { /* Select takes no testID, so the wrapper carries it. */ }
-                <View style={{ flex: 2, minWidth: 220 }} testID="report-department">
+                {/* Select takes no testID, so the wrapper carries it. */}
+                <View
+                  style={{ flex: 2, minWidth: 220 }}
+                  testID="report-department"
+                >
                   <Select
                     label="Department"
                     value={departmentId}
                     placeholder="All departments"
                     options={[
                       { value: "", label: "All departments" },
-                      ...(departments ?? []).map((d) => ({ value: d.id, label: d.name })),
+                      ...(departments ?? []).map((d) => ({
+                        value: d.id,
+                        label: d.name,
+                      })),
                     ]}
                     onChange={setDepartmentId}
                     // "Department" means something different in each report, so always state it.
@@ -323,7 +409,11 @@ export default function ReportsScreen() {
           {report.isError || exportReport.isError ? (
             <VStack gap={8} testID="report-error">
               {report.isError ? (
-                <Banner tone="danger" title="Couldn't run this report" message={apiErrorMessage(report.error)} />
+                <Banner
+                  tone="danger"
+                  title="Couldn't run this report"
+                  message={apiErrorMessage(report.error)}
+                />
               ) : null}
               {exportReport.isError ? (
                 <Banner
@@ -336,7 +426,11 @@ export default function ReportsScreen() {
           ) : null}
           {notice ? (
             <View testID="report-export-notice">
-              <Banner tone={notice.tone} message={notice.message} onDismiss={() => setNotice(null)} />
+              <Banner
+                tone={notice.tone}
+                message={notice.message}
+                onDismiss={() => setNotice(null)}
+              />
             </View>
           ) : null}
 
@@ -346,7 +440,10 @@ export default function ReportsScreen() {
               <Skeleton height={180} />
             </VStack>
           ) : data ? (
-            <VStack gap={16} style={{ opacity: report.isPlaceholderData ? 0.6 : 1 }}>
+            <VStack
+              gap={16}
+              style={{ opacity: report.isPlaceholderData ? 0.6 : 1 }}
+            >
               <SectionHeader
                 title={data.title}
                 subtitle={`${shortDate(data.range.from)} – ${shortDate(data.range.to)} · ${data.range.days} ${
@@ -359,7 +456,9 @@ export default function ReportsScreen() {
                     key={s.label}
                     label={s.label}
                     value={formatSummaryValue(s)}
-                    sublabel={s.value === null ? "Nothing to measure" : undefined}
+                    sublabel={
+                      s.value === null ? "Nothing to measure" : undefined
+                    }
                   />
                 ))}
               </HStack>
@@ -368,7 +467,11 @@ export default function ReportsScreen() {
                   series={data.series}
                   field={seriesField}
                   title={SERIES_TITLES[data.key] ?? "Per day"}
-                  formatValue={MONEY_SERIES_FIELDS.has(seriesField) ? formatRupees : formatNumber}
+                  formatValue={
+                    MONEY_SERIES_FIELDS.has(seriesField)
+                      ? formatRupees
+                      : formatNumber
+                  }
                 />
               ) : null}
               <ReportTable table={data.table} />

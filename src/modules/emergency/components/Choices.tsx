@@ -36,13 +36,21 @@ export function ChoiceChips({
             accessibilityState={{ checked: selected, disabled }}
             {...checkable(selected, () => onPress(o.key), disabled)}
             accessibilityLabel={o.label}
-            style={[styles.chip, selected && styles.chipActive, disabled && { opacity: 0.55 }]}
+            style={[
+              styles.chip,
+              selected && styles.chipActive,
+              disabled && { opacity: 0.55 },
+            ]}
           >
             {o.icon}
             <Text
               variant="label"
               weight={selected ? "600" : "500"}
-              style={{ color: selected ? palette.clinical[700] : palette.text.secondary }}
+              style={{
+                color: selected
+                  ? palette.clinical[700]
+                  : palette.text.secondary,
+              }}
             >
               {o.label}
             </Text>
@@ -78,7 +86,11 @@ export function CheckToggle({
       accessibilityLabel={label}
       style={styles.check}
     >
-      <Icon size={20} color={value ? palette.clinical[700] : palette.text.tertiary} strokeWidth={2} />
+      <Icon
+        size={20}
+        color={value ? palette.clinical[700] : palette.text.tertiary}
+        strokeWidth={2}
+      />
       <VStack gap={1} flex={1}>
         <Text variant="label-lg" tone="primary">
           {label}

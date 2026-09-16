@@ -33,7 +33,14 @@ export default function PharmacyQueueScreen() {
   const [search, setSearch] = useState("");
   const debounced = useDebouncedValue(search, 300);
 
-  const { data = [], isLoading, isError, error, refetch, isRefetching } = usePharmacyQueue({
+  const {
+    data = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+  } = usePharmacyQueue({
     urgency: urgency === "all" ? undefined : urgency,
     search: debounced.trim() || undefined,
   });
@@ -54,11 +61,23 @@ export default function PharmacyQueueScreen() {
       <VStack gap={14}>
         <HStack gap={10} wrap>
           <StatTile label="Waiting" value={data.length} icon={Pill} />
-          <StatTile label="Allergies changed" value={changed} attention={changed > 0} />
-          <StatTile label="Something out of stock" value={out} attention={out > 0} />
+          <StatTile
+            label="Allergies changed"
+            value={changed}
+            attention={changed > 0}
+          />
+          <StatTile
+            label="Something out of stock"
+            value={out}
+            attention={out > 0}
+          />
         </HStack>
 
-        <SearchInput value={search} onChangeText={setSearch} placeholder="Patient, hospital number or prescription number" />
+        <SearchInput
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Patient, hospital number or prescription number"
+        />
         <ChipsRow
           chips={[
             { key: "all", label: "All" },
@@ -78,13 +97,29 @@ export default function PharmacyQueueScreen() {
         ) : isError ? (
           <ErrorState error={error} onRetry={refetch} />
         ) : data.length === 0 ? (
-          <EmptyState icon={Pill} title="Nothing to dispense" message="Prescriptions appear here as soon as a doctor saves them." />
+          <EmptyState
+            icon={Pill}
+            title="Nothing to dispense"
+            message="Prescriptions appear here as soon as a doctor saves them."
+          />
         ) : (
           <VStack gap={8} testID="pharmacy-queue-rows">
             {rows.visible.map((row) => (
-              <QueueRow key={row.id} row={row} onPress={() => navigation.navigate("Dispense", { prescriptionId: row.id })} />
+              <QueueRow
+                key={row.id}
+                row={row}
+                onPress={() =>
+                  navigation.navigate("Dispense", { prescriptionId: row.id })
+                }
+              />
             ))}
-            <ShowMoreButton hidden={rows.hidden} pageSize={rows.pageSize} onPress={rows.showMore} noun="prescriptions" testID="pharmacy-queue-show-more" />
+            <ShowMoreButton
+              hidden={rows.hidden}
+              pageSize={rows.pageSize}
+              onPress={rows.showMore}
+              noun="prescriptions"
+              testID="pharmacy-queue-show-more"
+            />
           </VStack>
         )}
       </VStack>
@@ -92,12 +127,20 @@ export default function PharmacyQueueScreen() {
   );
 }
 
-function QueueRow({ row, onPress }: { row: PharmacyQueueRow; onPress: () => void }) {
+function QueueRow({
+  row,
+  onPress,
+}: {
+  row: PharmacyQueueRow;
+  onPress: () => void;
+}) {
   const p = row.patient;
   return (
     <Card
       onPress={onPress}
-      accentColor={row.allergiesChangedSinceWritten ? signal.critical.color : undefined}
+      accentColor={
+        row.allergiesChangedSinceWritten ? signal.critical.color : undefined
+      }
       testID={`rx-row-${row.prescriptionNumber}`}
       accessibilityLabel={`${row.prescriptionNumber} for ${p.fullName}`}
     >
@@ -117,7 +160,8 @@ function QueueRow({ row, onPress }: { row: PharmacyQueueRow; onPress: () => void
             </Text>
           </HStack>
           <Text variant="body-sm" tone="secondary">
-            {row.prescriptionNumber} · {row.lineCount} medicine{row.lineCount === 1 ? "" : "s"} · Dr {row.doctor.fullName}
+            {row.prescriptionNumber} · {row.lineCount} medicine
+            {row.lineCount === 1 ? "" : "s"} · Dr {row.doctor.fullName}
           </Text>
           {!p.allergiesRecorded ? (
             <Text variant="caption" style={{ color: signal.caution.text }}>
@@ -133,7 +177,11 @@ function QueueRow({ row, onPress }: { row: PharmacyQueueRow; onPress: () => void
         <VStack gap={4} align="flex-end">
           <StockStatusBadge status={row.stockStatus} />
           {row.allergiesChangedSinceWritten ? (
-            <HStack gap={4} align="center" testID={`rx-allergy-changed-${row.prescriptionNumber}`}>
+            <HStack
+              gap={4}
+              align="center"
+              testID={`rx-allergy-changed-${row.prescriptionNumber}`}
+            >
               <TriangleAlert size={13} color={signal.critical.text} />
               <Text variant="caption" style={{ color: signal.critical.text }}>
                 Allergies changed since prescribed

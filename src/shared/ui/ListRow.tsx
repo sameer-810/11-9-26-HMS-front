@@ -1,5 +1,11 @@
 import React from "react";
-import { View, Pressable, StyleSheet, ViewStyle, StyleProp } from "react-native";
+import {
+  View,
+  Pressable,
+  StyleSheet,
+  ViewStyle,
+  StyleProp,
+} from "react-native";
 import { ChevronRight } from "lucide-react-native";
 import { palette, radius, layout } from "../designSystem";
 import { Text } from "./Text";
@@ -37,7 +43,9 @@ export function ListRow({
       style={[
         styles.row,
         { minHeight: isPhone ? layout.rowHeightPhone : layout.rowHeight },
-        accentColor ? { borderLeftWidth: 3, borderLeftColor: accentColor } : null,
+        accentColor
+          ? { borderLeftWidth: 3, borderLeftColor: accentColor }
+          : null,
         style,
       ]}
     >
@@ -60,7 +68,11 @@ export function ListRow({
         ) : null}
         {right}
         {showChevron && onPress ? (
-          <ChevronRight size={16} color={palette.text.tertiary} strokeWidth={2} />
+          <ChevronRight
+            size={16}
+            color={palette.text.tertiary}
+            strokeWidth={2}
+          />
         ) : null}
       </HStack>
     </View>

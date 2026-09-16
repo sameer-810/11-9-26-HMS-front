@@ -21,8 +21,18 @@ import {
   StatTile,
 } from "@shared/ui";
 import { apiErrorMessage } from "@api/apiClient";
-import { useAllBeds, useBedBoardCounts, useSetBedStatus } from "@modules/admin/hooks/useAdmin";
-import { WARD_TYPE_LABELS, type Bed, type BedCounts, type BedStatus, type WardType } from "@modules/admin/types";
+import {
+  useAllBeds,
+  useBedBoardCounts,
+  useSetBedStatus,
+} from "@modules/admin/hooks/useAdmin";
+import {
+  WARD_TYPE_LABELS,
+  type Bed,
+  type BedCounts,
+  type BedStatus,
+  type WardType,
+} from "@modules/admin/types";
 
 type Filter = "all" | BedStatus;
 
@@ -35,10 +45,17 @@ interface WardGroup {
   counts: BedCounts;
 }
 
-const natural = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true });
+const natural = (a: string, b: string) =>
+  a.localeCompare(b, undefined, { numeric: true });
 
 function countOf(beds: Bed[]): BedCounts {
-  const c: BedCounts = { available: 0, occupied: 0, reserved: 0, maintenance: 0, total: beds.length };
+  const c: BedCounts = {
+    available: 0,
+    occupied: 0,
+    reserved: 0,
+    maintenance: 0,
+    total: beds.length,
+  };
   for (const b of beds) c[b.status] += 1;
   return c;
 }
@@ -50,7 +67,10 @@ function countOf(beds: Bed[]): BedCounts {
 export default function BedsScreen() {
   const hasAnyPermission = useAuthStore((s) => s.hasAnyPermission);
   // mirrors the ward routes: PATCH /beds/:id/status takes either grant
-  const canManage = hasAnyPermission(PERMISSIONS.BEDS_MANAGE, PERMISSIONS.HOSPITAL_CONFIG);
+  const canManage = hasAnyPermission(
+    PERMISSIONS.BEDS_MANAGE,
+    PERMISSIONS.HOSPITAL_CONFIG,
+  );
 
   const beds = useAllBeds();
   const board = useBedBoardCounts();
@@ -58,7 +78,10 @@ export default function BedsScreen() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const active = useMemo(() => (beds.data ?? []).filter((b) => b.isActive), [beds.data]);
+  const active = useMemo(
+    () => (beds.data ?? []).filter((b) => b.isActive),
+    [beds.data],
+  );
   // looked up from the fresh list each render so a just-admitted bed is not acted on from a stale copy
   const selected = active.find((b) => b.id === selectedId) ?? null;
 
@@ -69,12 +92,23 @@ export default function BedsScreen() {
       byWard.set(key, [...(byWard.get(key) ?? []), b]);
     }
     const sortBeds = (list: Bed[]) =>
-      [...list].sort((a, b) => natural(a.room?.number ?? "", b.room?.number ?? "") || natural(a.number, b.number));
+      [...list].sort(
+        (a, b) =>
+          natural(a.room?.number ?? "", b.room?.number ?? "") ||
+          natural(a.number, b.number),
+      );
 
     // the board fixes the ward order and includes wards with no beds yet
     const out: WardGroup[] = (board.data?.wards ?? []).map((w) => {
       const list = sortBeds(byWard.get(w.wardId) ?? []);
-      return { id: w.wardId, name: w.name, code: w.code, type: w.type, beds: list, counts: countOf(list) };
+      return {
+        id: w.wardId,
+        name: w.name,
+        code: w.code,
+        type: w.type,
+        beds: list,
+        counts: countOf(list),
+      };
     });
     for (const [id, list] of byWard) {
       if (out.some((g) => g.id === id)) continue;
@@ -92,11 +126,17 @@ export default function BedsScreen() {
   }, [active, board.data]);
 
   const totals = countOf(active);
-  const occupancy = totals.total ? Math.round((totals.occupied / totals.total) * 100) : 0;
+  const occupancy = totals.total
+    ? Math.round((totals.occupied / totals.total) * 100)
+    : 0;
 
   const chips = [
     { key: "all", label: "All beds", count: totals.total },
-    ...(Object.keys(bedState) as BedStatus[]).map((s) => ({ key: s, label: bedState[s].label, count: totals[s] })),
+    ...(Object.keys(bedState) as BedStatus[]).map((s) => ({
+      key: s,
+      label: bedState[s].label,
+      count: totals[s],
+    })),
   ];
 
   return (
@@ -113,17 +153,39 @@ export default function BedsScreen() {
     >
       <VStack gap={14}>
         <HStack gap={10} wrap>
-          <StatTile label="Available" value={totals.available} icon={BedDouble} accent="green" />
-          <StatTile label="Occupied" value={totals.occupied} sublabel={`${occupancy}% occupancy`} accent="clinical" />
+          <StatTile
+            label="Available"
+            value={totals.available}
+            icon={BedDouble}
+            accent="green"
+          />
+          <StatTile
+            label="Occupied"
+            value={totals.occupied}
+            sublabel={`${occupancy}% occupancy`}
+            accent="clinical"
+          />
           <StatTile label="Reserved" value={totals.reserved} accent="amber" />
-          <StatTile label="Out of service" value={totals.maintenance} attention={totals.maintenance > 0} />
+          <StatTile
+            label="Out of service"
+            value={totals.maintenance}
+            attention={totals.maintenance > 0}
+          />
         </HStack>
 
-        <ChipsRow chips={chips} active={filter} onChange={(k) => setFilter(k as Filter)} />
+        <ChipsRow
+          chips={chips}
+          active={filter}
+          onChange={(k) => setFilter(k as Filter)}
+        />
 
         {notice ? (
           <View testID="beds-notice">
-            <Banner tone="success" message={notice} onDismiss={() => setNotice(null)} />
+            <Banner
+              tone="success"
+              message={notice}
+              onDismiss={() => setNotice(null)}
+            />
           </View>
         ) : null}
         {canManage ? (
@@ -148,7 +210,10 @@ export default function BedsScreen() {
         ) : (
           <VStack gap={12}>
             {groups.map((g) => {
-              const shown = filter === "all" ? g.beds : g.beds.filter((b) => b.status === filter);
+              const shown =
+                filter === "all"
+                  ? g.beds
+                  : g.beds.filter((b) => b.status === filter);
               if (filter !== "all" && shown.length === 0) return null;
               return (
                 <Card key={g.id} testID={`beds-ward-${g.code}`}>
@@ -162,9 +227,16 @@ export default function BedsScreen() {
                           </Text>
                         </HStack>
                       </VStack>
-                      <Text variant="body-sm" tone="secondary" tabular testID={`beds-ward-counts-${g.code}`}>
-                        {g.counts.available} available · {g.counts.occupied} occupied · {g.counts.reserved} reserved ·{" "}
-                        {g.counts.maintenance} out of service · {g.counts.total} total
+                      <Text
+                        variant="body-sm"
+                        tone="secondary"
+                        tabular
+                        testID={`beds-ward-counts-${g.code}`}
+                      >
+                        {g.counts.available} available · {g.counts.occupied}{" "}
+                        occupied · {g.counts.reserved} reserved ·{" "}
+                        {g.counts.maintenance} out of service · {g.counts.total}{" "}
+                        total
                       </Text>
                     </HStack>
 
@@ -183,7 +255,9 @@ export default function BedsScreen() {
                             selected={selected?.id === b.id}
                             onToggle={() => {
                               setNotice(null);
-                              setSelectedId(selected?.id === b.id ? null : b.id);
+                              setSelectedId(
+                                selected?.id === b.id ? null : b.id,
+                              );
                             }}
                           />
                         ))}
@@ -226,7 +300,11 @@ function BedTile({
   onToggle: () => void;
 }) {
   const s = bedState[bed.status];
-  const kit = [bed.features.oxygen && "Oxygen", bed.features.ventilator && "Ventilator", bed.features.monitor && "Monitor"]
+  const kit = [
+    bed.features.oxygen && "Oxygen",
+    bed.features.ventilator && "Ventilator",
+    bed.features.monitor && "Monitor",
+  ]
     .filter(Boolean)
     .join(" · ");
 
@@ -236,7 +314,10 @@ function BedTile({
       accessibilityLabel={`Bed ${bed.number}${bed.room ? `, room ${bed.room.number}` : ""}, ${s.label}`}
       style={[
         styles.tile,
-        { backgroundColor: s.bg, borderColor: selected ? palette.border.focus : s.border },
+        {
+          backgroundColor: s.bg,
+          borderColor: selected ? palette.border.focus : s.border,
+        },
         selected ? styles.tileSelected : null,
       ]}
     >
@@ -250,8 +331,12 @@ function BedTile({
           </Text>
         ) : null}
       </HStack>
-      
-      <Text variant="label-sm" style={{ color: s.color }} testID={`bed-status-${bed.id}`}>
+
+      <Text
+        variant="label-sm"
+        style={{ color: s.color }}
+        testID={`bed-status-${bed.id}`}
+      >
         {s.label}
       </Text>
       {bed.status === "maintenance" && bed.maintenanceNote ? (
@@ -266,7 +351,13 @@ function BedTile({
       ) : null}
       {canManage && bed.status !== "occupied" ? (
         <Button
-          label={selected ? "Close" : bed.status === "maintenance" ? "Return to service" : "Out of service"}
+          label={
+            selected
+              ? "Close"
+              : bed.status === "maintenance"
+                ? "Return to service"
+                : "Out of service"
+          }
           size="xs"
           variant="secondary"
           onPress={onToggle}
@@ -300,18 +391,30 @@ function MaintenancePanel({
       },
       {
         onSuccess: () =>
-          onDone(takingOut ? `Bed ${bed.number} is out of service.` : `Bed ${bed.number} is back in service.`),
+          onDone(
+            takingOut
+              ? `Bed ${bed.number} is out of service.`
+              : `Bed ${bed.number} is back in service.`,
+          ),
       },
     );
 
   return (
     <VStack gap={8} style={styles.panel} testID="bed-maintenance-panel">
       <Text variant="label">
-        {takingOut ? `Take bed ${bed.number} out of service` : `Return bed ${bed.number} to service`}
+        {takingOut
+          ? `Take bed ${bed.number} out of service`
+          : `Return bed ${bed.number} to service`}
       </Text>
       {setStatus.isError ? (
         <View testID="bed-maintenance-error">
-          <Banner tone="danger" message={apiErrorMessage(setStatus.error, "Could not change the bed")} />
+          <Banner
+            tone="danger"
+            message={apiErrorMessage(
+              setStatus.error,
+              "Could not change the bed",
+            )}
+          />
         </View>
       ) : null}
       {takingOut ? (
@@ -327,8 +430,10 @@ function MaintenancePanel({
         />
       ) : (
         <Text variant="body-sm" tone="secondary">
-          {bed.maintenanceNote ? `Out of service: ${bed.maintenanceNote}` : "Out of service, no reason recorded."} It becomes
-          available for admission straight away.
+          {bed.maintenanceNote
+            ? `Out of service: ${bed.maintenanceNote}`
+            : "Out of service, no reason recorded."}{" "}
+          It becomes available for admission straight away.
         </Text>
       )}
       <HStack gap={8} wrap>
@@ -342,7 +447,14 @@ function MaintenancePanel({
           onPress={submit}
           testID="bed-maintenance-submit"
         />
-        <Button label="Cancel" size="sm" variant="ghost" fullWidth={false} onPress={onCancel} testID="bed-maintenance-cancel" />
+        <Button
+          label="Cancel"
+          size="sm"
+          variant="ghost"
+          fullWidth={false}
+          onPress={onCancel}
+          testID="bed-maintenance-cancel"
+        />
       </HStack>
     </VStack>
   );
@@ -357,5 +469,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   tileSelected: { borderWidth: 2 },
-  panel: { paddingTop: 10, borderTopWidth: 1, borderTopColor: palette.border.subtle },
+  panel: {
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: palette.border.subtle,
+  },
 });

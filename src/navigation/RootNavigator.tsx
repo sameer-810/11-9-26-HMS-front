@@ -24,7 +24,9 @@ export default function RootNavigator() {
   const isAuthChecked = useAuthStore((s) => s.isAuthChecked);
   // A primitive selector, deliberately: zustand v5 compares with Object.is, so
   // a selector returning a fresh object would re-render forever.
-  const mustChangePassword = useAuthStore((s) => Boolean(s.user?.mustChangePassword));
+  const mustChangePassword = useAuthStore((s) =>
+    Boolean(s.user?.mustChangePassword),
+  );
 
   useEffect(() => {
     if (isHydrated) void useAuthStore.getState().initializeAuth();
@@ -45,7 +47,11 @@ export default function RootNavigator() {
     );
   }
 
-  const branch = !isAuthenticated ? "auth" : mustChangePassword ? "forced" : "app";
+  const branch = !isAuthenticated
+    ? "auth"
+    : mustChangePassword
+      ? "forced"
+      : "app";
 
   return (
     <Stack.Navigator key={branch} screenOptions={{ headerShown: false }}>

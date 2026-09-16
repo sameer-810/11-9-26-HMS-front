@@ -27,7 +27,12 @@ import {
   ChipsRow,
 } from "@shared/ui";
 import { apiErrorMessage } from "@api/apiClient";
-import { formatWallTime, formatDuration, formatCalendarDate, todayCalendarDate } from "@shared/format";
+import {
+  formatWallTime,
+  formatDuration,
+  formatCalendarDate,
+  todayCalendarDate,
+} from "@shared/format";
 import { useMySchedule } from "@modules/appointment/hooks/useAppointments";
 import {
   useMyDrafts,
@@ -44,7 +49,14 @@ export default function MyScheduleScreen() {
   const [filter, setFilter] = useState("waiting");
   const [error, setError] = useState<string | null>(null);
 
-  const { data, isLoading, isError, error: loadError, refetch, isRefetching } = useMySchedule(today);
+  const {
+    data,
+    isLoading,
+    isError,
+    error: loadError,
+    refetch,
+    isRefetching,
+  } = useMySchedule(today);
   const { data: drafts } = useMyDrafts();
   const openConsultation = useOpenConsultation();
 
@@ -52,7 +64,8 @@ export default function MyScheduleScreen() {
   const counts = data?.meta?.counts;
 
   const visible = all.filter((a) => {
-    if (filter === "waiting") return a.status === "arrived" || a.status === "in_consultation";
+    if (filter === "waiting")
+      return a.status === "arrived" || a.status === "in_consultation";
     if (filter === "expected") return a.status === "scheduled";
     if (filter === "done") return a.status === "completed";
     return true;
@@ -86,15 +99,27 @@ export default function MyScheduleScreen() {
       testID="my-schedule"
     >
       <VStack gap={14}>
-        {error ? <Banner tone="danger" message={error} onDismiss={() => setError(null)} /> : null}
+        {error ? (
+          <Banner
+            tone="danger"
+            message={error}
+            onDismiss={() => setError(null)}
+          />
+        ) : null}
 
-        { /* Unsigned consultations are not yet in the record, so surface them. */ }
+        {/* Unsigned consultations are not yet in the record, so surface them. */}
         {(drafts ?? []).length > 0 ? (
           <Card accentColor={palette.warning.text}>
             <SectionHeader
               title="Unfinished notes"
               subtitle="These consultations are not yet signed, so they are not in the record"
-              right={<FileWarning size={16} color={palette.warning.text} strokeWidth={2.1} />}
+              right={
+                <FileWarning
+                  size={16}
+                  color={palette.warning.text}
+                  strokeWidth={2.1}
+                />
+              }
             />
             <VStack gap={8}>
               {drafts!.map((d) => (
@@ -104,7 +129,8 @@ export default function MyScheduleScreen() {
                       {d.patientName}
                     </Text>
                     <Text variant="caption" tone="tertiary" numberOfLines={1}>
-                      {d.patientId} · {d.chiefComplaint || "nothing written yet"}
+                      {d.patientId} ·{" "}
+                      {d.chiefComplaint || "nothing written yet"}
                     </Text>
                   </VStack>
                   <Button
@@ -112,7 +138,9 @@ export default function MyScheduleScreen() {
                     variant="secondary"
                     size="sm"
                     fullWidth={false}
-                    onPress={() => navigation.navigate("Consultation", { id: d.id })}
+                    onPress={() =>
+                      navigation.navigate("Consultation", { id: d.id })
+                    }
                   />
                 </HStack>
               ))}
@@ -128,7 +156,11 @@ export default function MyScheduleScreen() {
                 label: "Waiting for me",
                 count: (counts.arrived ?? 0) + (counts.in_consultation ?? 0),
               },
-              { key: "expected", label: "Later today", count: counts.scheduled },
+              {
+                key: "expected",
+                label: "Later today",
+                count: counts.scheduled,
+              },
               { key: "done", label: "Seen", count: counts.completed },
               { key: "all", label: "Everyone" },
             ]}
@@ -138,7 +170,11 @@ export default function MyScheduleScreen() {
         ) : null}
 
         {isError ? (
-          <ErrorState error={loadError} title="Couldn't load your schedule" onRetry={refetch} />
+          <ErrorState
+            error={loadError}
+            title="Couldn't load your schedule"
+            onRetry={refetch}
+          />
         ) : isLoading ? (
           <VStack gap={8}>
             {[0, 1, 2].map((i) => (
@@ -150,7 +186,11 @@ export default function MyScheduleScreen() {
         ) : visible.length === 0 ? (
           <EmptyState
             icon={CalendarDays}
-            title={filter === "waiting" ? "Nobody is waiting for you" : "Nothing here"}
+            title={
+              filter === "waiting"
+                ? "Nobody is waiting for you"
+                : "Nothing here"
+            }
             message={
               filter === "waiting"
                 ? "Patients appear here once reception marks them arrived."
@@ -167,7 +207,8 @@ export default function MyScheduleScreen() {
                 onSee={() => see(a)}
                 onOpenRecord={() => {
                   const p = a.patient as PatientBanner;
-                  if (p?.id) navigation.navigate("MedicalRecord", { patientId: p.id });
+                  if (p?.id)
+                    navigation.navigate("MedicalRecord", { patientId: p.id });
                 }}
               />
             ))}
@@ -203,7 +244,11 @@ function ScheduleRow({
           <Text
             variant="metric-sm"
             tabular
-            style={{ color: a.tokenNumber ? palette.clinical[700] : palette.text.disabled }}
+            style={{
+              color: a.tokenNumber
+                ? palette.clinical[700]
+                : palette.text.disabled,
+            }}
           >
             {a.tokenNumber ?? "—"}
           </Text>
@@ -214,7 +259,7 @@ function ScheduleRow({
             <Text variant="label-lg" tone="primary" numberOfLines={1}>
               {patient?.fullName ?? "—"}
             </Text>
-            { /* Allergy marker always travels with the patient name. */ }
+            {/* Allergy marker always travels with the patient name. */}
             {severe ? (
               <TriangleAlert
                 size={14}
@@ -264,7 +309,9 @@ function ScheduleRow({
           />
           {canSee ? (
             <Button
-              label={a.status === "in_consultation" ? "Continue" : "See patient"}
+              label={
+                a.status === "in_consultation" ? "Continue" : "See patient"
+              }
               size="sm"
               fullWidth={false}
               disabled={busy}

@@ -3,14 +3,28 @@ import { View, Pressable, StyleSheet } from "react-native";
 import { Trash2 } from "lucide-react-native";
 
 import { palette, radius, signal, layout } from "@shared/designSystem";
-import { Screen, Text, VStack, HStack, Card, SectionHeader, Button, TextField, Select, Banner } from "@shared/ui";
+import {
+  Screen,
+  Text,
+  VStack,
+  HStack,
+  Card,
+  SectionHeader,
+  Button,
+  TextField,
+  Select,
+  Banner,
+} from "@shared/ui";
 import { checkable } from "@shared/ui/a11y";
 import { apiErrorMessage } from "@api/apiClient";
 import { useDepartments } from "@modules/appointment/hooks/useDirectory";
-import { useInventoryItems, useInventoryItem, useIssueStock } from "@modules/inventory/hooks/useInventory";
+import {
+  useInventoryItems,
+  useInventoryItem,
+  useIssueStock,
+} from "@modules/inventory/hooks/useInventory";
 import { formatExpiry } from "@modules/inventory/utils/expiry";
 import { LOCATION_LABELS, type StockLocation } from "@modules/inventory/types";
-
 
 /**
  * issue stock to a department, or transfer it to the pharmacy.
@@ -27,7 +41,9 @@ interface Line {
 
 export default function IssueStockScreen() {
   const [from, setFrom] = useState<StockLocation>("main_store");
-  const [destination, setDestination] = useState<"department" | "pharmacy">("department");
+  const [destination, setDestination] = useState<"department" | "pharmacy">(
+    "department",
+  );
   const [departmentId, setDepartmentId] = useState<string | null>(null);
   const [receivedBy, setReceivedBy] = useState("");
   const [note, setNote] = useState("");
@@ -39,8 +55,14 @@ export default function IssueStockScreen() {
   const { data: detail } = useInventoryItem(itemId ?? undefined);
   const issue = useIssueStock();
 
-  const items = (itemsResult?.data ?? []).filter((i) => (i.stock.byLocation[from]?.usable ?? 0) > 0 || (i.stock.byLocation[from]?.expired ?? 0) > 0);
-  const batches = (detail?.batches ?? []).filter((b) => b.location === from && b.quantityOnHand > 0);
+  const items = (itemsResult?.data ?? []).filter(
+    (i) =>
+      (i.stock.byLocation[from]?.usable ?? 0) > 0 ||
+      (i.stock.byLocation[from]?.expired ?? 0) > 0,
+  );
+  const batches = (detail?.batches ?? []).filter(
+    (b) => b.location === from && b.quantityOnHand > 0,
+  );
   const toPharmacy = destination === "pharmacy" && from === "main_store";
 
   const reset = () => {
@@ -64,25 +86,43 @@ export default function IssueStockScreen() {
     issue.mutate(
       {
         fromLocation: from,
-        destination: toPharmacy ? { type: "pharmacy" } : { type: "department", departmentId: departmentId! },
+        destination: toPharmacy
+          ? { type: "pharmacy" }
+          : { type: "department", departmentId: departmentId! },
         receivedByName: receivedBy.trim(),
         note: note.trim() || undefined,
-        lines: lines.map((l) => ({ batchId: l.batchId, quantity: Number(l.quantity) })),
+        lines: lines.map((l) => ({
+          batchId: l.batchId,
+          quantity: Number(l.quantity),
+        })),
       },
       { onSuccess: () => setLines([]) },
     );
 
   return (
-    <Screen overline="Store" title="Issue stock" subtitle="To a department, or to the pharmacy" testID="issue-stock">
+    <Screen
+      overline="Store"
+      title="Issue stock"
+      subtitle="To a department, or to the pharmacy"
+      testID="issue-stock"
+    >
       <VStack gap={14}>
         {issue.isSuccess ? (
           <View testID="issue-success">
-            <Banner tone="success" title={`${issue.data.reference} recorded`} message={`${issue.data.movements.length} movement(s) written to the ledger.`} />
+            <Banner
+              tone="success"
+              title={`${issue.data.reference} recorded`}
+              message={`${issue.data.movements.length} movement(s) written to the ledger.`}
+            />
           </View>
         ) : null}
         {issue.isError ? (
           <View testID="issue-error">
-            <Banner tone="danger" title="Nothing was issued" message={apiErrorMessage(issue.error)} />
+            <Banner
+              tone="danger"
+              title="Nothing was issued"
+              message={apiErrorMessage(issue.error)}
+            />
           </View>
         ) : null}
 
@@ -98,7 +138,9 @@ export default function IssueStockScreen() {
                 setItemId(null);
                 reset();
               }}
-              options={(["main_store", "pharmacy"] as StockLocation[]).map((l) => ({ value: l, label: LOCATION_LABELS[l] }))}
+              options={(["main_store", "pharmacy"] as StockLocation[]).map(
+                (l) => ({ value: l, label: LOCATION_LABELS[l] }),
+              )}
             />
             <HStack gap={8}>
               {(["department", "pharmacy"] as const).map((d) => {
@@ -109,13 +151,21 @@ export default function IssueStockScreen() {
                     key={d}
                     disabled={disabled}
                     onPress={() => setDestination(d)}
-                    style={[styles.choice, active ? styles.choiceOn : null, disabled ? { opacity: 0.5 } : null]}
+                    style={[
+                      styles.choice,
+                      active ? styles.choiceOn : null,
+                      disabled ? { opacity: 0.5 } : null,
+                    ]}
                     accessibilityRole="radio"
                     accessibilityState={{ checked: active, disabled }}
                     {...checkable(active, () => setDestination(d), disabled)}
                     testID={`issue-to-${d}`}
                   >
-                    <Text variant="label">{d === "department" ? "A department" : "Transfer to the pharmacy"}</Text>
+                    <Text variant="label">
+                      {d === "department"
+                        ? "A department"
+                        : "Transfer to the pharmacy"}
+                    </Text>
                   </Pressable>
                 );
               })}
@@ -125,7 +175,10 @@ export default function IssueStockScreen() {
                 label="Receiving department"
                 value={departmentId}
                 onChange={setDepartmentId}
-                options={departments.map((d) => ({ value: d.id, label: d.name }))}
+                options={departments.map((d) => ({
+                  value: d.id,
+                  label: d.name,
+                }))}
                 placeholder="Choose the department"
               />
             ) : null}
@@ -148,7 +201,11 @@ export default function IssueStockScreen() {
               label="Item"
               value={itemId}
               onChange={setItemId}
-              options={items.map((i) => ({ value: i.id, label: i.name, sublabel: `${i.stock.byLocation[from]?.usable ?? 0} usable` }))}
+              options={items.map((i) => ({
+                value: i.id,
+                label: i.name,
+                sublabel: `${i.stock.byLocation[from]?.usable ?? 0} usable`,
+              }))}
               placeholder="Choose an item"
             />
             {itemId && batches.length ? (
@@ -160,7 +217,14 @@ export default function IssueStockScreen() {
                   if (!b || lines.some((l) => l.batchId === batchId)) return;
                   setLines((ls) => [
                     ...ls,
-                    { batchId: b.id, itemName: detail?.item.name ?? "", batchNumber: b.batchNumber, expiryDate: b.expiryDate, max: b.quantityOnHand, quantity: "" },
+                    {
+                      batchId: b.id,
+                      itemName: detail?.item.name ?? "",
+                      batchNumber: b.batchNumber,
+                      expiryDate: b.expiryDate,
+                      max: b.quantityOnHand,
+                      quantity: "",
+                    },
                   ]);
                   reset();
                 }}
@@ -169,7 +233,10 @@ export default function IssueStockScreen() {
                   label: `Batch ${b.batchNumber} · exp ${formatExpiry(b.expiryDate)}`,
                   sublabel: `${b.quantityOnHand} on hand`,
                   disabled: !b.selectable,
-                  disabledReason: b.expiryStatus === "expired" ? "Expired — cannot be issued" : undefined,
+                  disabledReason:
+                    b.expiryStatus === "expired"
+                      ? "Expired — cannot be issued"
+                      : undefined,
                 }))}
                 placeholder="Add a batch"
                 hint="Soonest expiry first. Expired batches are shown and cannot be chosen."
@@ -177,12 +244,17 @@ export default function IssueStockScreen() {
             ) : null}
 
             {lines.map((l, i) => (
-              <View key={l.batchId} style={styles.line} testID={`issue-line-${l.batchNumber}`}>
+              <View
+                key={l.batchId}
+                style={styles.line}
+                testID={`issue-line-${l.batchNumber}`}
+              >
                 <HStack gap={10} align="center" wrap>
                   <VStack gap={1} style={{ flex: 1, minWidth: 180 }}>
                     <Text variant="label-sm">{l.itemName}</Text>
                     <Text variant="caption" tone="tertiary">
-                      Batch {l.batchNumber} · exp {formatExpiry(l.expiryDate)} · {l.max} on hand
+                      Batch {l.batchNumber} · exp {formatExpiry(l.expiryDate)} ·{" "}
+                      {l.max} on hand
                     </Text>
                   </VStack>
                   <TextField
@@ -190,23 +262,48 @@ export default function IssueStockScreen() {
                     numericField
                     value={l.quantity}
                     onChangeText={(v) => {
-                      setLines((ls) => ls.map((x) => (x.batchId === l.batchId ? { ...x, quantity: v } : x)));
+                      setLines((ls) =>
+                        ls.map((x) =>
+                          x.batchId === l.batchId ? { ...x, quantity: v } : x,
+                        ),
+                      );
                       reset();
                     }}
-                    error={l.quantity.trim() && lineProblems[i] ? lineProblems[i]! : undefined}
+                    error={
+                      l.quantity.trim() && lineProblems[i]
+                        ? lineProblems[i]!
+                        : undefined
+                    }
                     containerStyle={{ width: 140 }}
                     testID={`issue-qty-${l.batchNumber}`}
                   />
-                  <Button label="" size="xs" variant="ghost" icon={<Trash2 size={14} color={palette.text.tertiary} />} onPress={() => setLines((ls) => ls.filter((x) => x.batchId !== l.batchId))} />
+                  <Button
+                    label=""
+                    size="xs"
+                    variant="ghost"
+                    icon={<Trash2 size={14} color={palette.text.tertiary} />}
+                    onPress={() =>
+                      setLines((ls) =>
+                        ls.filter((x) => x.batchId !== l.batchId),
+                      )
+                    }
+                  />
                 </HStack>
               </View>
             ))}
           </VStack>
         </Card>
 
-        <Button label={toPharmacy ? "Transfer to the pharmacy" : "Issue stock"} onPress={submit} disabled={!ready} loading={issue.isPending} testID="issue-submit" />
+        <Button
+          label={toPharmacy ? "Transfer to the pharmacy" : "Issue stock"}
+          onPress={submit}
+          disabled={!ready}
+          loading={issue.isPending}
+          testID="issue-submit"
+        />
         <Text variant="caption" style={{ color: signal.caution.text }}>
-          Issuing more than a batch holds is refused. Every issue is written to the stock ledger with both names.
+          Issuing more than a batch holds is refused. Every issue is written to
+          the stock ledger with both names.
         </Text>
       </VStack>
     </Screen>
@@ -223,6 +320,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.border.default,
   },
-  choiceOn: { borderColor: palette.border.focus, backgroundColor: palette.surface.secondary },
-  line: { paddingTop: 8, borderTopWidth: 1, borderTopColor: palette.border.subtle },
+  choiceOn: {
+    borderColor: palette.border.focus,
+    backgroundColor: palette.surface.secondary,
+  },
+  line: {
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: palette.border.subtle,
+  },
 });

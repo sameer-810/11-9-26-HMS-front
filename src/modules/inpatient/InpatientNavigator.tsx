@@ -19,7 +19,11 @@ function makeInpatientNavigator(mode: BoardMode) {
   return function InpatientNavigator() {
     return (
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="WardBoard" component={WardBoardScreen} initialParams={{ mode }} />
+        <Stack.Screen
+          name="WardBoard"
+          component={WardBoardScreen}
+          initialParams={{ mode }}
+        />
         <Stack.Screen name="Bedside" component={BedsideScreen} />
         <Stack.Screen name="AdmitPatient" component={AdmitPatientScreen} />
         <Stack.Screen name="Discharge" component={DischargeScreen} />

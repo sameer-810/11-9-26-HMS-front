@@ -4,14 +4,32 @@ import { useNavigation } from "@react-navigation/native";
 import { Ambulance } from "lucide-react-native";
 
 import { palette } from "@shared/designSystem";
-import { Screen, Text, VStack, HStack, Card, SectionHeader, SearchInput, Button, Banner, TextField } from "@shared/ui";
+import {
+  Screen,
+  Text,
+  VStack,
+  HStack,
+  Card,
+  SectionHeader,
+  SearchInput,
+  Button,
+  Banner,
+  TextField,
+} from "@shared/ui";
 import { apiErrorCode, apiErrorMessage, apiErrorDetails } from "@api/apiClient";
 import { useDebouncedValue } from "@shared/hooks/useDebouncedValue";
 import { usePatients } from "@modules/patient/hooks/usePatients";
 import type { Patient } from "@modules/patient/types";
 import { useRegisterArrival } from "@modules/emergency/hooks/useEmergency";
-import { ChoiceChips, CheckToggle } from "@modules/emergency/components/Choices";
-import { ARRIVAL_MODE_LABELS, type ArrivalMode, type RegisterArrivalBody } from "@modules/emergency/types";
+import {
+  ChoiceChips,
+  CheckToggle,
+} from "@modules/emergency/components/Choices";
+import {
+  ARRIVAL_MODE_LABELS,
+  type ArrivalMode,
+  type RegisterArrivalBody,
+} from "@modules/emergency/types";
 
 type Kind = "registered" | "unidentified";
 type Gender = "male" | "female" | "other";
@@ -46,24 +64,34 @@ export default function RegisterArrivalScreen() {
   const [isMlc, setIsMlc] = useState(false);
 
   const results = usePatients(
-    kind === "registered" && !patient && debounced.trim().length >= 2 ? { search: debounced.trim(), limit: 8 } : undefined,
+    kind === "registered" && !patient && debounced.trim().length >= 2
+      ? { search: debounced.trim(), limit: 8 }
+      : undefined,
   );
   const register = useRegisterArrival();
 
   const ageNum = approxAge.trim() === "" ? null : Number(approxAge);
-  const ageInvalid = ageNum !== null && (!Number.isInteger(ageNum) || ageNum < 0 || ageNum > 120);
+  const ageInvalid =
+    ageNum !== null &&
+    (!Number.isInteger(ageNum) || ageNum < 0 || ageNum > 120);
   const expectedNum = expectedIn.trim() === "" ? null : Number(expectedIn);
-  const expectedInvalid = expectedNum !== null && (!Number.isFinite(expectedNum) || expectedNum < 0 || expectedNum > 24 * 60);
+  const expectedInvalid =
+    expectedNum !== null &&
+    (!Number.isFinite(expectedNum) || expectedNum < 0 || expectedNum > 24 * 60);
   const isPreAlert = mode === "ambulance" && preAlert;
 
   const ready =
-    (kind === "registered" ? Boolean(patient) : Boolean(gender) && !ageInvalid) &&
+    (kind === "registered"
+      ? Boolean(patient)
+      : Boolean(gender) && !ageInvalid) &&
     complaint.trim().length >= 3 &&
     !(isPreAlert && expectedInvalid);
 
   const existing =
     register.isError && apiErrorCode(register.error) === "ALREADY_IN_ED"
-      ? apiErrorDetails<{ visitId: string; visitNumber: string }>(register.error)
+      ? apiErrorDetails<{ visitId: string; visitNumber: string }>(
+          register.error,
+        )
       : undefined;
 
   const submit = () => {
@@ -76,7 +104,12 @@ export default function RegisterArrivalScreen() {
     const body: RegisterArrivalBody = {
       ...(kind === "registered"
         ? { patientId: patient!.id }
-        : { unidentified: { gender: gender!, ...(ageNum !== null ? { approximateAgeYears: ageNum } : {}) } }),
+        : {
+            unidentified: {
+              gender: gender!,
+              ...(ageNum !== null ? { approximateAgeYears: ageNum } : {}),
+            },
+          }),
       arrivalMode: mode,
       chiefComplaint: complaint.trim(),
       ...(broughtBy.trim() ? { broughtBy: broughtBy.trim() } : {}),
@@ -84,18 +117,34 @@ export default function RegisterArrivalScreen() {
       ...(isPreAlert
         ? {
             expected: true,
-            ...(expectedNum !== null ? { expectedAt: new Date(Date.now() + expectedNum * 60_000).toISOString() } : {}),
+            ...(expectedNum !== null
+              ? {
+                  expectedAt: new Date(
+                    Date.now() + expectedNum * 60_000,
+                  ).toISOString(),
+                }
+              : {}),
           }
         : {}),
-      ...(mode === "referral" && referredFrom.trim() ? { referredFrom: referredFrom.trim() } : {}),
+      ...(mode === "referral" && referredFrom.trim()
+        ? { referredFrom: referredFrom.trim() }
+        : {}),
       ...(isMlc ? { isMlc: true } : {}),
     };
     // Replace so Back cannot return to the filled form and register twice.
-    register.mutate(body, { onSuccess: (visit) => navigation.replace("EmergencyVisit", { visitId: visit.id }) });
+    register.mutate(body, {
+      onSuccess: (visit) =>
+        navigation.replace("EmergencyVisit", { visitId: visit.id }),
+    });
   };
 
   return (
-    <Screen overline="Emergency" title="Register an arrival" subtitle="The clock starts when they are registered" testID="ed-register">
+    <Screen
+      overline="Emergency"
+      title="Register an arrival"
+      subtitle="The clock starts when they are registered"
+      testID="ed-register"
+    >
       <VStack gap={14}>
         <Card>
           <VStack gap={12}>
@@ -112,7 +161,13 @@ export default function RegisterArrivalScreen() {
 
             {kind === "registered" ? (
               patient ? (
-                <HStack justify="space-between" align="center" wrap gap={8} testID="register-chosen-patient">
+                <HStack
+                  justify="space-between"
+                  align="center"
+                  wrap
+                  gap={8}
+                  testID="register-chosen-patient"
+                >
                   <VStack gap={2}>
                     <Text variant="label-lg">{patient.fullName}</Text>
                     <Text variant="caption" tone="secondary">
@@ -146,9 +201,12 @@ export default function RegisterArrivalScreen() {
                       testID={`register-pick-${p.patientId}`}
                     />
                   ))}
-                  {debounced.trim().length >= 2 && results.data && results.data.data.length === 0 ? (
+                  {debounced.trim().length >= 2 &&
+                  results.data &&
+                  results.data.data.length === 0 ? (
                     <Text variant="caption" tone="tertiary">
-                      No match. If nobody knows who they are, register them as unidentified.
+                      No match. If nobody knows who they are, register them as
+                      unidentified.
                     </Text>
                   ) : null}
                 </VStack>
@@ -174,7 +232,9 @@ export default function RegisterArrivalScreen() {
                   numericField
                   value={approxAge}
                   onChangeText={setApproxAge}
-                  error={ageInvalid ? "A whole number from 0 to 120" : undefined}
+                  error={
+                    ageInvalid ? "A whole number from 0 to 120" : undefined
+                  }
                   hint="A guess is fine. Leave blank if you cannot tell."
                   containerStyle={{ maxWidth: 260 }}
                   testID="register-approx-age"
@@ -193,7 +253,15 @@ export default function RegisterArrivalScreen() {
                 label: ARRIVAL_MODE_LABELS[m],
                 icon:
                   m === "ambulance" ? (
-                    <Ambulance size={14} color={mode === m ? palette.clinical[700] : palette.text.secondary} strokeWidth={2.1} />
+                    <Ambulance
+                      size={14}
+                      color={
+                        mode === m
+                          ? palette.clinical[700]
+                          : palette.text.secondary
+                      }
+                      strokeWidth={2.1}
+                    />
                   ) : undefined,
               }))}
               isSelected={(k) => k === mode}
@@ -220,7 +288,12 @@ export default function RegisterArrivalScreen() {
                     testID="register-ambulance-vehicle"
                   />
                 </HStack>
-                <TextField label="Crew" value={crew} onChangeText={setCrew} testID="register-ambulance-crew" />
+                <TextField
+                  label="Crew"
+                  value={crew}
+                  onChangeText={setCrew}
+                  testID="register-ambulance-crew"
+                />
                 <TextField
                   label="Pre-alert note"
                   value={preAlertNote}
@@ -243,7 +316,11 @@ export default function RegisterArrivalScreen() {
                     numericField
                     value={expectedIn}
                     onChangeText={setExpectedIn}
-                    error={expectedInvalid ? "Minutes from now, up to 24 hours" : undefined}
+                    error={
+                      expectedInvalid
+                        ? "Minutes from now, up to 24 hours"
+                        : undefined
+                    }
                     containerStyle={{ maxWidth: 220 }}
                     testID="register-expected-minutes"
                   />
@@ -272,7 +349,11 @@ export default function RegisterArrivalScreen() {
               value={complaint}
               onChangeText={setComplaint}
               placeholder="Chest pain for 1 hour, fall from a height…"
-              error={complaint.length > 0 && complaint.trim().length < 3 ? "At least 3 characters" : undefined}
+              error={
+                complaint.length > 0 && complaint.trim().length < 3
+                  ? "At least 3 characters"
+                  : undefined
+              }
               testID="register-chief-complaint"
             />
             <TextField
@@ -296,7 +377,11 @@ export default function RegisterArrivalScreen() {
           <View testID="register-error">
             <Banner
               tone={existing ? "warning" : "danger"}
-              title={existing ? "Already in the department" : "Arrival not registered"}
+              title={
+                existing
+                  ? "Already in the department"
+                  : "Arrival not registered"
+              }
               message={apiErrorMessage(register.error)}
               action={
                 existing ? (
@@ -305,7 +390,11 @@ export default function RegisterArrivalScreen() {
                     size="sm"
                     variant="secondary"
                     fullWidth={false}
-                    onPress={() => navigation.replace("EmergencyVisit", { visitId: existing.visitId })}
+                    onPress={() =>
+                      navigation.replace("EmergencyVisit", {
+                        visitId: existing.visitId,
+                      })
+                    }
                     testID="register-open-existing"
                   />
                 ) : undefined

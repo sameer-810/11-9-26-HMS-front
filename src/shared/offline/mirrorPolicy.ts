@@ -1,6 +1,5 @@
 import type { QueryKey } from "@tanstack/react-query";
 
-
 /**
  * Pure rule for which patients the mirror must not keep. A break-the-glass read taints the
  * patient and their admissions, since bedside/notes payloads carry no break-glass marker.
@@ -17,9 +16,11 @@ interface Shape {
   admission?: { id?: unknown; patient?: { id?: unknown } };
 }
 
-const asShape = (data: unknown): Shape | null => (data && typeof data === "object" ? (data as Shape) : null);
+const asShape = (data: unknown): Shape | null =>
+  data && typeof data === "object" ? (data as Shape) : null;
 
-const str = (v: unknown): string | null => (typeof v === "string" && v ? v : null);
+const str = (v: unknown): string | null =>
+  typeof v === "string" && v ? v : null;
 
 /** The entity a mirrored query is about — the id every family puts second in its key. */
 const subject = (key: QueryKey) => str(key[1]);
@@ -38,7 +39,10 @@ export function readViaBreakGlass(data: unknown): boolean {
  * Adds break-the-glass patients and their admission ids to `tainted`. Accumulates across
  * calls, so a patient stays excluded after the emergency read leaves the cache.
  */
-export function collectBreakGlassIds(candidates: MirrorCandidate[], tainted: Set<string>): Set<string> {
+export function collectBreakGlassIds(
+  candidates: MirrorCandidate[],
+  tainted: Set<string>,
+): Set<string> {
   for (const { key, data } of candidates) {
     if (!readViaBreakGlass(data)) continue;
     const id = subject(key);
@@ -62,7 +66,10 @@ export function collectBreakGlassIds(candidates: MirrorCandidate[], tainted: Set
 }
 
 /** True when a mirrored entry is about a tainted patient or one of their admissions. */
-export function isTainted({ key, data }: MirrorCandidate, tainted: Set<string>): boolean {
+export function isTainted(
+  { key, data }: MirrorCandidate,
+  tainted: Set<string>,
+): boolean {
   if (tainted.size === 0) return false;
   if (readViaBreakGlass(data)) return true;
   const id = subject(key);

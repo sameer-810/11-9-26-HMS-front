@@ -14,13 +14,21 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
-import { palette, radius, outline, layout, motion, signal } from "../designSystem";
+import {
+  palette,
+  radius,
+  outline,
+  layout,
+  motion,
+  signal,
+} from "../designSystem";
 import { haptic, type FeedbackTone } from "../touchFeedback";
 import { Text } from "./Text";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-type Variant = "primary" | "secondary" | "ghost" | "accent" | "destructive" | "critical";
+type Variant =
+  "primary" | "secondary" | "ghost" | "accent" | "destructive" | "critical";
 type Size = "xs" | "sm" | "md" | "lg";
 
 interface Props {
@@ -74,7 +82,8 @@ export function Button({
   const isDisabled = disabled || loading;
   const c = getVariantColors(variant);
   const s = (width >= layout.wideBreakpoint ? DESKTOP : PHONE)[size];
-  const tone: FeedbackTone | "none" = hapticTone ?? (c.borderWidth === 0 ? "impact" : "select");
+  const tone: FeedbackTone | "none" =
+    hapticTone ?? (c.borderWidth === 0 ? "impact" : "select");
 
   const onPressIn = () => {
     press.set(withTiming(1, { duration: motion.duration.instant }));
@@ -95,7 +104,10 @@ export function Button({
         accessibilityRole="button"
         accessibilityLabel={label}
         accessibilityHint={accessibilityHint}
-        accessibilityState={{ disabled: Boolean(isDisabled), busy: Boolean(loading) }}
+        accessibilityState={{
+          disabled: Boolean(isDisabled),
+          busy: Boolean(loading),
+        }}
         onPressIn={onPressIn}
         onPressOut={() => press.set(withSpring(0, motion.spring.crisp))}
         style={[
@@ -116,10 +128,16 @@ export function Button({
         ) : (
           <View style={styles.row}>
             {icon ? <View style={{ marginRight: 6 }}>{icon}</View> : null}
-            <Text variant="label" weight="600" style={{ color: c.text, fontSize: s.fontSize }}>
+            <Text
+              variant="label"
+              weight="600"
+              style={{ color: c.text, fontSize: s.fontSize }}
+            >
               {label}
             </Text>
-            {rightIcon ? <View style={{ marginLeft: 6 }}>{rightIcon}</View> : null}
+            {rightIcon ? (
+              <View style={{ marginLeft: 6 }}>{rightIcon}</View>
+            ) : null}
           </View>
         )}
       </AnimatedPressable>
@@ -137,7 +155,12 @@ function getVariantColors(v: Variant) {
         borderWidth: 0,
       };
     case "accent":
-      return { bg: palette.teal[700], text: "#FFFFFF", border: palette.teal[700], borderWidth: 0 };
+      return {
+        bg: palette.teal[700],
+        text: "#FFFFFF",
+        border: palette.teal[700],
+        borderWidth: 0,
+      };
     case "secondary":
       return {
         bg: palette.surface.primary,
@@ -146,7 +169,12 @@ function getVariantColors(v: Variant) {
         borderWidth: 1,
       };
     case "ghost":
-      return { bg: "transparent", text: palette.text.accent, border: "transparent", borderWidth: 0 };
+      return {
+        bg: "transparent",
+        text: palette.text.accent,
+        border: "transparent",
+        borderWidth: 0,
+      };
     case "destructive":
       return {
         bg: palette.danger.text,

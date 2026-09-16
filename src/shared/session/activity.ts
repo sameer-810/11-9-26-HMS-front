@@ -25,9 +25,10 @@ export function recordActivity(force = false, now = Date.now()) {
   if (!force && now - lastActivity < THROTTLE_MS) return;
   lastActivity = now;
   try {
-    if (typeof localStorage !== "undefined") localStorage.setItem(ACTIVITY_KEY, String(now));
+    if (typeof localStorage !== "undefined")
+      localStorage.setItem(ACTIVITY_KEY, String(now));
   } catch {
-  /* private window or storage full: this tab's own clock still works */
+    /* private window or storage full: this tab's own clock still works */
   }
 }
 
@@ -43,8 +44,16 @@ export interface IdleState {
 }
 
 /** Pure idle calculation; enforces the server's 5-minute minimum. */
-export function idleState(lastActive: number, now: number, idleMinutes: number): IdleState {
+export function idleState(
+  lastActive: number,
+  now: number,
+  idleMinutes: number,
+): IdleState {
   const limit = Math.max(5, idleMinutes || 30) * 60_000;
   const remaining = lastActive + limit - now;
-  return { remaining, warn: remaining > 0 && remaining <= WARNING_MS, expired: remaining <= 0 };
+  return {
+    remaining,
+    warn: remaining > 0 && remaining <= WARNING_MS,
+    expired: remaining <= 0,
+  };
 }

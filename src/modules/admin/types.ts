@@ -33,7 +33,6 @@ export interface DepartmentRef {
   code: string;
 }
 
-
 // ---- Users ------------------------------------------------------------------
 export interface AdminUser {
   id: string;
@@ -61,7 +60,6 @@ export interface AdminUser {
   lastLoginAt: string | null;
   createdAt: string;
 }
-
 
 // ---- Roles (US-04) ----------------------------------------------------------
 
@@ -152,7 +150,6 @@ export interface UpdateUserBody extends ClinicalIdentity {
   wardIds?: string[];
 }
 
-
 // ---- Hospital ---------------------------------------------------------------
 export interface HospitalAddress {
   line1: string;
@@ -209,7 +206,6 @@ export type HospitalPatch = Partial<
   > & { address: Partial<HospitalAddress> }
 >;
 
-
 // ---- Departments ------------------------------------------------------------
 export interface Department {
   id: string;
@@ -233,7 +229,6 @@ export interface DepartmentBody {
   opdTimings?: string;
 }
 
-
 // ---- Wards, rooms, beds -----------------------------------------------------
 export type WardType =
   | "general"
@@ -246,7 +241,8 @@ export type WardType =
   | "private";
 
 export type WardGender = "male" | "female" | "mixed";
-export type RoomType = "general" | "semi-private" | "private" | "deluxe" | "icu";
+export type RoomType =
+  "general" | "semi-private" | "private" | "deluxe" | "icu";
 export type BedStatus = "available" | "occupied" | "reserved" | "maintenance";
 
 export const WARD_TYPE_LABELS: Record<WardType, string> = {
@@ -346,6 +342,11 @@ export interface BedCounts {
 
 /** GET /beds/board — counts only, one aggregation, no patient data. */
 export interface BedBoard {
-  wards: (BedCounts & { wardId: string; name: string; code: string; type: WardType })[];
+  wards: (BedCounts & {
+    wardId: string;
+    name: string;
+    code: string;
+    type: WardType;
+  })[];
   totals: BedCounts;
 }

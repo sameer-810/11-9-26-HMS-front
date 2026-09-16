@@ -11,7 +11,13 @@ import type { LabResult } from "@modules/laboratory/types";
  * results as on a paper report: value, glyph, then the range it was flagged against.
  * the trend line appears only when the change is significant.
  */
-export function ResultTable({ results, testID }: { results: LabResult[]; testID?: string }) {
+export function ResultTable({
+  results,
+  testID,
+}: {
+  results: LabResult[];
+  testID?: string;
+}) {
   if (results.length === 0) {
     return (
       <Text variant="caption" tone="tertiary">
@@ -63,7 +69,12 @@ export function ResultTable({ results, testID }: { results: LabResult[]; testID?
             </HStack>
 
             {r.delta?.significant ? (
-              <HStack gap={4} align="center" style={styles.delta} testID={`result-${r.code}-delta`}>
+              <HStack
+                gap={4}
+                align="center"
+                style={styles.delta}
+                testID={`result-${r.code}-delta`}
+              >
                 {r.delta.direction === "down" ? (
                   <TrendingDown size={13} color={signal.urgent.text} />
                 ) : (
@@ -71,9 +82,13 @@ export function ResultTable({ results, testID }: { results: LabResult[]; testID?
                 )}
                 <Text variant="caption" style={{ color: signal.urgent.text }}>
                   {r.delta.direction === "down" ? "Down" : "Up"}
-                  {r.delta.percent !== null ? ` ${Math.abs(r.delta.percent)}%` : ""} from{" "}
-                  {String(r.delta.previousValue)}
-                  {r.delta.previousAt ? ` on ${formatDateTime(r.delta.previousAt)}` : ""}
+                  {r.delta.percent !== null
+                    ? ` ${Math.abs(r.delta.percent)}%`
+                    : ""}{" "}
+                  from {String(r.delta.previousValue)}
+                  {r.delta.previousAt
+                    ? ` on ${formatDateTime(r.delta.previousAt)}`
+                    : ""}
                 </Text>
               </HStack>
             ) : null}

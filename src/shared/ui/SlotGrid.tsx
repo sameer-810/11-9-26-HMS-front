@@ -26,12 +26,22 @@ interface Props {
 }
 
 /** Appointment slot grid. Unavailable slots are shown disabled with their reason, never hidden. */
-export function SlotGrid({ slots, value, onChange, unavailableReason, testID }: Props) {
+export function SlotGrid({
+  slots,
+  value,
+  onChange,
+  unavailableReason,
+  testID,
+}: Props) {
   if (slots.length === 0) {
     return (
       <View style={styles.empty} testID={testID}>
         <VStack gap={8} align="center">
-          <CalendarX size={20} color={palette.text.tertiary} strokeWidth={1.8} />
+          <CalendarX
+            size={20}
+            color={palette.text.tertiary}
+            strokeWidth={1.8}
+          />
           <Text variant="label" tone="secondary" center>
             {unavailableReason || "No clinic on this day"}
           </Text>
@@ -87,23 +97,35 @@ export function SlotGrid({ slots, value, onChange, unavailableReason, testID }: 
                 {s.time}
               </Text>
 
-              { /* Why it cannot be picked. */ }
+              {/* Why it cannot be picked. */}
               {!s.available ? (
-                <Text variant="caption" numberOfLines={1} style={{ color: palette.text.disabled }}>
+                <Text
+                  variant="caption"
+                  numberOfLines={1}
+                  style={{ color: palette.text.disabled }}
+                >
                   {s.unavailableReason}
                 </Text>
               ) : partiallyBooked ? (
                 <Text
                   variant="caption"
                   tabular
-                  style={{ color: selected ? "rgba(255,255,255,0.85)" : palette.text.tertiary }}
+                  style={{
+                    color: selected
+                      ? "rgba(255,255,255,0.85)"
+                      : palette.text.tertiary,
+                  }}
                 >
                   {s.remaining} left
                 </Text>
               ) : s.isExtra ? (
                 <Text
                   variant="caption"
-                  style={{ color: selected ? "rgba(255,255,255,0.85)" : palette.text.tertiary }}
+                  style={{
+                    color: selected
+                      ? "rgba(255,255,255,0.85)"
+                      : palette.text.tertiary,
+                  }}
                 >
                   extra
                 </Text>
@@ -114,8 +136,16 @@ export function SlotGrid({ slots, value, onChange, unavailableReason, testID }: 
       </HStack>
 
       <HStack gap={14} wrap>
-        <Legend color={palette.surface.primary} border={palette.border.strong} label="Free" />
-        <Legend color={palette.clinical[700]} border={palette.clinical[700]} label="Selected" />
+        <Legend
+          color={palette.surface.primary}
+          border={palette.border.strong}
+          label="Free"
+        />
+        <Legend
+          color={palette.clinical[700]}
+          border={palette.clinical[700]}
+          label="Selected"
+        />
         <Legend
           color={palette.surface.tertiary}
           border={palette.border.default}
@@ -126,7 +156,15 @@ export function SlotGrid({ slots, value, onChange, unavailableReason, testID }: 
   );
 }
 
-function Legend({ color, border, label }: { color: string; border: string; label: string }) {
+function Legend({
+  color,
+  border,
+  label,
+}: {
+  color: string;
+  border: string;
+  label: string;
+}) {
   return (
     <HStack gap={6} align="center">
       <View

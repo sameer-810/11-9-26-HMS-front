@@ -33,6 +33,14 @@ test("at the timeout: signed out, not warned", () => {
 });
 
 test("a setting under five minutes, or none, is not trusted", () => {
-  assert.equal(idleState(t0, t0 + 3 * MIN, 1).expired, false, "the floor is five minutes, as on the server");
-  assert.equal(idleState(t0, t0 + 29 * MIN, 0).expired, false, "no setting means the thirty-minute default");
+  assert.equal(
+    idleState(t0, t0 + 3 * MIN, 1).expired,
+    false,
+    "the floor is five minutes, as on the server",
+  );
+  assert.equal(
+    idleState(t0, t0 + 29 * MIN, 0).expired,
+    false,
+    "no setting means the thirty-minute default",
+  );
 });

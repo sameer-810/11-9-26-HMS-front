@@ -10,7 +10,8 @@ import { useMirrorStore } from "./mirror";
 import { useOutbox, useMyOps, drainOutbox, type OutboxOp } from "./outbox";
 
 const entries = (n: number) => `${n} ${n === 1 ? "entry" : "entries"}`;
-const clock = (t: number) => new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+const clock = (t: number) =>
+  new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
 /**
  * Device-state strip above every screen: offline, entries still sending, or refused entries.
@@ -40,7 +41,11 @@ export function OfflineStatusBar() {
       ) : pending.length > 0 ? (
         <Banner
           tone="info"
-          title={syncing ? "Sending entries saved offline" : "Entries saved offline are waiting to send"}
+          title={
+            syncing
+              ? "Sending entries saved offline"
+              : "Entries saved offline are waiting to send"
+          }
           message={`${entries(pending.length)} will be filed at the times they were charted.`}
         />
       ) : null}
@@ -52,13 +57,23 @@ export function OfflineStatusBar() {
             title={`${entries(failed.length)} saved offline could not be filed`}
             message="The server refused them — the patient may have been discharged, or the device clock was wrong. Review them to re-enter what is still needed."
             action={
-              <Button label="Review" size="sm" variant="secondary" onPress={() => setReviewing(true)} testID="outbox-review" />
+              <Button
+                label="Review"
+                size="sm"
+                variant="secondary"
+                onPress={() => setReviewing(true)}
+                testID="outbox-review"
+              />
             }
           />
         </View>
       ) : null}
 
-      <FailedEntries visible={reviewing} ops={failed} onClose={() => setReviewing(false)} />
+      <FailedEntries
+        visible={reviewing}
+        ops={failed}
+        onClose={() => setReviewing(false)}
+      />
     </View>
   );
 }
@@ -77,19 +92,37 @@ const SUMMARY_FIELDS: [string, string][] = [
 
 function summarise(op: OutboxOp): string {
   if (op.kind === "note") return String(op.body.note ?? "");
-  return SUMMARY_FIELDS.filter(([key]) => op.body[key] !== null && op.body[key] !== undefined && op.body[key] !== "")
+  return SUMMARY_FIELDS.filter(
+    ([key]) =>
+      op.body[key] !== null &&
+      op.body[key] !== undefined &&
+      op.body[key] !== "",
+  )
     .map(([key, label]) => `${label} ${String(op.body[key])}`)
     .join(" · ");
 }
 
-function FailedEntries({ visible, ops, onClose }: { visible: boolean; ops: OutboxOp[]; onClose: () => void }) {
+function FailedEntries({
+  visible,
+  ops,
+  onClose,
+}: {
+  visible: boolean;
+  ops: OutboxOp[];
+  onClose: () => void;
+}) {
   const retry = useOutbox((s) => s.retry);
   const discard = useOutbox((s) => s.discard);
   const [confirming, setConfirming] = useState<string | null>(null);
   const reduceMotion = useReducedMotion();
 
   return (
-    <Modal visible={visible} transparent animationType={reduceMotion ? "none" : "fade"} onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType={reduceMotion ? "none" : "fade"}
+      onRequestClose={onClose}
+    >
       <View style={styles.overlay}>
         <View style={styles.sheet}>
           <VStack gap={12}>
@@ -97,8 +130,8 @@ function FailedEntries({ visible, ops, onClose }: { visible: boolean; ops: Outbo
               Entries not filed
             </Text>
             <Text variant="body-sm" tone="secondary">
-              Each was charted on this device and refused by the server. The values are shown so they can be
-              re-entered where they still apply.
+              Each was charted on this device and refused by the server. The
+              values are shown so they can be re-entered where they still apply.
             </Text>
             <ScrollView style={{ maxHeight: 420 }}>
               <VStack gap={10}>
@@ -108,14 +141,21 @@ function FailedEntries({ visible, ops, onClose }: { visible: boolean; ops: Outbo
                   </Text>
                 ) : null}
                 {ops.map((op) => (
-                  <View key={op.id} style={styles.entry} testID={`outbox-failed-${op.id}`}>
+                  <View
+                    key={op.id}
+                    style={styles.entry}
+                    testID={`outbox-failed-${op.id}`}
+                  >
                     <VStack gap={4}>
                       <Text variant="label">{op.label}</Text>
                       <Text variant="caption" tone="tertiary">
                         Charted {formatDateTime(op.takenAt)}
                       </Text>
                       <Text variant="body-sm">{summarise(op)}</Text>
-                      <Text variant="caption" style={{ color: palette.danger.text }}>
+                      <Text
+                        variant="caption"
+                        style={{ color: palette.danger.text }}
+                      >
                         {op.error}
                       </Text>
                       <HStack gap={8} wrap>
@@ -130,9 +170,15 @@ function FailedEntries({ visible, ops, onClose }: { visible: boolean; ops: Outbo
                           testID={`outbox-retry-${op.id}`}
                         />
                         <Button
-                          label={confirming === op.id ? "Discard — tap again to confirm" : "Discard"}
+                          label={
+                            confirming === op.id
+                              ? "Discard — tap again to confirm"
+                              : "Discard"
+                          }
                           size="sm"
-                          variant={confirming === op.id ? "destructive" : "ghost"}
+                          variant={
+                            confirming === op.id ? "destructive" : "ghost"
+                          }
                           onPress={() => {
                             if (confirming === op.id) {
                               discard(op.id);
@@ -149,7 +195,12 @@ function FailedEntries({ visible, ops, onClose }: { visible: boolean; ops: Outbo
                 ))}
               </VStack>
             </ScrollView>
-            <Button label="Close" variant="ghost" onPress={onClose} testID="outbox-close" />
+            <Button
+              label="Close"
+              variant="ghost"
+              onPress={onClose}
+              testID="outbox-close"
+            />
           </VStack>
         </View>
       </View>
@@ -158,7 +209,12 @@ function FailedEntries({ visible, ops, onClose }: { visible: boolean; ops: Outbo
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingHorizontal: 12, paddingTop: 8, gap: 8, backgroundColor: palette.surface.secondary },
+  wrap: {
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    gap: 8,
+    backgroundColor: palette.surface.secondary,
+  },
   overlay: {
     flex: 1,
     backgroundColor: "rgba(11,18,32,0.45)",

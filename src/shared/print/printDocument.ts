@@ -27,7 +27,12 @@ export interface PrintOutcome {
  */
 interface TestPrintGlobals {
   __HMS_TEST_PRINT__?: unknown;
-  __hmsLastPrint?: { html: string; widthMm: number; heightMm: number; title: string };
+  __hmsLastPrint?: {
+    html: string;
+    widthMm: number;
+    heightMm: number;
+    title: string;
+  };
 }
 
 export async function printDocument(job: PrintJob): Promise<PrintOutcome> {
@@ -45,7 +50,10 @@ export async function printDocument(job: PrintJob): Promise<PrintOutcome> {
   // Desktop first: its shell also reports Platform.OS "web", and only it guarantees exact size.
   const bridge = desktopBridge();
   if (bridge) {
-    const deviceName = job.printerClass === "label" ? getLabelPrinter() ?? undefined : undefined;
+    const deviceName =
+      job.printerClass === "label"
+        ? (getLabelPrinter() ?? undefined)
+        : undefined;
     try {
       const result = await bridge.printExact({
         html: job.html,
@@ -55,7 +63,11 @@ export async function printDocument(job: PrintJob): Promise<PrintOutcome> {
       });
       return { ...result, channel: "desktop" };
     } catch (err) {
-      return { ok: false, channel: "desktop", reason: err instanceof Error ? err.message : String(err) };
+      return {
+        ok: false,
+        channel: "desktop",
+        reason: err instanceof Error ? err.message : String(err),
+      };
     }
   }
 
@@ -63,10 +75,18 @@ export async function printDocument(job: PrintJob): Promise<PrintOutcome> {
 
   // iOS and Android: expo-print sizes the page in points (1/72 inch).
   try {
-    await Print.printAsync({ html: job.html, width: mmToPt(job.widthMm), height: mmToPt(job.heightMm) });
+    await Print.printAsync({
+      html: job.html,
+      width: mmToPt(job.widthMm),
+      height: mmToPt(job.heightMm),
+    });
     return { ok: true, channel: "native" };
   } catch (err) {
-    return { ok: false, channel: "native", reason: err instanceof Error ? err.message : String(err) };
+    return {
+      ok: false,
+      channel: "native",
+      reason: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -77,7 +97,11 @@ export async function printDocument(job: PrintJob): Promise<PrintOutcome> {
 function printInHiddenFrame(job: PrintJob): Promise<PrintOutcome> {
   return new Promise((resolve) => {
     if (typeof document === "undefined") {
-      resolve({ ok: false, channel: "web", reason: "No document to print from" });
+      resolve({
+        ok: false,
+        channel: "web",
+        reason: "No document to print from",
+      });
       return;
     }
 
@@ -106,11 +130,17 @@ function printInHiddenFrame(job: PrintJob): Promise<PrintOutcome> {
       const win = frame.contentWindow;
       if (!win) {
         remove();
-        resolve({ ok: false, channel: "web", reason: "The print frame did not open" });
+        resolve({
+          ok: false,
+          channel: "web",
+          reason: "The print frame did not open",
+        });
         return;
       }
       // Some browsers fire afterprint when the dialog opens; delay removal until spooled.
-      win.addEventListener("afterprint", () => setTimeout(remove, 1000), { once: true });
+      win.addEventListener("afterprint", () => setTimeout(remove, 1000), {
+        once: true,
+      });
       setTimeout(remove, 120_000);
       try {
         win.focus();
@@ -118,7 +148,11 @@ function printInHiddenFrame(job: PrintJob): Promise<PrintOutcome> {
         resolve({ ok: true, channel: "web" });
       } catch (err) {
         remove();
-        resolve({ ok: false, channel: "web", reason: err instanceof Error ? err.message : String(err) });
+        resolve({
+          ok: false,
+          channel: "web",
+          reason: err instanceof Error ? err.message : String(err),
+        });
       }
     };
 

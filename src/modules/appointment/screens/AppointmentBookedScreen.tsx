@@ -24,7 +24,13 @@ export default function AppointmentBookedScreen() {
   const route = useRoute<any>();
   const { id } = (route.params ?? {}) as { id: string };
 
-  const { data: appointment, isLoading, isError, error, refetch } = useAppointment(id);
+  const {
+    data: appointment,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useAppointment(id);
 
   if (isLoading) {
     return (
@@ -42,22 +48,37 @@ export default function AppointmentBookedScreen() {
   if (isError || !appointment) {
     return (
       <Screen title="Appointment">
-        <ErrorState error={error} title="Couldn't load this appointment" onRetry={refetch} />
+        <ErrorState
+          error={error}
+          title="Couldn't load this appointment"
+          onRetry={refetch}
+        />
       </Screen>
     );
   }
 
   const patient = appointment.patient as PatientBanner;
-  const doctor = appointment.doctor as { fullName?: string; designation?: string };
+  const doctor = appointment.doctor as {
+    fullName?: string;
+    designation?: string;
+  };
 
   return (
-    <Screen overline="Front office" title="Appointment booked" testID="appointment-booked">
+    <Screen
+      overline="Front office"
+      title="Appointment booked"
+      testID="appointment-booked"
+    >
       <VStack gap={16} style={{ maxWidth: 620 }}>
         <Card>
           <VStack gap={16}>
             <HStack gap={12} align="center">
               <View style={confirmMark}>
-                <CircleCheck size={22} color={signal.normal.color} strokeWidth={2.2} />
+                <CircleCheck
+                  size={22}
+                  color={signal.normal.color}
+                  strokeWidth={2.2}
+                />
               </View>
               <VStack gap={2} flex={1}>
                 <Text variant="h2" tone="primary">
@@ -69,18 +90,26 @@ export default function AppointmentBookedScreen() {
               </VStack>
             </HStack>
 
-            { /* The number the patient will quote on the phone. */ }
+            {/* The number the patient will quote on the phone. */}
             <View style={numberBox}>
               <Text variant="overline" tone="tertiary">
                 Appointment number
               </Text>
-              <Text variant="display" tone="primary" tabular testID="booked-number">
+              <Text
+                variant="display"
+                tone="primary"
+                tabular
+                testID="booked-number"
+              >
                 {appointment.appointmentNumber}
               </Text>
             </View>
 
             <VStack gap={0}>
-              <Row label="Patient" value={`${patient?.fullName} · ${patient?.patientId}`} />
+              <Row
+                label="Patient"
+                value={`${patient?.fullName} · ${patient?.patientId}`}
+              />
               <Row
                 label="When"
                 value={`${formatCalendarDate(appointment.scheduledDate)} at ${formatWallTime(appointment.scheduledTime)}`}
@@ -93,7 +122,9 @@ export default function AppointmentBookedScreen() {
               {appointment.department ? (
                 <Row label="Department" value={appointment.department.name} />
               ) : null}
-              {appointment.reason ? <Row label="Reason" value={appointment.reason} /> : null}
+              {appointment.reason ? (
+                <Row label="Reason" value={appointment.reason} />
+              ) : null}
             </VStack>
           </VStack>
         </Card>
@@ -103,7 +134,13 @@ export default function AppointmentBookedScreen() {
             label="Book another"
             variant="secondary"
             fullWidth={false}
-            icon={<CalendarPlus size={16} color={palette.text.primary} strokeWidth={2.1} />}
+            icon={
+              <CalendarPlus
+                size={16}
+                color={palette.text.primary}
+                strokeWidth={2.1}
+              />
+            }
             onPress={() => navigation.replace("BookAppointment")}
           />
           <Button

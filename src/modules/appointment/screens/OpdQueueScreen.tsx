@@ -33,7 +33,12 @@ import {
 import { apiErrorMessage } from "@api/apiClient";
 import { useProgressiveList } from "@shared/hooks/useProgressiveList";
 import { ShowMoreButton } from "@shared/ui/ShowMoreButton";
-import { formatWallTime, formatDuration, formatCalendarDate, todayCalendarDate } from "@shared/format";
+import {
+  formatWallTime,
+  formatDuration,
+  formatCalendarDate,
+  todayCalendarDate,
+} from "@shared/format";
 import { useDepartments } from "@modules/appointment/hooks/useDirectory";
 import {
   useOpdQueue,
@@ -60,7 +65,14 @@ export default function OpdQueueScreen() {
 
   const today = todayCalendarDate();
   const { data: departments } = useDepartments();
-  const { data, isLoading, isError, error: loadError, refetch, isRefetching } = useOpdQueue({
+  const {
+    data,
+    isLoading,
+    isError,
+    error: loadError,
+    refetch,
+    isRefetching,
+  } = useOpdQueue({
     date: today,
     ...(departmentId ? { departmentId } : {}),
   });
@@ -72,9 +84,11 @@ export default function OpdQueueScreen() {
   const counts = data?.meta?.counts;
 
   const visible = all.filter((a) => {
-    if (filter === "waiting") return a.status === "arrived" || a.status === "in_consultation";
+    if (filter === "waiting")
+      return a.status === "arrived" || a.status === "in_consultation";
     if (filter === "expected") return a.status === "scheduled";
-    if (filter === "done") return ["completed", "no_show", "cancelled"].includes(a.status);
+    if (filter === "done")
+      return ["completed", "no_show", "cancelled"].includes(a.status);
     return true;
   });
   const shown = useProgressiveList(visible);
@@ -110,20 +124,42 @@ export default function OpdQueueScreen() {
       testID="opd-queue"
     >
       <VStack gap={14}>
-        {error ? <Banner tone="danger" message={error} onDismiss={() => setError(null)} /> : null}
+        {error ? (
+          <Banner
+            tone="danger"
+            message={error}
+            onDismiss={() => setError(null)}
+          />
+        ) : null}
 
         {counts ? (
           <HStack gap={10} wrap>
-            <CountTile label="Waiting" value={counts.arrived} accent={palette.warning.text} />
+            <CountTile
+              label="Waiting"
+              value={counts.arrived}
+              accent={palette.warning.text}
+            />
             <CountTile
               label="With the doctor"
               value={counts.in_consultation}
               accent={palette.clinical[600]}
             />
-            <CountTile label="Expected" value={counts.scheduled} accent={palette.text.tertiary} />
-            <CountTile label="Seen" value={counts.completed} accent={signal.normal.text} />
+            <CountTile
+              label="Expected"
+              value={counts.scheduled}
+              accent={palette.text.tertiary}
+            />
+            <CountTile
+              label="Seen"
+              value={counts.completed}
+              accent={signal.normal.text}
+            />
             {counts.no_show > 0 ? (
-              <CountTile label="Did not attend" value={counts.no_show} accent={palette.danger.text} />
+              <CountTile
+                label="Did not attend"
+                value={counts.no_show}
+                accent={palette.danger.text}
+              />
             ) : null}
           </HStack>
         ) : null}
@@ -132,8 +168,17 @@ export default function OpdQueueScreen() {
           <View style={{ flex: 1, minWidth: 220 }}>
             <ChipsRow
               chips={[
-                { key: "waiting", label: "Waiting", count: (counts?.arrived ?? 0) + (counts?.in_consultation ?? 0) },
-                { key: "expected", label: "Expected", count: counts?.scheduled },
+                {
+                  key: "waiting",
+                  label: "Waiting",
+                  count:
+                    (counts?.arrived ?? 0) + (counts?.in_consultation ?? 0),
+                },
+                {
+                  key: "expected",
+                  label: "Expected",
+                  count: counts?.scheduled,
+                },
                 { key: "done", label: "Done" },
                 { key: "all", label: "Everyone" },
               ]}
@@ -147,7 +192,10 @@ export default function OpdQueueScreen() {
               placeholder="All departments"
               options={[
                 { value: "", label: "All departments" },
-                ...(departments ?? []).map((d) => ({ value: d.id, label: d.name })),
+                ...(departments ?? []).map((d) => ({
+                  value: d.id,
+                  label: d.name,
+                })),
               ]}
               onChange={(v) => setDepartmentId(v || null)}
             />
@@ -155,7 +203,11 @@ export default function OpdQueueScreen() {
         </HStack>
 
         {isError ? (
-          <ErrorState error={loadError} title="Couldn't load the queue" onRetry={refetch} />
+          <ErrorState
+            error={loadError}
+            title="Couldn't load the queue"
+            onRetry={refetch}
+          />
         ) : isLoading ? (
           <VStack gap={8}>
             {[0, 1, 2, 3].map((i) => (
@@ -197,7 +249,13 @@ export default function OpdQueueScreen() {
                 }}
               />
             ))}
-            <ShowMoreButton hidden={shown.hidden} pageSize={shown.pageSize} onPress={shown.showMore} noun="patients" testID="opd-queue-show-more" />
+            <ShowMoreButton
+              hidden={shown.hidden}
+              pageSize={shown.pageSize}
+              onPress={shown.showMore}
+              noun="patients"
+              testID="opd-queue-show-more"
+            />
           </VStack>
         )}
       </VStack>
@@ -251,12 +309,21 @@ function QueueRow({
       testID={`queue-row-${a.appointmentNumber}`}
     >
       <HStack gap={12} align="center" wrap>
-        { /* Token — the number the waiting room is called by. */ }
-        <View style={[styles.token, a.tokenNumber ? styles.tokenIssued : styles.tokenPending]}>
+        {/* Token — the number the waiting room is called by. */}
+        <View
+          style={[
+            styles.token,
+            a.tokenNumber ? styles.tokenIssued : styles.tokenPending,
+          ]}
+        >
           <Text
             variant="metric-sm"
             tabular
-            style={{ color: a.tokenNumber ? palette.clinical[700] : palette.text.disabled }}
+            style={{
+              color: a.tokenNumber
+                ? palette.clinical[700]
+                : palette.text.disabled,
+            }}
           >
             {a.tokenNumber ?? "—"}
           </Text>
@@ -301,7 +368,9 @@ function QueueRow({
             <Text
               variant="caption"
               tabular
-              style={{ color: longWait ? palette.warning.text : palette.text.tertiary }}
+              style={{
+                color: longWait ? palette.warning.text : palette.text.tertiary,
+              }}
             >
               waiting {formatDuration(a.waitingMinutes)}
             </Text>
@@ -333,12 +402,22 @@ function QueueRow({
               fullWidth={false}
               disabled={busy}
               onPress={onNoShow}
-              icon={<UserX size={14} color={palette.text.primary} strokeWidth={2.1} />}
+              icon={
+                <UserX
+                  size={14}
+                  color={palette.text.primary}
+                  strokeWidth={2.1}
+                />
+              }
             />
           </HStack>
         ) : a.status === "in_consultation" ? (
           <HStack gap={5} align="center">
-            <Stethoscope size={14} color={palette.clinical[600]} strokeWidth={2.1} />
+            <Stethoscope
+              size={14}
+              color={palette.clinical[600]}
+              strokeWidth={2.1}
+            />
             <Text variant="label-sm" style={{ color: palette.clinical[700] }}>
               With the doctor
             </Text>
@@ -349,7 +428,15 @@ function QueueRow({
   );
 }
 
-function CountTile({ label, value, accent }: { label: string; value: number; accent: string }) {
+function CountTile({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: number;
+  accent: string;
+}) {
   return (
     <View style={styles.countTile}>
       <Text variant="metric-sm" tabular style={{ color: accent }}>

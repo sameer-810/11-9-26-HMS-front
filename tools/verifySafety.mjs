@@ -17,9 +17,15 @@ const DIST = path.join(FRONT, "dist");
 const SHOTS = path.join(FRONT, "docs", "shots");
 
 const TYPES = {
-  ".html": "text/html", ".js": "text/javascript", ".css": "text/css",
-  ".json": "application/json", ".png": "image/png", ".ttf": "font/ttf",
-  ".woff2": "font/woff2", ".ico": "image/x-icon", ".svg": "image/svg+xml",
+  ".html": "text/html",
+  ".js": "text/javascript",
+  ".css": "text/css",
+  ".json": "application/json",
+  ".png": "image/png",
+  ".ttf": "font/ttf",
+  ".woff2": "font/woff2",
+  ".ico": "image/x-icon",
+  ".svg": "image/svg+xml",
 };
 
 const imp = (...segs) => import(pathToFileURL(path.join(...segs)).href);
@@ -43,7 +49,10 @@ fs.mkdirSync(SHOTS, { recursive: true });
 console.log("\nStarting the API…");
 
 const { MongoMemoryReplSet } = await imp(
-  BACK, "node_modules", "mongodb-memory-server", "index.js",
+  BACK,
+  "node_modules",
+  "mongodb-memory-server",
+  "index.js",
 );
 const replSet = await MongoMemoryReplSet.create({
   replSet: { count: 1, storageEngine: "wiredTiger" },
@@ -76,7 +85,7 @@ for (let waited = 0; ; waited += 300) {
     if ((await fetch(`${API}/health`)).ok) break;
   } catch {
     /* not up */
-    }
+  }
   if (waited > 40_000) throw new Error(`API did not start.\n${apiLog}`);
   await new Promise((r) => setTimeout(r, 300));
 }
@@ -89,23 +98,49 @@ process.env.JWT_REFRESH_SECRET ??= "verify-refresh-secret-not-real";
 process.env.JWT_ADMIN_SECRET ??= "verify-admin-secret-not-real";
 process.env.BCRYPT_ROUNDS ??= "4";
 
-const mongoose = (await imp(BACK, "node_modules", "mongoose", "index.js")).default;
+const mongoose = (await imp(BACK, "node_modules", "mongoose", "index.js"))
+  .default;
 await mongoose.connect(mongoUri);
-const { HospitalModel } = await imp(BACK, "src", "modules", "hospital", "hospital.model.js");
-const { UserModel, hashPassword } = await imp(BACK, "src", "modules", "user", "user.model.js");
-const { defaultPermissionsFor, ROLES } = await imp(BACK, "src", "config", "roles.js");
+const { HospitalModel } = await imp(
+  BACK,
+  "src",
+  "modules",
+  "hospital",
+  "hospital.model.js",
+);
+const { UserModel, hashPassword } = await imp(
+  BACK,
+  "src",
+  "modules",
+  "user",
+  "user.model.js",
+);
+const { defaultPermissionsFor, ROLES } = await imp(
+  BACK,
+  "src",
+  "config",
+  "roles.js",
+);
 
 const hospital = await HospitalModel.create({
-  name: "City General Hospital", code: "CGH",
-  approvalStatus: "approved", approvedAt: new Date(), isActive: true,
+  name: "City General Hospital",
+  code: "CGH",
+  approvalStatus: "approved",
+  approvedAt: new Date(),
+  isActive: true,
   timezone: "Asia/Kolkata",
 });
 await UserModel.create({
-  hospitalId: hospital._id, employeeId: "ADM001",
-  firstName: "Asha", lastName: "Menon", email: "admin@cgh.test",
+  hospitalId: hospital._id,
+  employeeId: "ADM001",
+  firstName: "Asha",
+  lastName: "Menon",
+  email: "admin@cgh.test",
   passwordHash: await hashPassword("AdminPassword123"),
-  role: ROLES.ADMIN, permissions: defaultPermissionsFor(ROLES.ADMIN),
-  isActive: true, mustChangePassword: false,
+  role: ROLES.ADMIN,
+  permissions: defaultPermissionsFor(ROLES.ADMIN),
+  isActive: true,
+  mustChangePassword: false,
 });
 
 const req = (method, p, body, token) =>
@@ -120,94 +155,161 @@ const req = (method, p, body, token) =>
 
 const adminToken = (
   await req("POST", "/auth/login", {
-    email: "admin@cgh.test", password: "AdminPassword123",
-    deviceId: "verify-admin-device", deviceName: "Verifier",
+    email: "admin@cgh.test",
+    password: "AdminPassword123",
+    deviceId: "verify-admin-device",
+    deviceName: "Verifier",
   })
 ).data.accessToken;
 
-const dept = await req("POST", "/departments", { name: "General Medicine", code: "MED" }, adminToken);
+const dept = await req(
+  "POST",
+  "/departments",
+  { name: "General Medicine", code: "MED" },
+  adminToken,
+);
 
 async function provision({ employeeId, firstName, email, role, departmentId }) {
   const created = await req(
-    "POST", "/users",
+    "POST",
+    "/users",
     { employeeId, firstName, lastName: "Kumar", email, role, departmentId },
     adminToken,
   );
   const temp = created.data.temporaryPassword;
   const first = await req("POST", "/auth/login", {
-    email, password: temp, deviceId: `${employeeId}-device`, deviceName: "Verifier",
+    email,
+    password: temp,
+    deviceId: `${employeeId}-device`,
+    deviceName: "Verifier",
   });
   const password = `${firstName}Password123`;
   await req(
-    "POST", "/auth/change-password",
-    { currentPassword: temp, newPassword: password, deviceId: `${employeeId}-device` },
+    "POST",
+    "/auth/change-password",
+    {
+      currentPassword: temp,
+      newPassword: password,
+      deviceId: `${employeeId}-device`,
+    },
     first.data.accessToken,
   );
   const live = await req("POST", "/auth/login", {
-    email, password, deviceId: `${employeeId}-device`,
+    email,
+    password,
+    deviceId: `${employeeId}-device`,
   });
-  return { id: created.data.user.id, email, password, token: live.data.accessToken };
+  return {
+    id: created.data.user.id,
+    email,
+    password,
+    token: live.data.accessToken,
+  };
 }
 
 const doctor = await provision({
-  employeeId: "DOC001", firstName: "Rajesh", email: "rajesh@cgh.test",
-  role: "doctor", departmentId: dept.data.id,
+  employeeId: "DOC001",
+  firstName: "Rajesh",
+  email: "rajesh@cgh.test",
+  role: "doctor",
+  departmentId: dept.data.id,
 });
 const reception = await provision({
-  employeeId: "REC001", firstName: "Deepak", email: "deepak@cgh.test", role: "receptionist",
+  employeeId: "REC001",
+  firstName: "Deepak",
+  email: "deepak@cgh.test",
+  role: "receptionist",
 });
 const pharmacist = await provision({
-  employeeId: "PHA001", firstName: "Imran", email: "imran@cgh.test", role: "pharmacy",
+  employeeId: "PHA001",
+  firstName: "Imran",
+  email: "imran@cgh.test",
+  role: "pharmacy",
 });
 
 // The patient this whole phase exists for.
 const patient = await req(
-  "POST", "/patients",
+  "POST",
+  "/patients",
   {
-    firstName: "Sanjay", lastName: "Kumar", gender: "male",
-    dateOfBirth: "1985-06-15", mobile: "9876543210",
+    firstName: "Sanjay",
+    lastName: "Kumar",
+    gender: "male",
+    dateOfBirth: "1985-06-15",
+    mobile: "9876543210",
   },
   reception.token,
 );
 await req(
-  "PUT", `/patients/${patient.data.id}/allergies`,
+  "PUT",
+  `/patients/${patient.data.id}/allergies`,
   {
-    allergies: [{
-      substance: "Penicillin", severity: "anaphylaxis",
-      reaction: "Throat swelling, ICU admission 2019", category: "drug",
-    }],
+    allergies: [
+      {
+        substance: "Penicillin",
+        severity: "anaphylaxis",
+        reaction: "Throat swelling, ICU admission 2019",
+        category: "drug",
+      },
+    ],
   },
   doctor.token,
 );
 
 // The formulary. Amoxil is a penicillin; its name says nothing about that.
-await req("POST", "/prescriptions/medicines", {
-  name: "Amoxil", genericName: "Amoxicillin", ingredients: ["amoxicillin"],
-  form: "capsule", strength: "500mg", schedule: "H",
-  defaultDose: "1 cap", defaultFrequency: "1-1-1", defaultDurationDays: 5,
-}, adminToken);
-await req("POST", "/prescriptions/medicines", {
-  name: "Pan-40", genericName: "Pantoprazole", ingredients: ["pantoprazole"],
-  form: "tablet", strength: "40mg",
-  defaultDose: "1 tab", defaultFrequency: "1-0-0", defaultDurationDays: 7,
-}, adminToken);
+await req(
+  "POST",
+  "/prescriptions/medicines",
+  {
+    name: "Amoxil",
+    genericName: "Amoxicillin",
+    ingredients: ["amoxicillin"],
+    form: "capsule",
+    strength: "500mg",
+    schedule: "H",
+    defaultDose: "1 cap",
+    defaultFrequency: "1-1-1",
+    defaultDurationDays: 5,
+  },
+  adminToken,
+);
+await req(
+  "POST",
+  "/prescriptions/medicines",
+  {
+    name: "Pan-40",
+    genericName: "Pantoprazole",
+    ingredients: ["pantoprazole"],
+    form: "tablet",
+    strength: "40mg",
+    defaultDose: "1 tab",
+    defaultFrequency: "1-0-0",
+    defaultDurationDays: 7,
+  },
+  adminToken,
+);
 
 // The consultation the doctor will open.
 const consultation = await req(
-  "POST", "/consultations",
+  "POST",
+  "/consultations",
   { patientId: patient.data.id, type: "opd" },
   doctor.token,
 );
 
-console.log("Seeded: a penicillin-anaphylaxis patient and a formulary containing Amoxil\n");
+console.log(
+  "Seeded: a penicillin-anaphylaxis patient and a formulary containing Amoxil\n",
+);
 
 // ---------------------------------------------------------------------------
 const web = http.createServer((rq, rs) => {
   const url = decodeURIComponent((rq.url || "/").split("?")[0]);
   let file = path.join(DIST, url);
-  if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) file = path.join(DIST, "index.html");
+  if (!fs.existsSync(file) || fs.statSync(file).isDirectory())
+    file = path.join(DIST, "index.html");
   rs.writeHead(200, {
-    "Content-Type": TYPES[path.extname(file).toLowerCase()] || "application/octet-stream",
+    "Content-Type":
+      TYPES[path.extname(file).toLowerCase()] || "application/octet-stream",
   });
   fs.createReadStream(file).pipe(rs);
 });
@@ -215,7 +317,9 @@ await new Promise((r) => web.listen(0, "127.0.0.1", r));
 const WEB = `http://127.0.0.1:${web.address().port}`;
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+const ctx = await browser.newContext({
+  viewport: { width: 1440, height: 1000 },
+});
 const page = await ctx.newPage();
 
 const consoleErrors = [];
@@ -226,14 +330,18 @@ page.on("console", (m) => {
 page.on("pageerror", (e) => consoleErrors.push(String(e)));
 page.on("response", (r) => {
   if (r.status() >= 400) {
-    httpFailures.push(`${r.status()} ${r.request().method()} ${new URL(r.url()).pathname}`);
+    httpFailures.push(
+      `${r.status()} ${r.request().method()} ${new URL(r.url()).pathname}`,
+    );
   }
 });
 // Block the live-update socket; it is not under test and may hit a stray dev port.
 await page.route("**/socket.io/**", (route) => route.abort());
 await page.route("**/api/v1/**", async (route) => {
   const url = new URL(route.request().url());
-  const response = await route.fetch({ url: `${API}${url.pathname}${url.search}` });
+  const response = await route.fetch({
+    url: `${API}${url.pathname}${url.search}`,
+  });
   await route.fulfill({ response });
 });
 
@@ -251,7 +359,9 @@ try {
 
   await signIn(page, doctor.email, doctor.password);
   check(
-    /Good (morning|afternoon|evening), Rajesh/.test(await page.innerText("body")),
+    /Good (morning|afternoon|evening), Rajesh/.test(
+      await page.innerText("body"),
+    ),
     "doctor signs in",
   );
 
@@ -272,7 +382,10 @@ try {
   // Open the consultation directly via the drafts panel, which lists it.
   const finishBtn = page.getByRole("button", { name: "Finish it" }).first();
   const hasDraft = await finishBtn.isVisible().catch(() => false);
-  check(hasDraft, "the unfinished note is surfaced so nobody goes home with one open");
+  check(
+    hasDraft,
+    "the unfinished note is surfaced so nobody goes home with one open",
+  );
   await page.screenshot({ path: path.join(SHOTS, "safety-1-schedule.png") });
 
   if (hasDraft) {
@@ -283,13 +396,23 @@ try {
   let text = await page.innerText("body");
 
   // -- OP-01: the history is there before anything is typed ------------------
-  check(text.includes("Sanjay Kumar"), "the consultation opens on the right patient");
-  check(text.includes("Penicillin"), "OP-01: the allergy is on screen before typing starts");
+  check(
+    text.includes("Sanjay Kumar"),
+    "the consultation opens on the right patient",
+  );
+  check(
+    text.includes("Penicillin"),
+    "OP-01: the allergy is on screen before typing starts",
+  );
   check(text.includes("anaphylaxis"), "and its severity is stated");
-  await page.screenshot({ path: path.join(SHOTS, "safety-2-consultation.png") });
+  await page.screenshot({
+    path: path.join(SHOTS, "safety-2-consultation.png"),
+  });
 
   // -- Record the visit ------------------------------------------------------
-  await page.getByTestId("cc-field").fill("Fever and sore throat for three days");
+  await page
+    .getByTestId("cc-field")
+    .fill("Fever and sore throat for three days");
   await page.getByTestId("exam-field").fill("Temp 38.9, pharynx inflamed");
   await page.getByTestId("dx-field").fill("Acute pharyngitis");
   await page.getByTestId("dx-add").click();
@@ -303,16 +426,30 @@ try {
   await page.getByTestId("medicine-search").fill("Amox");
   await page.waitForTimeout(1600);
   const amoxOption = page.getByText("Amoxil 500mg capsule").first();
-  check(await amoxOption.isVisible().catch(() => false), "the formulary finds Amoxil");
+  check(
+    await amoxOption.isVisible().catch(() => false),
+    "the formulary finds Amoxil",
+  );
   await amoxOption.click();
   await page.waitForTimeout(2200);
 
   text = await page.innerText("body");
   // Chosen but not saved: the alert must already be on screen.
-  check(text.includes("Anaphylaxis risk"), "THE INTERCEPTION: the alert fires on choosing, before saving");
-  check(text.includes("penicillins"), "and explains that Amoxil IS a penicillin");
-  check(text.includes("Review this alert"), "and the line cannot simply be left as-is");
-  await page.screenshot({ path: path.join(SHOTS, "safety-3-alert-inline.png") });
+  check(
+    text.includes("Anaphylaxis risk"),
+    "THE INTERCEPTION: the alert fires on choosing, before saving",
+  );
+  check(
+    text.includes("penicillins"),
+    "and explains that Amoxil IS a penicillin",
+  );
+  check(
+    text.includes("Review this alert"),
+    "and the line cannot simply be left as-is",
+  );
+  await page.screenshot({
+    path: path.join(SHOTS, "safety-3-alert-inline.png"),
+  });
 
   // -- The blocking dialog ---------------------------------------------------
   await page.getByTestId("review-alert-Amoxil").click();
@@ -321,9 +458,17 @@ try {
   text = await page.innerText("body");
   check(text.includes("Anaphylaxis risk"), "the blocking alert opens");
   check(text.includes("Throat swelling"), "it shows the recorded reaction");
-  check(text.includes("Remove this medicine"), "the SAFE action is offered first");
-  check(text.includes("Prescribe anyway"), "the override is available but secondary");
-  await page.screenshot({ path: path.join(SHOTS, "safety-4-blocking-alert.png") });
+  check(
+    text.includes("Remove this medicine"),
+    "the SAFE action is offered first",
+  );
+  check(
+    text.includes("Prescribe anyway"),
+    "the override is available but secondary",
+  );
+  await page.screenshot({
+    path: path.join(SHOTS, "safety-4-blocking-alert.png"),
+  });
 
   // Overriding demands a reason — a click alone is not enough.
   await page.getByRole("button", { name: "Prescribe anyway" }).click();
@@ -337,7 +482,9 @@ try {
     text.includes("recorded in the patient"),
     "and says the reason goes into the record with their name",
   );
-  await page.screenshot({ path: path.join(SHOTS, "safety-5-reason-required.png") });
+  await page.screenshot({
+    path: path.join(SHOTS, "safety-5-reason-required.png"),
+  });
 
   // A token reason is refused by the control itself.
   const reasonBox = page.getByLabel("Reason for overriding this alert");
@@ -350,15 +497,26 @@ try {
   );
 
   // A real one can.
-  await reasonBox.fill("Allergy testing 2023 negative; consultant approved supervised challenge");
+  await reasonBox.fill(
+    "Allergy testing 2023 negative; consultant approved supervised challenge",
+  );
   await page.waitForTimeout(600);
-  check(!(await confirmBtn.isDisabled().catch(() => true)), "a real reason unlocks the override");
+  check(
+    !(await confirmBtn.isDisabled().catch(() => true)),
+    "a real reason unlocks the override",
+  );
   await confirmBtn.click();
   await page.waitForTimeout(1200);
 
   text = await page.innerText("body");
-  check(text.includes("Prescribing anyway"), "the recorded reason is shown on the line");
-  check(text.includes("Allergy testing 2023"), "and the reason itself is visible");
+  check(
+    text.includes("Prescribing anyway"),
+    "the recorded reason is shown on the line",
+  );
+  check(
+    text.includes("Allergy testing 2023"),
+    "and the reason itself is visible",
+  );
   await page.screenshot({ path: path.join(SHOTS, "safety-6-overridden.png") });
 
   // -- The safe path: removing the medicine ---------------------------------
@@ -367,7 +525,10 @@ try {
   await page.getByText("Pan-40 40mg tablet").first().click();
   await page.waitForTimeout(1800);
   const panLine = page.getByTestId("rx-line-Pan-40");
-  check(await panLine.isVisible().catch(() => false), "a safe medicine is added");
+  check(
+    await panLine.isVisible().catch(() => false),
+    "a safe medicine is added",
+  );
   check(
     !(await panLine.innerText()).includes("Anaphylaxis"),
     "and raises no alert of its own",
@@ -392,27 +553,39 @@ try {
   await page.waitForTimeout(2400);
 
   text = await page.innerText("body");
-  check(text.includes("This note is permanent"), "OP-06: the note is signed and locked");
+  check(
+    text.includes("This note is permanent"),
+    "OP-06: the note is signed and locked",
+  );
   check(text.includes("Signed by Rajesh Kumar"), "and names who signed it");
-  check(text.includes("Notes added since signing"), "corrections are offered as addenda");
+  check(
+    text.includes("Notes added since signing"),
+    "corrections are offered as addenda",
+  );
 
   // The fields are genuinely read-only now.
   const ccField = page.getByTestId("cc-field");
   check(
-    await ccField.isEditable().then((e) => !e).catch(() => true),
+    await ccField
+      .isEditable()
+      .then((e) => !e)
+      .catch(() => true),
     "the original text can no longer be edited",
   );
   await page.screenshot({ path: path.join(SHOTS, "safety-8-signed.png") });
 
   // -- An addendum -----------------------------------------------------------
-  await page.getByTestId("addendum-field").fill(
-    "Throat swab sent after the consultation; result to follow.",
-  );
+  await page
+    .getByTestId("addendum-field")
+    .fill("Throat swab sent after the consultation; result to follow.");
   await page.waitForTimeout(500);
   await page.getByTestId("addendum-submit").click();
   await page.waitForTimeout(2000);
   text = await page.innerText("body");
-  check(text.includes("Throat swab sent"), "the correction is recorded beside the original");
+  check(
+    text.includes("Throat swab sent"),
+    "the correction is recorded beside the original",
+  );
   // Read-only field: its text is in the input value, not innerText.
   const originalText = await page.getByTestId("cc-field").inputValue();
   check(
@@ -422,29 +595,46 @@ try {
   );
 
   // -- MR-04: what the PHARMACIST receives ----------------------------------
-  const phPage = await (await browser.newContext({ viewport: { width: 1440, height: 950 } })).newPage();
+  const phPage = await (
+    await browser.newContext({ viewport: { width: 1440, height: 950 } })
+  ).newPage();
   // Block the live-update socket, as above.
   await phPage.route("**/socket.io/**", (route) => route.abort());
   await phPage.route("**/api/v1/**", async (route) => {
     const url = new URL(route.request().url());
-    const response = await route.fetch({ url: `${API}${url.pathname}${url.search}` });
+    const response = await route.fetch({
+      url: `${API}${url.pathname}${url.search}`,
+    });
     await route.fulfill({ response });
   });
   await signIn(phPage, pharmacist.email, pharmacist.password);
-  await phPage.goto(`${WEB}/patients/${patient.data.id}/record`, { waitUntil: "networkidle" });
+  await phPage.goto(`${WEB}/patients/${patient.data.id}/record`, {
+    waitUntil: "networkidle",
+  });
   await phPage.waitForTimeout(2600);
 
   const phText = await phPage.innerText("body");
-  check(phText.includes("Pharmacy view"), "the pharmacist is told which view they have");
+  check(
+    phText.includes("Pharmacy view"),
+    "the pharmacist is told which view they have",
+  );
   check(
     phText.includes("Diagnosis detail is not included"),
     "and that it is partial, so an empty section is not read as an empty history",
   );
-  check(phText.includes("Penicillin"), "MR-04: the pharmacist sees the allergy");
+  check(
+    phText.includes("Penicillin"),
+    "MR-04: the pharmacist sees the allergy",
+  );
   check(!phText.includes("Acute pharyngitis"), "MR-04: and NOT the diagnosis");
-  await phPage.screenshot({ path: path.join(SHOTS, "safety-9-pharmacy-view.png") });
+  await phPage.screenshot({
+    path: path.join(SHOTS, "safety-9-pharmacy-view.png"),
+  });
 
-  await phPage.getByRole("tab", { name: /Medication/ }).first().click();
+  await phPage
+    .getByRole("tab", { name: /Medication/ })
+    .first()
+    .click();
   await phPage.waitForTimeout(1200);
   const medText = await phPage.innerText("body");
   check(medText.includes("Amoxil"), "the prescription reached the pharmacy");
@@ -456,18 +646,34 @@ try {
     medText.includes("Anaphylaxis risk"),
     "beside the alert it overrode — a reason alone is not reviewable",
   );
-  await phPage.screenshot({ path: path.join(SHOTS, "safety-10-pharmacy-override.png") });
+  await phPage.screenshot({
+    path: path.join(SHOTS, "safety-10-pharmacy-override.png"),
+  });
 
   // -- Health ----------------------------------------------------------------
-  console.log(`\n  (HTTP non-2xx seen: ${httpFailures.join(", ") || "none"})\n`);
-  const jsErrors = consoleErrors.filter((e) => !/Failed to load resource/i.test(e));
-  check(jsErrors.length === 0, "no JavaScript errors", jsErrors.slice(0, 2).join(" | "));
+  console.log(
+    `\n  (HTTP non-2xx seen: ${httpFailures.join(", ") || "none"})\n`,
+  );
+  const jsErrors = consoleErrors.filter(
+    (e) => !/Failed to load resource/i.test(e),
+  );
+  check(
+    jsErrors.length === 0,
+    "no JavaScript errors",
+    jsErrors.slice(0, 2).join(" | "),
+  );
   const unexpected = httpFailures.filter((f) => !/^40[139] /.test(f));
-  check(unexpected.length === 0, "no unexpected HTTP failures", unexpected.join(", "));
+  check(
+    unexpected.length === 0,
+    "no unexpected HTTP failures",
+    unexpected.join(", "),
+  );
 } catch (err) {
   console.error("\nJourney threw:", err.message);
   failures.push(`exception: ${err.message}`);
-  await page.screenshot({ path: path.join(SHOTS, "safety-FAILURE.png") }).catch(() => {});
+  await page
+    .screenshot({ path: path.join(SHOTS, "safety-FAILURE.png") })
+    .catch(() => {});
 } finally {
   await browser.close();
   web.close();
@@ -477,7 +683,11 @@ try {
 }
 
 if (failures.length) {
-  console.error(`\n${failures.length} check(s) failed:\n - ${failures.join("\n - ")}\n`);
+  console.error(
+    `\n${failures.length} check(s) failed:\n - ${failures.join("\n - ")}\n`,
+  );
   process.exit(1);
 }
-console.log("\nThe interception works end to end. Screenshots in docs/shots/\n");
+console.log(
+  "\nThe interception works end to end. Screenshots in docs/shots/\n",
+);

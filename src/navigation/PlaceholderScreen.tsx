@@ -6,7 +6,10 @@ import { Screen, EmptyState } from "@shared/ui";
 /** stands in for a route whose module has not been built yet. */
 export function PlaceholderScreen() {
   const route = useRoute();
-  const params = (route.params ?? {}) as { __label?: string; __section?: string };
+  const params = (route.params ?? {}) as {
+    __label?: string;
+    __section?: string;
+  };
   const label = params.__label ?? route.name;
 
   return (

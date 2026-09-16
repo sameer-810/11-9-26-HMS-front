@@ -19,8 +19,11 @@ export default function PatientsNavigator() {
       <Stack.Screen name="PatientDetail" component={PatientDetailScreen} />
       <Stack.Screen name="RegisterPatient" component={RegisterPatientScreen} />
       <Stack.Screen name="BookAppointment" component={BookAppointmentScreen} />
-      <Stack.Screen name="AppointmentBooked" component={AppointmentBookedScreen} />
-      
+      <Stack.Screen
+        name="AppointmentBooked"
+        component={AppointmentBookedScreen}
+      />
+
       <Stack.Screen name="MedicalRecord" component={MedicalRecordScreen} />
       <Stack.Screen name="Consultation" component={ConsultationScreen} />
     </Stack.Navigator>

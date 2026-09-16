@@ -1,9 +1,12 @@
 /** All amounts in this module arrive as rupees. The server computes in paise. */
 
-export type BillStatus = "draft" | "finalised" | "partially_paid" | "paid" | "cancelled";
+export type BillStatus =
+  "draft" | "finalised" | "partially_paid" | "paid" | "cancelled";
 export type BillType = "opd" | "ipd";
-export type ChargeCategory = "consultation" | "room" | "laboratory" | "pharmacy" | "procedure";
-export type PaymentMethod = "cash" | "card" | "upi" | "bank_transfer" | "cheque";
+export type ChargeCategory =
+  "consultation" | "room" | "laboratory" | "pharmacy" | "procedure";
+export type PaymentMethod =
+  "cash" | "card" | "upi" | "bank_transfer" | "cheque";
 
 export const BILL_STATUS_LABELS: Record<BillStatus, string> = {
   draft: "Draft",
@@ -89,7 +92,13 @@ export interface Bill {
   admissionId: string | null;
   status: BillStatus;
   lines: Charge[];
-  removedLines: { description: string; amount: number; reason: string; byName: string; at: string }[];
+  removedLines: {
+    description: string;
+    amount: number;
+    reason: string;
+    byName: string;
+    at: string;
+  }[];
   categoryTotals: Partial<Record<ChargeCategory, number>>;
   discount: {
     status: "none" | "pending" | "approved" | "rejected";
@@ -149,15 +158,36 @@ export interface BillingPreview {
     total: number;
     warnings: string[];
   }[];
-  drafts: { id: string; billNumber: string; billType: BillType; admissionId: string | null; total: number }[];
+  drafts: {
+    id: string;
+    billNumber: string;
+    billType: BillType;
+    admissionId: string | null;
+    total: number;
+  }[];
 }
 
 export interface Receipt {
-  hospital: { name: string; address: string; phone: string; email: string; gstin: string; registrationNumber: string };
+  hospital: {
+    name: string;
+    address: string;
+    phone: string;
+    email: string;
+    gstin: string;
+    registrationNumber: string;
+  };
   patient: BillPatient;
   payment: Payment;
   amountInWords: string;
-  bill: { id: string; billNumber: string; billType: BillType; total: number; amountPaid: number; balanceDue: number; status: BillStatus } | null;
+  bill: {
+    id: string;
+    billNumber: string;
+    billType: BillType;
+    total: number;
+    amountPaid: number;
+    balanceDue: number;
+    status: BillStatus;
+  } | null;
   footer: string;
 }
 
@@ -166,7 +196,11 @@ export type AgingBucket = "0_30" | "31_60" | "61_90" | "90_plus";
 export interface Outstanding {
   total: number;
   buckets: Record<AgingBucket, { label: string; amount: number }>;
-  rows: (BillRow & { ageDays: number; bucket: AgingBucket; bucketLabel: string })[];
+  rows: (BillRow & {
+    ageDays: number;
+    bucket: AgingBucket;
+    bucketLabel: string;
+  })[];
 }
 
 export interface TariffItem {

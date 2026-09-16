@@ -35,7 +35,11 @@ import {
 import { PermissionEditor } from "@modules/admin/components/PermissionEditor";
 import { CredentialPanel } from "@modules/admin/components/CredentialPanel";
 import { ToggleRow } from "@modules/admin/components/ToggleRow";
-import { CLINICAL_ROLES, editUserSchema, type EditUserForm } from "@modules/admin/admin.validation";
+import {
+  CLINICAL_ROLES,
+  editUserSchema,
+  type EditUserForm,
+} from "@modules/admin/admin.validation";
 import {
   ROLE_SUMMARIES,
   type AdminUser,
@@ -59,12 +63,23 @@ export default function UserDetailScreen() {
   const userId: string = route.params?.userId;
   const meId = useAuthStore((s) => s.user?.id);
 
-  const { data: user, isLoading, isError, error, refetch, isRefetching } = useUser(userId);
+  const {
+    data: user,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+  } = useUser(userId);
 
   if (isLoading || !user) {
     return (
       <Screen title="Account" testID="user-detail">
-        {isError ? <ErrorState error={error} onRetry={refetch} /> : <Skeleton height={240} />}
+        {isError ? (
+          <ErrorState error={error} onRetry={refetch} />
+        ) : (
+          <Skeleton height={240} />
+        )}
       </Screen>
     );
   }
@@ -74,7 +89,9 @@ export default function UserDetailScreen() {
       overline={`${user.employeeId} · ${user.roleLabel}`}
       title={user.fullName}
       subtitle={`${user.email}${
-        user.lastLoginAt ? ` · last signed in ${formatDateTime(user.lastLoginAt)}` : " · never signed in"
+        user.lastLoginAt
+          ? ` · last signed in ${formatDateTime(user.lastLoginAt)}`
+          : " · never signed in"
       }`}
       refreshing={isRefetching}
       onRefresh={refetch}
@@ -109,9 +126,15 @@ export default function UserDetailScreen() {
 
         <ProfileSection key={`profile-${user.id}`} user={user} />
         <RoleSection key={`role-${user.id}`} user={user} />
-        {user.role === ROLES.NURSE ? <WardSection key={`wards-${user.id}`} user={user} /> : null}
+        {user.role === ROLES.NURSE ? (
+          <WardSection key={`wards-${user.id}`} user={user} />
+        ) : null}
         <PermissionEditor key={`perms-${user.id}`} user={user} />
-        <AccountSection key={`account-${user.id}`} user={user} isSelf={user.id === meId} />
+        <AccountSection
+          key={`account-${user.id}`}
+          user={user}
+          isSelf={user.id === meId}
+        />
       </VStack>
     </Screen>
   );
@@ -147,13 +170,16 @@ function ProfileSection({ user }: { user: AdminUser }) {
     if (v.email.toLowerCase() !== user.email) patch.email = v.email;
     // The API treats an empty phone as "no change", so it can be replaced but not cleared.
     if (v.phone && v.phone !== user.phone) patch.phone = v.phone;
-    if ((v.designation ?? "") !== user.designation) patch.designation = v.designation ?? "";
+    if ((v.designation ?? "") !== user.designation)
+      patch.designation = v.designation ?? "";
     if (clinical) {
       if ((v.registrationNumber ?? "") !== user.registrationNumber) {
         patch.registrationNumber = v.registrationNumber ?? "";
       }
-      if ((v.specialization ?? "") !== user.specialization) patch.specialization = v.specialization ?? "";
-      if ((v.qualifications ?? "") !== user.qualifications) patch.qualifications = v.qualifications ?? "";
+      if ((v.specialization ?? "") !== user.specialization)
+        patch.specialization = v.specialization ?? "";
+      if ((v.qualifications ?? "") !== user.qualifications)
+        patch.qualifications = v.qualifications ?? "";
       if (icu !== user.icuAuthorized) patch.icuAuthorized = icu;
     }
     if (Object.keys(patch).length === 0) {
@@ -169,7 +195,13 @@ function ProfileSection({ user }: { user: AdminUser }) {
       <VStack gap={14}>
         {update.isError ? (
           <View testID="user-profile-error">
-            <Banner tone="danger" message={apiErrorMessage(update.error, "Could not save the profile")} />
+            <Banner
+              tone="danger"
+              message={apiErrorMessage(
+                update.error,
+                "Could not save the profile",
+              )}
+            />
           </View>
         ) : null}
         {result === "saved" ? (
@@ -182,10 +214,21 @@ function ProfileSection({ user }: { user: AdminUser }) {
 
         <HStack gap={12} wrap>
           <View style={{ flex: 1, minWidth: 200 }}>
-            <ControlledTextField control={control} name="firstName" label="First name" required testID="user-edit-firstName" />
+            <ControlledTextField
+              control={control}
+              name="firstName"
+              label="First name"
+              required
+              testID="user-edit-firstName"
+            />
           </View>
           <View style={{ flex: 1, minWidth: 200 }}>
-            <ControlledTextField control={control} name="lastName" label="Last name" testID="user-edit-lastName" />
+            <ControlledTextField
+              control={control}
+              name="lastName"
+              label="Last name"
+              testID="user-edit-lastName"
+            />
           </View>
         </HStack>
         <HStack gap={12} wrap>
@@ -202,10 +245,21 @@ function ProfileSection({ user }: { user: AdminUser }) {
             />
           </View>
           <View style={{ flex: 1, minWidth: 200 }}>
-            <ControlledTextField control={control} name="phone" label="Mobile" keyboardType="phone-pad" testID="user-edit-phone" />
+            <ControlledTextField
+              control={control}
+              name="phone"
+              label="Mobile"
+              keyboardType="phone-pad"
+              testID="user-edit-phone"
+            />
           </View>
         </HStack>
-        <ControlledTextField control={control} name="designation" label="Designation" testID="user-edit-designation" />
+        <ControlledTextField
+          control={control}
+          name="designation"
+          label="Designation"
+          testID="user-edit-designation"
+        />
 
         {clinical ? (
           <VStack gap={14}>
@@ -219,10 +273,20 @@ function ProfileSection({ user }: { user: AdminUser }) {
                 />
               </View>
               <View style={{ flex: 1, minWidth: 200 }}>
-                <ControlledTextField control={control} name="specialization" label="Specialisation" testID="user-edit-specialization" />
+                <ControlledTextField
+                  control={control}
+                  name="specialization"
+                  label="Specialisation"
+                  testID="user-edit-specialization"
+                />
               </View>
             </HStack>
-            <ControlledTextField control={control} name="qualifications" label="Qualifications" testID="user-edit-qualifications" />
+            <ControlledTextField
+              control={control}
+              name="qualifications"
+              label="Qualifications"
+              testID="user-edit-qualifications"
+            />
             <ToggleRow
               label="ICU staff"
               description="Needed, together with the ICU permission, to open the ICU workspace."
@@ -236,7 +300,13 @@ function ProfileSection({ user }: { user: AdminUser }) {
           </VStack>
         ) : null}
 
-        <Button label="Save profile" fullWidth={false} onPress={submit} loading={update.isPending} testID="user-save-profile" />
+        <Button
+          label="Save profile"
+          fullWidth={false}
+          onPress={submit}
+          loading={update.isPending}
+          testID="user-save-profile"
+        />
       </VStack>
     </Card>
   );
@@ -246,7 +316,9 @@ function RoleSection({ user }: { user: AdminUser }) {
   const update = useUpdateUser(user.id);
   const { data: departments = [] } = useDepartments();
   const [role, setRole] = useState<string>(user.role);
-  const [departmentId, setDepartmentId] = useState<string>(user.department?.id ?? "");
+  const [departmentId, setDepartmentId] = useState<string>(
+    user.department?.id ?? "",
+  );
   const [confirm, setConfirm] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -255,11 +327,22 @@ function RoleSection({ user }: { user: AdminUser }) {
 
   const options = [
     { value: "", label: "No department" },
-    ...departments.map((d) => ({ value: d.id, label: d.name, sublabel: d.code })),
+    ...departments.map((d) => ({
+      value: d.id,
+      label: d.name,
+      sublabel: d.code,
+    })),
   ];
   // The picker lists active departments only; keep a current inactive one visible.
-  if (user.department && !departments.some((d) => d.id === user.department!.id)) {
-    options.push({ value: user.department.id, label: user.department.name, sublabel: "Inactive department" });
+  if (
+    user.department &&
+    !departments.some((d) => d.id === user.department!.id)
+  ) {
+    options.push({
+      value: user.department.id,
+      label: user.department.name,
+      sublabel: "Inactive department",
+    });
   }
 
   const save = () => {
@@ -274,16 +357,28 @@ function RoleSection({ user }: { user: AdminUser }) {
 
   return (
     <Card testID="user-role-section">
-      <SectionHeader title="Role and department" subtitle={ROLE_SUMMARIES[user.role]} />
+      <SectionHeader
+        title="Role and department"
+        subtitle={ROLE_SUMMARIES[user.role]}
+      />
       <VStack gap={14}>
         {update.isError ? (
           <View testID="user-role-error">
-            <Banner tone="danger" message={apiErrorMessage(update.error, "Could not change the role")} />
+            <Banner
+              tone="danger"
+              message={apiErrorMessage(
+                update.error,
+                "Could not change the role",
+              )}
+            />
           </View>
         ) : null}
         {saved ? (
           <View testID="user-role-saved">
-            <Banner tone="success" message="Saved. The new menu and dashboard appear at their next sign-in." />
+            <Banner
+              tone="success"
+              message="Saved. The new menu and dashboard appear at their next sign-in."
+            />
           </View>
         ) : null}
 
@@ -299,7 +394,10 @@ function RoleSection({ user }: { user: AdminUser }) {
               }}
             />
           </View>
-          <View style={{ flex: 1, minWidth: 240 }} testID="user-edit-department">
+          <View
+            style={{ flex: 1, minWidth: 240 }}
+            testID="user-edit-department"
+          >
             <Select
               label="Department"
               value={departmentId}
@@ -313,8 +411,9 @@ function RoleSection({ user }: { user: AdminUser }) {
         </HStack>
         {roleChanged ? (
           <Text variant="caption" tone="warning">
-            Changing the role replaces every permission this person holds with the defaults for{" "}
-            {ROLE_LABELS[role as Role]}, including any individual adjustments.
+            Changing the role replaces every permission this person holds with
+            the defaults for {ROLE_LABELS[role as Role]}, including any
+            individual adjustments.
           </Text>
         ) : null}
         <Button
@@ -351,7 +450,9 @@ function WardSection({ user }: { user: AdminUser }) {
   const original = [...(user.wardIds ?? [])].sort().join(",");
   const changed = [...selected].sort().join(",") !== original;
   // Inactive wards stay listed while this nurse is still on one, so it can be taken off.
-  const options = (wards.data ?? []).filter((w) => w.isActive || selected.includes(w.id));
+  const options = (wards.data ?? []).filter(
+    (w) => w.isActive || selected.includes(w.id),
+  );
 
   return (
     <Card testID="user-wards">
@@ -362,12 +463,21 @@ function WardSection({ user }: { user: AdminUser }) {
       <VStack gap={12}>
         {update.isError ? (
           <View testID="user-wards-error">
-            <Banner tone="danger" message={apiErrorMessage(update.error, "Could not save the ward allocation")} />
+            <Banner
+              tone="danger"
+              message={apiErrorMessage(
+                update.error,
+                "Could not save the ward allocation",
+              )}
+            />
           </View>
         ) : null}
         {saved ? (
           <View testID="user-wards-saved">
-            <Banner tone="success" message="Ward allocation saved. Their list changes straight away." />
+            <Banner
+              tone="success"
+              message="Ward allocation saved. Their list changes straight away."
+            />
           </View>
         ) : null}
 
@@ -385,11 +495,19 @@ function WardSection({ user }: { user: AdminUser }) {
               <View key={w.id} style={{ flexBasis: 260, flexGrow: 1 }}>
                 <ToggleRow
                   label={w.name}
-                  description={[w.code, w.department?.name, w.isActive ? "" : "Inactive"].filter(Boolean).join(" · ")}
+                  description={[
+                    w.code,
+                    w.department?.name,
+                    w.isActive ? "" : "Inactive",
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
                   checked={selected.includes(w.id)}
                   onChange={(on) => {
                     setSaved(false);
-                    setSelected((s) => (on ? [...s, w.id] : s.filter((id) => id !== w.id)));
+                    setSelected((s) =>
+                      on ? [...s, w.id] : s.filter((id) => id !== w.id),
+                    );
                   }}
                   testID={`user-ward-${w.code}`}
                 />
@@ -403,7 +521,12 @@ function WardSection({ user }: { user: AdminUser }) {
           fullWidth={false}
           disabled={!changed}
           loading={update.isPending}
-          onPress={() => update.mutate({ wardIds: selected }, { onSuccess: () => setSaved(true) })}
+          onPress={() =>
+            update.mutate(
+              { wardIds: selected },
+              { onSuccess: () => setSaved(true) },
+            )
+          }
           testID="user-save-wards"
         />
       </VStack>
@@ -413,7 +536,13 @@ function WardSection({ user }: { user: AdminUser }) {
 
 type Dialog = "deactivate" | "activate" | "reset" | null;
 
-function AccountSection({ user, isSelf }: { user: AdminUser; isSelf: boolean }) {
+function AccountSection({
+  user,
+  isSelf,
+}: {
+  user: AdminUser;
+  isSelf: boolean;
+}) {
   const setActive = useSetUserActive(user.id);
   const resetCredential = useResetCredential(user.id);
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -431,7 +560,8 @@ function AccountSection({ user, isSelf }: { user: AdminUser; isSelf: boolean }) 
     if (dialog === "reset") {
       resetCredential.mutate(undefined, {
         onSuccess: (res) => setIssued(res),
-        onError: (e) => setFailure(apiErrorMessage(e, "Could not reset the credential")),
+        onError: (e) =>
+          setFailure(apiErrorMessage(e, "Could not reset the credential")),
         onSettled: () => setDialog(null),
       });
       return;
@@ -445,18 +575,32 @@ function AccountSection({ user, isSelf }: { user: AdminUser; isSelf: boolean }) 
             : `${user.fullName} has been signed out everywhere and can no longer sign in.`,
         ),
       onError: (e) =>
-        setFailure(apiErrorMessage(e, activate ? "Could not reactivate the account" : "Could not deactivate the account")),
+        setFailure(
+          apiErrorMessage(
+            e,
+            activate
+              ? "Could not reactivate the account"
+              : "Could not deactivate the account",
+          ),
+        ),
       onSettled: () => setDialog(null),
     });
   };
 
   return (
     <Card testID="user-account">
-      <SectionHeader title="Sign-in and status" subtitle={isSelf ? "This is your own account." : undefined} />
+      <SectionHeader
+        title="Sign-in and status"
+        subtitle={isSelf ? "This is your own account." : undefined}
+      />
       <VStack gap={14}>
         {failure ? (
           <View testID="user-account-error">
-            <Banner tone="danger" message={failure} onDismiss={() => setFailure(null)} />
+            <Banner
+              tone="danger"
+              message={failure}
+              onDismiss={() => setFailure(null)}
+            />
           </View>
         ) : null}
         {notice ? (
@@ -500,7 +644,8 @@ function AccountSection({ user, isSelf }: { user: AdminUser; isSelf: boolean }) 
           )}
         </HStack>
         <Text variant="caption" tone="tertiary">
-          Deactivation blocks sign-in and ends every session. Nothing is deleted.
+          Deactivation blocks sign-in and ends every session. Nothing is
+          deleted.
         </Text>
       </VStack>
 
@@ -521,7 +666,11 @@ function AccountSection({ user, isSelf }: { user: AdminUser; isSelf: boolean }) 
               : "They are signed out of every device straight away and cannot sign in until reactivated. Everything they recorded is kept."
         }
         confirmLabel={
-          dialog === "reset" ? "Yes, issue a new password" : dialog === "activate" ? "Yes, reactivate" : "Yes, deactivate"
+          dialog === "reset"
+            ? "Yes, issue a new password"
+            : dialog === "activate"
+              ? "Yes, reactivate"
+              : "Yes, deactivate"
         }
         destructive={dialog === "deactivate"}
         loading={setActive.isPending || resetCredential.isPending}

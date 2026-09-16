@@ -26,13 +26,21 @@ export const registerPatientSchema = z
 
     mobile: phone,
     alternatePhone: optionalPhone,
-    email: z.union([z.string().trim().email("Enter a valid email"), z.literal("")]).optional(),
+    email: z
+      .union([z.string().trim().email("Enter a valid email"), z.literal("")])
+      .optional(),
 
     addressLine1: z.string().trim().max(120).optional(),
     city: z.string().trim().max(60).optional(),
     state: z.string().trim().max(60).optional(),
     pincode: z
-      .union([z.string().trim().regex(/^\d{6}$/, "Enter a 6-digit PIN code"), z.literal("")])
+      .union([
+        z
+          .string()
+          .trim()
+          .regex(/^\d{6}$/, "Enter a 6-digit PIN code"),
+        z.literal(""),
+      ])
       .optional(),
 
     emergencyName: z.string().trim().max(60).optional(),
@@ -41,7 +49,13 @@ export const registerPatientSchema = z
 
     abhaNumber: z
       .union([
-        z.string().trim().regex(/^\d{2}-?\d{4}-?\d{4}-?\d{4}$/, "Enter a 14-digit ABHA number"),
+        z
+          .string()
+          .trim()
+          .regex(
+            /^\d{2}-?\d{4}-?\d{4}-?\d{4}$/,
+            "Enter a 14-digit ABHA number",
+          ),
         z.literal(""),
       ])
       .optional(),

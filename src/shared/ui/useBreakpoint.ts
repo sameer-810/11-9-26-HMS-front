@@ -31,7 +31,8 @@ export function useBreakpoint(): Breakpoint {
 /** Table row density derived from the viewport, with an optional per-screen override. */
 export function useDensity(override?: Density) {
   const { isWide, isPhone } = useBreakpoint();
-  const resolved: Density = override ?? (isPhone ? "comfortable" : isWide ? "standard" : "standard");
+  const resolved: Density =
+    override ?? (isPhone ? "comfortable" : isWide ? "standard" : "standard");
   return { name: resolved, ...density[resolved] };
 }
 

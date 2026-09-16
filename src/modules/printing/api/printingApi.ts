@@ -15,7 +15,9 @@ export const printingApi = {
    * `HMS1|…` payload — so there is one reader, not one per client.
    */
   scan: async (code: string) => {
-    const res = await apiClient.get<{ data: ScanResult }>(`/patients/scan/${encodeURIComponent(code)}`);
+    const res = await apiClient.get<{ data: ScanResult }>(
+      `/patients/scan/${encodeURIComponent(code)}`,
+    );
     return res.data.data;
   },
 
@@ -24,9 +26,12 @@ export const printingApi = {
    * Calls the endpoint directly so printing does not depend on the inpatient module.
    */
   currentAdmission: async (patientId: string) => {
-    const res = await apiClient.get<{ data: CurrentAdmission[] }>("/admissions", {
-      params: { patientId, status: "admitted", limit: 1 },
-    });
+    const res = await apiClient.get<{ data: CurrentAdmission[] }>(
+      "/admissions",
+      {
+        params: { patientId, status: "admitted", limit: 1 },
+      },
+    );
     return res.data.data[0] ?? null;
   },
 };

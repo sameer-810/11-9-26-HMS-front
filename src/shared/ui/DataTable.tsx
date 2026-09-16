@@ -1,5 +1,13 @@
 import React, { useMemo, useState } from "react";
-import { View, Pressable, ScrollView, StyleSheet, ViewStyle, StyleProp, Platform } from "react-native";
+import {
+  View,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  ViewStyle,
+  StyleProp,
+  Platform,
+} from "react-native";
 import { webAria } from "./a11y";
 import { ChevronUp, ChevronDown, type LucideIcon } from "lucide-react-native";
 import { palette, radius, breakpoints } from "../designSystem";
@@ -92,7 +100,9 @@ export function DataTable<T>({
   };
 
   if (rows.length === 0) {
-    return <EmptyState icon={emptyIcon} title={emptyTitle} message={emptyMessage} />;
+    return (
+      <EmptyState icon={emptyIcon} title={emptyTitle} message={emptyMessage} />
+    );
   }
 
   if (isNarrow && mobileCard) {
@@ -107,8 +117,11 @@ export function DataTable<T>({
 
   const table = (
     <View style={[styles.table, style]} testID={testID}>
-      { /* Header */ }
-      <View style={[styles.headerRow, { minHeight: 36 }]} accessibilityRole="none">
+      {/* Header */}
+      <View
+        style={[styles.headerRow, { minHeight: 36 }]}
+        accessibilityRole="none"
+      >
         {columns.map((c) => {
           const active = sortKey === c.key;
           // Size goes on the outer wrapper: a flex cell in an unsized Pressable misaligns headers.
@@ -116,7 +129,12 @@ export function DataTable<T>({
             <View
               style={[
                 styles.cell,
-                { justifyContent: justifyFor(c.align), flexDirection: "row", alignItems: "center", gap: 4 },
+                {
+                  justifyContent: justifyFor(c.align),
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 4,
+                },
               ]}
             >
               <Text variant="label-sm" tone="tertiary" numberOfLines={1}>
@@ -124,9 +142,17 @@ export function DataTable<T>({
               </Text>
               {c.sortable && active ? (
                 sortDir === "asc" ? (
-                  <ChevronUp size={12} color={palette.text.secondary} strokeWidth={2.4} />
+                  <ChevronUp
+                    size={12}
+                    color={palette.text.secondary}
+                    strokeWidth={2.4}
+                  />
                 ) : (
-                  <ChevronDown size={12} color={palette.text.secondary} strokeWidth={2.4} />
+                  <ChevronDown
+                    size={12}
+                    color={palette.text.secondary}
+                    strokeWidth={2.4}
+                  />
                 )
               ) : null}
             </View>
@@ -139,7 +165,9 @@ export function DataTable<T>({
               onPress={() => toggleSort(c.key)}
               accessibilityRole="button"
               accessibilityLabel={`Sort by ${c.header}${active ? (sortDir === "asc" ? ", ascending" : ", descending") : ""}`}
-              accessibilityState={Platform.OS === "web" ? undefined : { selected: active }}
+              accessibilityState={
+                Platform.OS === "web" ? undefined : { selected: active }
+              }
               {...webAria({ pressed: active })}
             >
               {cell}
@@ -152,7 +180,7 @@ export function DataTable<T>({
         })}
       </View>
 
-      { /* Rows */ }
+      {/* Rows */}
       {sorted.map((row, i) => {
         const accent = rowAccent?.(row);
         const content = (
@@ -162,7 +190,10 @@ export function DataTable<T>({
               {
                 minHeight: d.rowHeight,
                 paddingVertical: d.cellPaddingY,
-                backgroundColor: i % 2 === 1 ? palette.surface.secondary : palette.surface.primary,
+                backgroundColor:
+                  i % 2 === 1
+                    ? palette.surface.secondary
+                    : palette.surface.primary,
               },
               accent ? { borderLeftWidth: 3, borderLeftColor: accent } : null,
             ]}
@@ -170,7 +201,11 @@ export function DataTable<T>({
             {columns.map((c) => (
               <View
                 key={c.key}
-                style={[styles.cell, cellSize(c), { justifyContent: justifyFor(c.align) }]}
+                style={[
+                  styles.cell,
+                  cellSize(c),
+                  { justifyContent: justifyFor(c.align) },
+                ]}
               >
                 {c.render(row)}
               </View>
@@ -197,7 +232,9 @@ export function DataTable<T>({
   // Narrow without mobileCard: fall back to horizontal scroll rather than truncating.
   if (isNarrow) {
     if (__DEV__ && !mobileCard) {
-      console.warn("DataTable: no mobileCard provided — falling back to horizontal scroll.");
+      console.warn(
+        "DataTable: no mobileCard provided — falling back to horizontal scroll.",
+      );
     }
     return (
       <ScrollView horizontal showsHorizontalScrollIndicator>
@@ -214,7 +251,9 @@ function cellSize<T>(c: Column<T>): ViewStyle {
   return { flex: c.flex ?? 1, minWidth: 0 };
 }
 
-function justifyFor(align?: "left" | "right" | "center"): ViewStyle["justifyContent"] {
+function justifyFor(
+  align?: "left" | "right" | "center",
+): ViewStyle["justifyContent"] {
   if (align === "right") return "flex-end";
   if (align === "center") return "center";
   return "flex-start";

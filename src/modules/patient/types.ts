@@ -83,7 +83,11 @@ export interface PatientBanner {
   age: string;
   gender: string;
   bloodGroup: string;
-  allergies: { substance: string; severity: AllergySeverity; reaction?: string }[];
+  allergies: {
+    substance: string;
+    severity: AllergySeverity;
+    reaction?: string;
+  }[];
   allergiesRecorded: boolean;
   status: PatientStatus;
   isMlc: boolean;

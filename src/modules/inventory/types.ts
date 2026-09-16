@@ -5,7 +5,8 @@ export const LOCATION_LABELS: Record<StockLocation, string> = {
   pharmacy: "Pharmacy",
 };
 
-export type ItemCategory = "medicine" | "consumable" | "surgical" | "equipment" | "other";
+export type ItemCategory =
+  "medicine" | "consumable" | "surgical" | "equipment" | "other";
 
 export type ExpiryStatus = "expired" | "short_dated" | "ok";
 
@@ -22,7 +23,14 @@ export interface InventoryItem {
   code: string;
   name: string;
   category: ItemCategory;
-  medicine: { id: string; name: string; genericName: string; strength: string; form: string; schedule: string } | null;
+  medicine: {
+    id: string;
+    name: string;
+    genericName: string;
+    strength: string;
+    form: string;
+    schedule: string;
+  } | null;
   medicineId: string | null;
   unit: string;
   reorderLevel: number;
@@ -56,7 +64,13 @@ export interface StockBatch {
   selectable: boolean;
 }
 
-export type MovementType = "receipt" | "issue" | "transfer_out" | "transfer_in" | "dispense" | "disposal";
+export type MovementType =
+  | "receipt"
+  | "issue"
+  | "transfer_out"
+  | "transfer_in"
+  | "dispense"
+  | "disposal";
 
 export const MOVEMENT_LABELS: Record<MovementType, string> = {
   receipt: "Received",

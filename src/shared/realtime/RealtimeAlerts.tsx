@@ -14,12 +14,23 @@ export function RealtimeAlerts() {
   return (
     <View style={styles.wrap} testID="realtime-alerts">
       {alerts.map((a) => (
-        <Banner key={a.id} tone={a.tone} title={a.title} message={a.message} onDismiss={() => dismiss(a.id)} />
+        <Banner
+          key={a.id}
+          tone={a.tone}
+          title={a.title}
+          message={a.message}
+          onDismiss={() => dismiss(a.id)}
+        />
       ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingHorizontal: 12, paddingTop: 8, gap: 8, backgroundColor: palette.surface.secondary },
+  wrap: {
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    gap: 8,
+    backgroundColor: palette.surface.secondary,
+  },
 });

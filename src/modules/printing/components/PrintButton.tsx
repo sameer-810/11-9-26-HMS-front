@@ -40,7 +40,10 @@ export function PrintButton({
   testID,
 }: Props) {
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<{ tone: "danger" | "tertiary"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    tone: "danger" | "tertiary";
+    text: string;
+  } | null>(null);
 
   const onPress = async () => {
     setBusy(true);
@@ -49,7 +52,10 @@ export function PrintButton({
       const job = await build();
       const outcome = await printDocument(job);
       if (!outcome.ok) {
-        setMessage({ tone: "danger", text: `Not printed${outcome.reason ? `: ${outcome.reason}` : ""}` });
+        setMessage({
+          tone: "danger",
+          text: `Not printed${outcome.reason ? `: ${outcome.reason}` : ""}`,
+        });
       } else if (outcome.channel === "web") {
         setMessage({
           tone: "tertiary",
@@ -59,10 +65,19 @@ export function PrintButton({
               : "In the print dialog set Scale to 100% and Margins to None, so the page prints at its real size.",
         });
       } else if (outcome.channel === "desktop") {
-        setMessage({ tone: "tertiary", text: `Sent to ${outcome.deviceName || "the default printer"}` });
+        setMessage({
+          tone: "tertiary",
+          text: `Sent to ${outcome.deviceName || "the default printer"}`,
+        });
       }
     } catch (err) {
-      setMessage({ tone: "danger", text: err instanceof Error ? err.message : "The document could not be prepared" });
+      setMessage({
+        tone: "danger",
+        text:
+          err instanceof Error
+            ? err.message
+            : "The document could not be prepared",
+      });
     } finally {
       setBusy(false);
     }
@@ -79,15 +94,25 @@ export function PrintButton({
         disabled={disabled}
         onPress={onPress}
         testID={testID}
-        icon={<Printer size={14} color={palette.text.primary} strokeWidth={2.2} />}
+        icon={
+          <Printer size={14} color={palette.text.primary} strokeWidth={2.2} />
+        }
       />
       {disabled && disabledReason ? (
-        <Text variant="caption" tone="tertiary" style={{ textAlign: align === "flex-end" ? "right" : "left" }}>
+        <Text
+          variant="caption"
+          tone="tertiary"
+          style={{ textAlign: align === "flex-end" ? "right" : "left" }}
+        >
           {disabledReason}
         </Text>
       ) : null}
       {note ? (
-        <Text variant="caption" tone="tertiary" style={{ textAlign: align === "flex-end" ? "right" : "left" }}>
+        <Text
+          variant="caption"
+          tone="tertiary"
+          style={{ textAlign: align === "flex-end" ? "right" : "left" }}
+        >
           {note}
         </Text>
       ) : null}
@@ -109,7 +134,9 @@ export function PrintButton({
 /** Label printer picker; desktop shell only, as browsers cannot target a printer by name. */
 function LabelPrinterPicker({ align }: { align: "flex-start" | "flex-end" }) {
   const bridge = desktopBridge();
-  const [selected, setSelected] = useState<string | null>(() => getLabelPrinter());
+  const [selected, setSelected] = useState<string | null>(() =>
+    getLabelPrinter(),
+  );
   const [open, setOpen] = useState(false);
   const [printers, setPrinters] = useState<DesktopPrinter[] | null>(null);
 
@@ -128,7 +155,11 @@ function LabelPrinterPicker({ align }: { align: "flex-start" | "flex-end" }) {
 
   if (!open) {
     return (
-      <Pressable onPress={() => setOpen(true)} accessibilityRole="button" hitSlop={8}>
+      <Pressable
+        onPress={() => setOpen(true)}
+        accessibilityRole="button"
+        hitSlop={8}
+      >
         <Text variant="caption" tone="link">
           Label printer: {selected ?? "system default"} · Change
         </Text>

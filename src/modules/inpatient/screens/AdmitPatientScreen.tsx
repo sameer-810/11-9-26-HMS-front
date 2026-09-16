@@ -22,7 +22,6 @@ import { useSelectableBeds } from "@modules/inpatient/hooks/useBeds";
 import { useAdmit } from "@modules/inpatient/hooks/useInpatient";
 import type { PatientBanner } from "@modules/patient/types";
 
-
 /**
  * IP-01: admit a patient. The bed list is never cached, unavailable beds show their reason,
  * and a lost bed race is reported as such rather than as a generic failure.
@@ -39,7 +38,9 @@ export default function AdmitPatientScreen() {
   const route = useRoute<any>();
 
   const [search, setSearch] = useState("");
-  const [patient, setPatient] = useState<PatientBanner | null>(route.params?.patient ?? null);
+  const [patient, setPatient] = useState<PatientBanner | null>(
+    route.params?.patient ?? null,
+  );
   const [bedId, setBedId] = useState<string | null>(null);
   // US-17: admitting from a recommendation starts from the doctor's reason.
   const [reason, setReason] = useState<string>(route.params?.reason ?? "");
@@ -47,7 +48,9 @@ export default function AdmitPatientScreen() {
   const [expectedStay, setExpectedStay] = useState("");
   const [admissionType, setAdmissionType] = useState("planned");
 
-  const results = usePatients(search.length >= 2 ? { search, limit: 8 } : undefined);
+  const results = usePatients(
+    search.length >= 2 ? { search, limit: 8 } : undefined,
+  );
   // Gender is passed so a single-sex ward is refused HERE, in the list, rather
   // than after the doctor has typed a reason and pressed admit.
   const beds = useSelectableBeds(patient ? { gender: patient.gender } : {});
@@ -96,8 +99,12 @@ export default function AdmitPatientScreen() {
                     </Text>
                     {patient.allergiesRecorded ? (
                       patient.allergies.length > 0 ? (
-                        <Text variant="caption" style={{ color: signal.critical.text }}>
-                          Allergic to {patient.allergies.map((a) => a.substance).join(", ")}
+                        <Text
+                          variant="caption"
+                          style={{ color: signal.critical.text }}
+                        >
+                          Allergic to{" "}
+                          {patient.allergies.map((a) => a.substance).join(", ")}
                         </Text>
                       ) : (
                         <Text variant="caption" tone="tertiary">
@@ -105,7 +112,10 @@ export default function AdmitPatientScreen() {
                         </Text>
                       )
                     ) : (
-                      <Text variant="caption" style={{ color: signal.caution.text }}>
+                      <Text
+                        variant="caption"
+                        style={{ color: signal.caution.text }}
+                      >
                         Allergies not recorded — ask before the first drug round
                       </Text>
                     )}

@@ -1,7 +1,12 @@
 import React, { useState } from "react";
 import { View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { UserPlus, Users, TriangleAlert, ShieldAlert } from "lucide-react-native";
+import {
+  UserPlus,
+  Users,
+  TriangleAlert,
+  ShieldAlert,
+} from "lucide-react-native";
 
 import { palette, signal } from "@shared/designSystem";
 import { useAuthStore } from "@shared/store/useAuthStore";
@@ -57,18 +62,20 @@ export default function PatientsScreen() {
     setPage(1);
   }
 
-  const { data, isLoading, isError, error, refetch, isRefetching } = usePatients({
-    ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
-    ...(status ? { status } : {}),
-    page,
-    limit,
-  });
+  const { data, isLoading, isError, error, refetch, isRefetching } =
+    usePatients({
+      ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
+      ...(status ? { status } : {}),
+      page,
+      limit,
+    });
 
   const patients = data?.data ?? [];
   const total = data?.meta?.total ?? 0;
   const totalPages = data?.meta?.pages ?? 1;
 
-  const open = (p: Patient) => navigation.navigate("PatientDetail", { id: p.id });
+  const open = (p: Patient) =>
+    navigation.navigate("PatientDetail", { id: p.id });
 
   const columns: Column<Patient>[] = [
     {
@@ -94,7 +101,7 @@ export default function PatientsScreen() {
           <Text variant="label" tone="primary" numberOfLines={1}>
             {p.fullName}
           </Text>
-          { /* The allergy marker rides with the name everywhere it appears. */ }
+          {/* The allergy marker rides with the name everywhere it appears. */}
           <AllergyMark patient={p} seesClinical={seesClinical} />
         </HStack>
       ),
@@ -144,7 +151,9 @@ export default function PatientsScreen() {
     <Screen
       overline="Front office"
       title="Patients"
-      subtitle={isError ? undefined : `${total.toLocaleString("en-IN")} registered`}
+      subtitle={
+        isError ? undefined : `${total.toLocaleString("en-IN")} registered`
+      }
       refreshing={isRefetching}
       onRefresh={refetch}
       testID="patients-screen"
@@ -171,7 +180,11 @@ export default function PatientsScreen() {
         <ChipsRow chips={STATUS_CHIPS} active={status} onChange={setStatus} />
 
         {isError ? (
-          <ErrorState error={error} title="Couldn't load patients" onRetry={refetch} />
+          <ErrorState
+            error={error}
+            title="Couldn't load patients"
+            onRetry={refetch}
+          />
         ) : isLoading && patients.length === 0 ? (
           <ListSkeleton />
         ) : (
@@ -182,11 +195,15 @@ export default function PatientsScreen() {
               keyExtractor={(p) => p.id}
               onRowPress={open}
               rowAccent={(p) =>
-                seesClinical && hasSevereAllergy(p) ? signal.critical.color : undefined
+                seesClinical && hasSevereAllergy(p)
+                  ? signal.critical.color
+                  : undefined
               }
               emptyIcon={Users}
               emptyTitle={
-                debouncedSearch ? "Nobody matches that search" : "No patients registered yet"
+                debouncedSearch
+                  ? "Nobody matches that search"
+                  : "No patients registered yet"
               }
               emptyMessage={
                 debouncedSearch
@@ -203,7 +220,9 @@ export default function PatientsScreen() {
                   onPress={() => open(p)}
                   showChevron
                   accentColor={
-                    seesClinical && hasSevereAllergy(p) ? signal.critical.color : undefined
+                    seesClinical && hasSevereAllergy(p)
+                      ? signal.critical.color
+                      : undefined
                   }
                   right={<StatusChip status={p.status} size="sm" />}
                 />
@@ -235,7 +254,13 @@ function hasSevereAllergy(p: Patient) {
 }
 
 /** Allergy marker by the name: red triangle = known allergy, amber shield = not recorded, none = recorded none. */
-function AllergyMark({ patient, seesClinical }: { patient: Patient; seesClinical: boolean }) {
+function AllergyMark({
+  patient,
+  seesClinical,
+}: {
+  patient: Patient;
+  seesClinical: boolean;
+}) {
   if (!seesClinical) return null;
   if (patient.allergiesRecorded === undefined) return null;
 

@@ -1,8 +1,19 @@
 import React from "react";
-import { View, Pressable, StyleSheet, ScrollView, Platform } from "react-native";
+import {
+  View,
+  Pressable,
+  StyleSheet,
+  ScrollView,
+  Platform,
+} from "react-native";
 import { webAria } from "@shared/ui/a11y";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { LogOut, ChevronsLeft, ChevronsRight, Hospital } from "lucide-react-native";
+import {
+  LogOut,
+  ChevronsLeft,
+  ChevronsRight,
+  Hospital,
+} from "lucide-react-native";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { ROLE_LABELS } from "@shared/permissions";
 import { palette, radius, layout } from "@shared/designSystem";
@@ -16,7 +27,12 @@ interface Props {
   onToggleCollapse?: () => void;
 }
 
-export function Sidebar({ activeRoute, onNavigate, collapsed = false, onToggleCollapse }: Props) {
+export function Sidebar({
+  activeRoute,
+  onNavigate,
+  collapsed = false,
+  onToggleCollapse,
+}: Props) {
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
   const hospital = useAuthStore((s) => s.hospital);
@@ -35,7 +51,7 @@ export function Sidebar({ activeRoute, onNavigate, collapsed = false, onToggleCo
         },
       ]}
     >
-      { /* the hospital name is shown because a user may hold accounts at more than one site. */ }
+      {/* the hospital name is shown because a user may hold accounts at more than one site. */}
       <HStack
         gap={10}
         align="center"
@@ -66,7 +82,11 @@ export function Sidebar({ activeRoute, onNavigate, collapsed = false, onToggleCo
                 accessibilityRole="button"
                 accessibilityLabel="Collapse sidebar"
               >
-                <ChevronsLeft size={18} color={palette.text.tertiary} strokeWidth={2} />
+                <ChevronsLeft
+                  size={18}
+                  color={palette.text.tertiary}
+                  strokeWidth={2}
+                />
               </Pressable>
             ) : null}
           </>
@@ -81,7 +101,11 @@ export function Sidebar({ activeRoute, onNavigate, collapsed = false, onToggleCo
           accessibilityRole="button"
           accessibilityLabel="Expand sidebar"
         >
-          <ChevronsRight size={18} color={palette.text.tertiary} strokeWidth={2} />
+          <ChevronsRight
+            size={18}
+            color={palette.text.tertiary}
+            strokeWidth={2}
+          />
         </Pressable>
       ) : null}
 
@@ -98,7 +122,11 @@ export function Sidebar({ activeRoute, onNavigate, collapsed = false, onToggleCo
               {collapsed ? (
                 <View style={styles.sectionDivider} />
               ) : (
-                <Text variant="overline" tone="tertiary" style={styles.sectionLabel}>
+                <Text
+                  variant="overline"
+                  tone="tertiary"
+                  style={styles.sectionLabel}
+                >
                   {section}
                 </Text>
               )}
@@ -136,7 +164,11 @@ export function Sidebar({ activeRoute, onNavigate, collapsed = false, onToggleCo
               accessibilityRole="button"
               accessibilityLabel="Sign out"
             >
-              <LogOut size={17} color={palette.text.tertiary} strokeWidth={1.9} />
+              <LogOut
+                size={17}
+                color={palette.text.tertiary}
+                strokeWidth={1.9}
+              />
             </Pressable>
           </VStack>
         ) : (
@@ -157,7 +189,11 @@ export function Sidebar({ activeRoute, onNavigate, collapsed = false, onToggleCo
               accessibilityRole="button"
               accessibilityLabel="Sign out"
             >
-              <LogOut size={17} color={palette.text.tertiary} strokeWidth={1.9} />
+              <LogOut
+                size={17}
+                color={palette.text.tertiary}
+                strokeWidth={1.9}
+              />
             </Pressable>
           </HStack>
         )}
@@ -184,7 +220,9 @@ function NavRow({
       accessibilityRole="link"
       accessibilityLabel={item.label}
       // native reads "selected"; web uses aria-current instead (aria-selected is invalid on a link).
-      accessibilityState={Platform.OS === "web" ? undefined : { selected: active }}
+      accessibilityState={
+        Platform.OS === "web" ? undefined : { selected: active }
+      }
       {...webAria({ current: active ? "page" : undefined })}
       style={({ pressed }) => [
         styles.navRow,
@@ -202,7 +240,9 @@ function NavRow({
         <Text
           variant="label-lg"
           numberOfLines={1}
-          style={{ color: active ? palette.clinical[700] : palette.text.secondary }}
+          style={{
+            color: active ? palette.clinical[700] : palette.text.secondary,
+          }}
         >
           {item.label}
         </Text>

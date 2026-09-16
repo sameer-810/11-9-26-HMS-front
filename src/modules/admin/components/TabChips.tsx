@@ -17,7 +17,10 @@ interface Props {
  */
 export function TabChips({ chips, active, onChange, testIDPrefix }: Props) {
   return (
-    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }} testID={`${testIDPrefix}s`}>
+    <View
+      style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}
+      testID={`${testIDPrefix}s`}
+    >
       {chips.map((chip) => (
         <View key={chip.key} testID={`${testIDPrefix}-${chip.key}`}>
           <ChipsRow chips={[chip]} active={active} onChange={onChange} />

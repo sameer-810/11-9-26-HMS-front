@@ -41,7 +41,10 @@ export const useMyPatients = (enabled = true) =>
   });
 
 /** Everything a change to one patient's state can appear on. */
-function invalidateWard(qc: ReturnType<typeof useQueryClient>, admissionId?: string) {
+function invalidateWard(
+  qc: ReturnType<typeof useQueryClient>,
+  admissionId?: string,
+) {
   qc.invalidateQueries({ queryKey: ["admissions"] });
   qc.invalidateQueries({ queryKey: ["my-ward-patients"] });
   qc.invalidateQueries({ queryKey: ["escalations"] });
@@ -70,7 +73,6 @@ export const useAdmit = () => {
   });
 };
 
-
 // ---- US-17: recommendations to admit ---------------------------------------
 export const useAdmissionRequests = (enabled = true) =>
   useQuery({
@@ -84,8 +86,14 @@ export const useAdmissionRequests = (enabled = true) =>
 export const useCloseAdmissionRequest = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ consultationId, ...body }: { consultationId: string; outcome: RequestClosureOutcome; note: string }) =>
-      inpatientApi.closeAdmissionRequest(consultationId, body),
+    mutationFn: ({
+      consultationId,
+      ...body
+    }: {
+      consultationId: string;
+      outcome: RequestClosureOutcome;
+      note: string;
+    }) => inpatientApi.closeAdmissionRequest(consultationId, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admission-requests"] });
       qc.invalidateQueries({ queryKey: ["dashboard-summary"] });
@@ -105,7 +113,8 @@ export const useTransfer = (admissionId: string) => {
 export const useDischarge = (admissionId: string) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: DischargeBody) => inpatientApi.discharge(admissionId, body),
+    mutationFn: (body: DischargeBody) =>
+      inpatientApi.discharge(admissionId, body),
     onSuccess: (data) => {
       invalidateWard(qc, admissionId);
       qc.invalidateQueries({ queryKey: ["patients"] });
@@ -117,7 +126,8 @@ export const useDischarge = (admissionId: string) => {
 export const useAssignNurse = (admissionId: string) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (nurseId: string) => inpatientApi.assignNurse(admissionId, nurseId),
+    mutationFn: (nurseId: string) =>
+      inpatientApi.assignNurse(admissionId, nurseId),
     onSuccess: () => invalidateWard(qc, admissionId),
   });
 };
@@ -130,7 +140,6 @@ export const useSetNews2Scale = (admissionId: string) => {
     onSuccess: () => invalidateWard(qc, admissionId),
   });
 };
-
 
 // ---- Observations -----------------------------------------------------------
 export const useObservations = (admissionId?: string) =>
@@ -148,8 +157,11 @@ export const useRecordObservation = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ label, ...body }: ObservationBody & { label: string }) =>
-      sendOrQueue("observation", { admissionId: body.admissionId ?? "", label }, body, (payload) =>
-        inpatientApi.recordObservation(payload),
+      sendOrQueue(
+        "observation",
+        { admissionId: body.admissionId ?? "", label },
+        body,
+        (payload) => inpatientApi.recordObservation(payload),
       ),
     onSuccess: (result, variables) => {
       if (result.status === "sent") invalidateWard(qc, variables.admissionId);
@@ -179,7 +191,6 @@ export const useAcknowledgeEscalation = () => {
   });
 };
 
-
 // ---- Notes ------------------------------------------------------------------
 export const useNursingNotes = (admissionId?: string) =>
   useQuery({
@@ -189,11 +200,19 @@ export const useNursingNotes = (admissionId?: string) =>
   });
 
 /** A nursing note — the other write that may be kept on the device. */
-export const useAddNursingNote = (admissionId: string, label = "Nursing note") => {
+export const useAddNursingNote = (
+  admissionId: string,
+  label = "Nursing note",
+) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: { note: string; category?: string }) =>
-      sendOrQueue("note", { admissionId, label }, { admissionId, ...body }, (payload) => inpatientApi.addNote(payload)),
+      sendOrQueue(
+        "note",
+        { admissionId, label },
+        { admissionId, ...body },
+        (payload) => inpatientApi.addNote(payload),
+      ),
     onSuccess: (result) => {
       if (result.status !== "sent") return;
       qc.invalidateQueries({ queryKey: ["nursing-notes", admissionId] });
@@ -201,7 +220,6 @@ export const useAddNursingNote = (admissionId: string, label = "Nursing note") =
     },
   });
 };
-
 
 // ---- NU-04: the drug round --------------------------------------------------
 export const useDrugRound = (admissionId?: string, date?: string) =>
@@ -228,7 +246,6 @@ export const useAdminister = () => {
     },
   });
 };
-
 
 // ---- NU-05: SBAR ------------------------------------------------------------
 export const useHandovers = (admissionId?: string) =>
@@ -259,7 +276,6 @@ export const useReceiveHandover = () => {
     },
   });
 };
-
 
 // ---- IP-04 ------------------------------------------------------------------
 export const useBedside = (admissionId?: string) =>
