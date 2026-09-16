@@ -10,17 +10,8 @@ import { allergyStatement, sexLabel } from "./common";
 export const PRESCRIPTION_PAGE = { widthMm: 148, heightMm: 210, marginMm: 10 } as const;
 
 /**
- * A prescription as handed to the patient or another pharmacy.
- *
- * Carries what the Drugs and Magic Remedies / Telemedicine Practice Guidelines
- * and every pharmacist ask of a paper prescription: the prescriber's name and
- * registration number, the date, the patient's identity, and each medicine with
- * strength, dose, frequency and duration — plus the allergy status, because
- * paper leaves the building and the allergy check the system ran does not go
- * with it.
- *
- * Cancelled lines are counted, not printed. A cancelled medicine on paper can
- * still be dispensed by a pharmacy that has never seen this system.
+ * Printed prescription with prescriber registration and allergy status (paper leaves the system).
+ * Cancelled lines are counted, not printed, so an outside pharmacy cannot dispense them.
  */
 export function buildPrescription(input: PrescriptionInput): PrintJob {
   const { widthMm, heightMm, marginMm } = PRESCRIPTION_PAGE;

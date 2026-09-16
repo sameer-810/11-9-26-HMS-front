@@ -17,13 +17,7 @@ interface Props {
 }
 
 /**
- * One chip, styled as ChipsRow draws them.
- *
- * Exists because ChipsRow takes its chips as data and has nowhere to hang a
- * per-chip testID; the report picker, date presets and audit tabs all need one.
- * Rendered in a wrapping HStack rather than a horizontal scroll, so on a wide
- * screen every report is visible without swiping to find the ninth.
- *
+ * A single ChipsRow-style chip with its own testID (ChipsRow cannot take one per chip).
  * A "tab" chip must sit inside a Stack with role="tablist".
  */
 export function FilterChip({ label, active, onPress, count, accentColor, role = "tab", testID }: Props) {

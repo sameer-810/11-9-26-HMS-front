@@ -14,11 +14,7 @@ interface Props {
   onPageChange: (p: number) => void;
   onLimitChange?: (l: number) => void;
   label?: string;
-  /**
-   * The server stopped counting at `total` — a year's audit trail or stock
-   * ledger is counted only so far, because an exact count cost most of a
-   * second per page. Shown as "10,000+" rather than as an exact figure.
-   */
+  /** Server capped the count at `total` (exact counts are slow on big ledgers); shown as "10,000+". */
   totalCapped?: boolean;
 }
 

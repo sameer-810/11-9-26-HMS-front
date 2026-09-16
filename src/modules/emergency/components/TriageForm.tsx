@@ -43,15 +43,8 @@ interface Props {
 }
 
 /**
- * ESI v4 triage, asked in the handbook's order.
- *
- * Each decision point only appears once the one before it has not settled the
- * level — a patient who needs intubating does not need their resources counted.
- * Hidden answers are sent as "no", so what is recorded is what the nurse saw.
- *
- * The screen never computes the level. It shows the server's preview, and on
- * save either accepts the server's own computation (no level sent) or sends a
- * different level with the reason for it.
+ * ESI v4 triage in handbook order; each step shows only if earlier ones did not settle the level.
+ * The level comes from the server preview; an override is sent with its reason.
  */
 export function TriageForm({ visit, meta, onSaved }: Props) {
   const prior = visit.triage;
@@ -142,7 +135,7 @@ export function TriageForm({ visit, meta, onSaved }: Props) {
           subtitle="Emergency Severity Index v4 — answer in order"
         />
 
-        {/* ---- A ---- */}
+        { /* ---- A ---- */ }
         <Step letter="A" title="Life-saving intervention">
           <YesNo
             question="Does this patient need an immediate life-saving intervention?"
@@ -153,7 +146,7 @@ export function TriageForm({ visit, meta, onSaved }: Props) {
           />
         </Step>
 
-        {/* ---- B ---- */}
+        { /* ---- B ---- */ }
         {showB ? (
           <Step letter="B" title="Should this patient not wait?">
             <VStack gap={12}>
@@ -188,7 +181,7 @@ export function TriageForm({ visit, meta, onSaved }: Props) {
           <SkippedNote text="Decision A settles the level. B to D are not asked." />
         )}
 
-        {/* ---- C ---- */}
+        { /* ---- C ---- */ }
         {showC ? (
           <Step letter="C" title="How many different resources?">
             <VStack gap={8}>
@@ -209,7 +202,7 @@ export function TriageForm({ visit, meta, onSaved }: Props) {
           <SkippedNote text="Decision B settles the level. Resources are not counted." />
         ) : null}
 
-        {/* ---- D ---- */}
+        { /* ---- D ---- */ }
         <Step letter="D" title="Vital signs">
           <VStack gap={8}>
             <Text variant="caption" tone="tertiary">
@@ -232,7 +225,7 @@ export function TriageForm({ visit, meta, onSaved }: Props) {
           </VStack>
         </Step>
 
-        {/* ---- Suggestion ---- */}
+        { /* ---- Suggestion ---- */ }
         <View testID="triage-preview" style={styles.preview}>
           {preview.isError ? (
             <Text variant="body-sm" tone="danger">
@@ -260,7 +253,7 @@ export function TriageForm({ visit, meta, onSaved }: Props) {
           )}
         </View>
 
-        {/* ---- Decision ---- */}
+        { /* ---- Decision ---- */ }
         <VStack gap={10}>
           <HStack gap={10} align="center" wrap>
             <Button

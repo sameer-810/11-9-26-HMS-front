@@ -8,12 +8,8 @@ const phone = z
 const optionalPhone = z.union([phone, z.literal("")]).optional();
 
 /**
- * Registration.
- *
- * The `age OR date of birth` rule is a form-level refine because it cannot be
- * expressed per field: both are individually optional, but one of them must be
- * present. A great many patients do not know their date of birth, and forcing
- * one produces a register full of 01-Jan entries that look precise and are not.
+ * Registration. "Date of birth or age" is a form-level refine; many patients do not know their
+ * date of birth, and forcing one fills the register with falsely precise 01-Jan dates.
  */
 export const registerPatientSchema = z
   .object({

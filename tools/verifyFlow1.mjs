@@ -1,17 +1,7 @@
 /**
- * Phase 2 gate — Flow 1 steps 1 to 4, end to end in a real browser.
- *
- *   1. Receptionist searches before registering        (RG-01)
- *   2. Registers a new patient, system issues the ID   (RG-02, RG-03)
- *   3. Books against a doctor and a genuinely free slot (AP-01)
- *   4. Marks the patient Arrived, token issued          (AP-03)
- *
- * Plus the two things that are only observable in a browser: that a duplicate
- * warning actually appears while the form is being typed into, and that a
- * booked slot is rendered as taken rather than quietly disappearing.
- *
- * Boots the REAL API against an in-memory replica set and serves the REAL web
- * export. Nothing is mocked.
+ * phase 2 gate — flow 1 steps 1 to 4 (RG-01 to RG-03, AP-01, AP-03) in a browser:
+ * search, register, book a free slot, arrive on the opd queue.
+ * boots the real api on an in-memory replica set and serves the real web export.
  *
  *   node tools/verifyFlow1.mjs
  */
@@ -57,7 +47,7 @@ if (!fs.existsSync(DIST)) {
 }
 fs.mkdirSync(SHOTS, { recursive: true });
 
-/** Next occurrence of a weekday, as a calendar date. Never via toISOString. */
+/** next occurrence of a weekday as a local calendar date, never via toISOString. */
 function nextWeekday(dow) {
   const now = new Date();
   let y = now.getFullYear();
@@ -76,9 +66,7 @@ function nextWeekday(dow) {
   throw new Error("no weekday found");
 }
 
-// ---------------------------------------------------------------------------
-// API
-// ---------------------------------------------------------------------------
+// ---- API ----
 console.log("\nStarting the API…");
 
 const { MongoMemoryReplSet } = await imp(
@@ -115,16 +103,14 @@ for (let waited = 0; ; waited += 300) {
   try {
     if ((await fetch(`${API}/health`)).ok) break;
   } catch {
-    /* not up yet */
+  /* not up yet */
   }
   if (waited > 40_000) throw new Error(`API did not start.\n${apiLog}`);
   await new Promise((r) => setTimeout(r, 300));
 }
 console.log(`API ready on ${API}`);
 
-// ---------------------------------------------------------------------------
-// Seed: hospital, admin, department, receptionist, doctor, roster
-// ---------------------------------------------------------------------------
+// ---- Seed: hospital, admin, department, receptionist, doctor, roster ----
 process.env.MONGODB_URI = mongoUri;
 process.env.JWT_ACCESS_SECRET ??= "verify-access-secret-not-real";
 process.env.JWT_REFRESH_SECRET ??= "verify-refresh-secret-not-real";
@@ -182,7 +168,7 @@ const dept = await post(
   adminToken,
 );
 
-/** Creates a user and returns their working password. */
+/** creates a user, completes the forced password change, returns the working password. */
 async function provision({ employeeId, firstName, email, role, departmentId }) {
   const created = await post(
     "/users",
@@ -234,7 +220,7 @@ await post(
   adminToken,
 );
 
-// One patient already on file, so the duplicate check has something to find.
+// one patient already on file, so the duplicate check has something to find.
 await post(
   "/patients",
   {
@@ -254,9 +240,7 @@ await post(
 console.log(`Seeded: hospital, 3 staff, a Tuesday clinic, 1 existing patient`);
 console.log(`Clinic date: ${CLINIC_DATE}\n`);
 
-// ---------------------------------------------------------------------------
-// Serve the web export
-// ---------------------------------------------------------------------------
+// ---- Serve the web export ----
 const web = http.createServer((req, res) => {
   const url = decodeURIComponent((req.url || "/").split("?")[0]);
   let file = path.join(DIST, url);
@@ -271,9 +255,7 @@ const web = http.createServer((req, res) => {
 await new Promise((r) => web.listen(0, "127.0.0.1", r));
 const WEB = `http://127.0.0.1:${web.address().port}`;
 
-// ---------------------------------------------------------------------------
-// Drive it
-// ---------------------------------------------------------------------------
+// ---- Drive it ----
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 980 } });
 const page = await ctx.newPage();
@@ -289,8 +271,8 @@ page.on("response", (r) => {
     httpFailures.push(`${r.status()} ${r.request().method()} ${new URL(r.url()).pathname}`);
   }
 });
-// The live-update socket is not under test here. Blocked, so the gate never
-// reaches whatever else happens to listen on the dev port baked into the build.
+// the live-update socket is not under test; blocked so the gate never reaches
+// the dev port baked into the build.
 await page.route("**/socket.io/**", (route) => route.abort());
 await page.route("**/api/v1/**", async (route) => {
   const url = new URL(route.request().url());
@@ -333,7 +315,7 @@ try {
     "step 2: the registration form opens",
   );
 
-  // Type the SAME person's details. RG-01 should notice while typing.
+  // same person's details — RG-01 should notice while typing.
   await page.getByTestId("reg-firstName").fill("Sanjay");
   await page.getByTestId("reg-lastName").fill("Kumar");
   await page.getByTestId("reg-mobile").fill("9876543210");
@@ -344,13 +326,11 @@ try {
 
   if (dupVisible) {
     const dupText = await page.getByTestId("duplicate-warning").innerText();
-    // The REASONS are what make someone look. "Possible duplicate" gets clicked past.
     check(dupText.includes("Same mobile number"), "the warning says WHY it matched");
     check(dupText.includes("Sanjay Kumar"), "the warning names the existing patient");
   }
   await page.screenshot({ path: path.join(SHOTS, "flow1-2-duplicate-warning.png") });
 
-  // Now register someone genuinely new.
   await page.getByTestId("reg-firstName").fill("Kamala");
   await page.getByTestId("reg-lastName").fill("Devi");
   await page.getByTestId("reg-mobile").fill("9800000001");
@@ -363,7 +343,7 @@ try {
     .catch(() => false);
   check(!stillWarning, "the warning clears once the details are someone else's");
 
-  // Gender is a Select, which opens a sheet.
+  // gender is a Select, which opens a sheet.
   await page.getByRole("button", { name: /^Gender\./ }).click();
   await page.waitForTimeout(500);
   await page.getByRole("menuitem", { name: "Female" }).click();
@@ -381,10 +361,7 @@ try {
   );
   await page.screenshot({ path: path.join(SHOTS, "flow1-3-registered.png") });
 
-  // The tri-state, as RECEPTION sees it — through the identity banner rather
-  // than the clinical panel, which is gated behind record.view. The banner is
-  // deliberately not role-gated: an allergy nobody at the front desk can see is
-  // an allergy that gets missed.
+  // the identity banner is not role-gated; the clinical panel is, behind record.view.
   check(
     text.includes("Allergies not recorded"),
     "the banner says NOT RECORDED, which is not the same as none",
@@ -398,7 +375,7 @@ try {
   await page.getByTestId("book-from-patient").click();
   await page.waitForTimeout(1800);
 
-  // Department, then doctor — AP-01's order.
+  // department, then doctor — AP-01's order.
   await page.getByRole("button", { name: /^Department\./ }).click();
   await page.waitForTimeout(500);
   await page.getByRole("menuitem", { name: /General Medicine/ }).click();
@@ -409,7 +386,6 @@ try {
   await page.getByRole("menuitem", { name: /Rajesh/ }).click();
   await page.waitForTimeout(1200);
 
-  // Walk the date forward to the clinic day.
   for (let i = 0; i < 8; i += 1) {
     const shown = await page.getByTestId("book-date").innerText();
     if (shown.includes(String(Number(CLINIC_DATE.slice(8, 10))))) break;
@@ -432,8 +408,7 @@ try {
     text = await page.innerText("body");
     check(text.includes("Booked"), "step 3: the appointment is booked");
     check(/A\d{6}/.test(text), "an appointment number is issued");
-    // The wall-clock time, not the server's instant. This is the whole
-    // timezone fix, visible.
+    // wall-clock time, not the server's instant.
     check(text.includes("10:30 am"), "the booked time reads back as 10:30, not shifted");
     await page.screenshot({ path: path.join(SHOTS, "flow1-5-booked.png") });
   }
@@ -468,8 +443,8 @@ try {
   check((await page.innerText("body")).includes("OPD queue"), "step 4: the queue board opens");
   await page.screenshot({ path: path.join(SHOTS, "flow1-6-opd-queue.png") });
 
-  // The booking is for a future Tuesday, so today's queue is empty. Book a
-  // walk-in through the API to exercise arrival and tokening on the board.
+  // the booking is for a future tuesday, so today's queue is empty — a walk-in
+  // is added through the api to exercise arrival and tokening.
   const recSession = await post("/auth/login", {
     email: reception.email,
     password: reception.password,
@@ -506,7 +481,7 @@ try {
     try {
       localStorage.removeItem("hms-auth-storage");
     } catch {
-      /* nothing to clear */
+    /* nothing to clear */
     }
   });
   await page.goto(WEB, { waitUntil: "networkidle" });
@@ -532,8 +507,8 @@ try {
   // -- Phone ----------------------------------------------------------------
   const phone = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const pPage = await phone.newPage();
-  // The live-update socket is not under test here. Blocked, so the gate never
-  // reaches whatever else happens to listen on the dev port baked into the build.
+  // the live-update socket is not under test; blocked so the gate never reaches
+  // the dev port baked into the build.
   await pPage.route("**/socket.io/**", (route) => route.abort());
   await pPage.route("**/api/v1/**", async (route) => {
     const url = new URL(route.request().url());

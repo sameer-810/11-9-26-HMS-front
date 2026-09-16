@@ -16,11 +16,7 @@ import type {
   WardBody,
 } from "@modules/admin/types";
 
-/**
- * Every admin query lives under the "admin" prefix, so a key here can never
- * collide with a picker elsewhere that caches a different shape under the same
- * name — `["wards"]` in inpatient holds four fields, not a full ward.
- */
+/** Keys under "admin" so they never collide with pickers caching a different shape (e.g. `["wards"]`). */
 export const adminKeys = {
   users: (params?: UserListParams) => ["admin", "users", params] as const,
   user: (id?: string) => ["admin", "user", id] as const,
@@ -34,12 +30,10 @@ export const adminKeys = {
   allBeds: ["admin", "all-beds"] as const,
 };
 
+
 // ---- Users ------------------------------------------------------------------
 
-/**
- * A changed account can change the staff list, the doctor pickers used for
- * booking and admission, and the administrator's dashboard figures.
- */
+/** Account changes affect the staff list, doctor pickers and dashboard figures. */
 function afterUserChange(qc: QueryClient, user: AdminUser) {
   qc.setQueryData(adminKeys.user(user.id), user);
   for (const key of [["admin", "users"], ["doctors"], ["dashboard-summary"]]) {
@@ -73,8 +67,7 @@ export const useCreateUser = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: CreateUserBody) => adminApi.users.create(body),
-    // Only the account is cached. The temporary password stays in the
-    // mutation result the screen reads once, and goes when the screen does.
+    // Cache the account only; the temporary password must never enter the query cache.
     onSuccess: (res) => afterUserChange(qc, res.user),
   });
 };
@@ -106,6 +99,7 @@ export const useResetCredential = (id: string) => {
   });
 };
 
+
 // ---- Roles (US-04) ----------------------------------------------------------
 
 /** A role change can change every account in the role, so every account view refetches. */
@@ -135,8 +129,8 @@ export const useResetRole = () => {
   });
 };
 
-// ---- Hospital ---------------------------------------------------------------
 
+// ---- Hospital ---------------------------------------------------------------
 export const useHospitalProfile = () =>
   useQuery({ queryKey: adminKeys.hospital, queryFn: adminApi.hospital.get });
 
@@ -146,9 +140,7 @@ export const useUpdateHospital = () => {
     mutationFn: (patch: HospitalPatch) => adminApi.hospital.update(patch),
     onSuccess: (hospital) => {
       qc.setQueryData(adminKeys.hospital, hospital);
-      // The shell prints the hospital name from the auth store on every screen.
-      // Without this the old name stays in the header until the next sign-in.
-      // The idle timeout is read from there too, and applies from this moment.
+      // Header name and idle timeout read from the auth store; update it so both apply now.
       useAuthStore.setState((s) => ({
         hospital: s.hospital
           ? { ...s.hospital, name: hospital.name, sessionIdleMinutes: hospital.sessionIdleMinutes }
@@ -158,6 +150,7 @@ export const useUpdateHospital = () => {
     },
   });
 };
+
 
 // ---- Departments ------------------------------------------------------------
 
@@ -195,8 +188,7 @@ export const useUpdateDepartment = () => {
 export const useSetDepartmentActive = () => {
   const qc = useQueryClient();
   return useMutation({
-    // The two calls answer differently — activate returns the department,
-    // deactivate only a message — and every list refetches anyway.
+    // The two endpoints return different shapes; lists refetch anyway.
     mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
       if (active) await adminApi.departments.activate(id);
       else await adminApi.departments.deactivate(id);
@@ -205,13 +197,10 @@ export const useSetDepartmentActive = () => {
   });
 };
 
+
 // ---- Wards, rooms, beds -----------------------------------------------------
 
-/**
- * A ward, room or bed change is visible from the admission bed picker, the
- * inpatient ward list, the bed board and the occupancy figure — all of them
- * are told, not just this module's own lists.
- */
+/** Bed estate changes also show in the bed picker, ward list, bed board and occupancy figure. */
 function afterBedEstateChange(qc: QueryClient) {
   for (const key of [
     ["admin", "wards"],
@@ -277,13 +266,7 @@ export const useCreateBedsBulk = () => {
   });
 };
 
-/**
- * Every bed in the hospital, for the bed board.
- *
- * `staleTime: 0` and a one-minute poll, matching the inpatient board: bed
- * status changes as other people admit and discharge, and this screen is left
- * open on a nursing station all shift.
- */
+/** Every bed, for the bed board. Polled each minute, as the screen stays open all shift. */
 export const useAllBeds = () =>
   useQuery({
     queryKey: adminKeys.allBeds,
@@ -292,11 +275,7 @@ export const useAllBeds = () =>
     refetchInterval: 60_000,
   });
 
-/**
- * The per-ward counts, from the same cache entry the inpatient module reads.
- * That hook types the payload loosely; the shape is the backend's
- * `boardByWard`, typed here once.
- */
+/** Per-ward counts from the inpatient bed-board cache entry, typed properly here. */
 export const useBedBoardCounts = () => {
   const query = useBedBoard();
   return { ...query, data: query.data as BedBoard | undefined };

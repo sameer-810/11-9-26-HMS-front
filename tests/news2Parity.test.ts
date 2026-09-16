@@ -5,16 +5,11 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { calculateNews2 } from "../src/shared/clinical/news2";
 
-/**
- * The device's NEWS2 must be the server's NEWS2.
- *
- * The device copy only ever speaks when a set is charted offline — which is
- * exactly when nobody else is checking it. A threshold that drifted between the
- * two would tell a nurse "3, routine" for a patient the server will escalate as
- * a 7 twenty minutes later. So both copies run over the same inputs here, and
- * any difference fails.
- */
 
+/**
+ * the device NEWS2 (used when charting offline) must match the server's exactly;
+ * both run over the same inputs and any difference fails.
+ */
 const here = path.dirname(fileURLToPath(import.meta.url));
 const serverFile = path.resolve(here, "..", "..", "11-9-26-HMS-back", "src", "modules", "nursing", "news2.js");
 

@@ -46,14 +46,8 @@ import { formatDateTime } from "@shared/format";
 import type { Diagnosis, RestrictedDetails } from "@modules/consultation/types";
 
 /**
- * The doctor's workspace.
- *
- * OP-01 asks for the patient's history to be open in front of the doctor
- * BEFORE they start, without a separate lookup — so the history panel loads
- * with the screen and the identity banner is pinned above everything.
- *
- * OP-06 governs the rest: the note is a draft until signed, and after that it
- * is read-only and corrections become addenda.
+ * Consultation workspace: history loads with the screen (OP-01); the note is a draft
+ * until signed, then read-only with addenda (OP-06).
  */
 export default function ConsultationScreen() {
   const route = useRoute<any>();
@@ -112,8 +106,7 @@ export default function ConsultationScreen() {
 
   return (
     <Screen
-      // Pinned outside the scroll view by Screen. It cannot be scrolled away
-      // from while somebody writes into the record beneath it.
+      // Screen pins the banner outside the scroll view.
       patient={banner ?? undefined}
       overline="Clinical"
       title={signed ? "Consultation (signed)" : "Consultation"}
@@ -160,7 +153,7 @@ export default function ConsultationScreen() {
           />
         ) : null}
 
-        {/* OP-01 — the history, before anything is written. */}
+        { /* OP-01 — the history, before anything is written. */ }
         {restricted && patientId ? (
             <BreakGlassPrompt patientId={patientId} details={restricted} compact />
           ) : (
@@ -199,7 +192,7 @@ export default function ConsultationScreen() {
           />
         ) : null}
 
-        {/* LB-01, from the consultation. Flow 1 step 9: "request reaches laboratory". */}
+        { /* LB-01, from the consultation. Flow 1 step 9: "request reaches laboratory". */ }
         {patientId ? (
           <OrderTestsPanel
             patientId={patientId}
@@ -226,12 +219,7 @@ export default function ConsultationScreen() {
   );
 }
 
-/**
- * OP-01: what the doctor needs in front of them.
- *
- * Allergies first and loudest — it is the piece of history whose absence most
- * reliably causes harm.
- */
+/** OP-01 history panel, allergies first. */
 function HistoryPanel({
   context,
   compact,
@@ -263,7 +251,7 @@ function HistoryPanel({
       />
 
       <VStack gap={14}>
-        {/* Allergies — first, because that is the priority order. */}
+        
         <View>
           {!context.allergiesRecorded ? (
             <HStack gap={8} align="center">
@@ -347,10 +335,7 @@ function HistoryPanel({
           </VStack>
         ) : null}
 
-        {/*
-          Recent results, abnormal values named. Before the doctor orders, so a
-          creatinine from yesterday is seen before a second one is requested.
-        */}
+        { /* Recent results with abnormal values named, to avoid duplicate orders. */ }
         {context.recentLabResults?.length ? (
           <VStack gap={4} testID="history-lab-results">
             <Text variant="label-sm" tone="tertiary">
@@ -401,13 +386,7 @@ function HistoryPanel({
   );
 }
 
-/**
- * The note itself.
- *
- * Autosaved as a draft while typing, because a doctor mid-consultation is
- * interrupted constantly and losing a half-written note is the failure this
- * screen exists to avoid. Autosave stops entirely once signed.
- */
+/** The note, autosaved as a draft while typing; autosave stops once signed. */
 function ConsultationForm({
   consultation,
   disabled,
@@ -448,7 +427,7 @@ function ConsultationForm({
         onError(null);
       })
       .catch((err) => onError(apiErrorMessage(err, "Could not save the note")));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debounced, disabled]);
 
   const addDiagnosis = async () => {

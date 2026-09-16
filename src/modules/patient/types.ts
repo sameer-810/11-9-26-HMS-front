@@ -35,13 +35,7 @@ export interface EmergencyContact {
   phone: string;
 }
 
-/**
- * What reception and billing receive.
- *
- * The clinical fields are not optional-and-absent here by accident — the server
- * serves a different shape entirely to roles without `record.view`, so they
- * never reach the device.
- */
+/** Patient shape for roles without `record.view`; the server never sends clinical fields to them. */
 export interface PatientDemographic {
   id: string;
   patientId: string;

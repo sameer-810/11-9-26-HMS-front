@@ -1,31 +1,22 @@
 /**
- * Formatting, and calendar-date arithmetic that does not go through Date.
- *
- * The API speaks calendar dates — "2026-09-15" — because an appointment is a
- * wall-clock fact about a building rather than an instant. Parsing one with
- * `new Date("2026-09-15")` yields UTC midnight, which in any western timezone
- * is the PREVIOUS day; doing that on the way in or out would reintroduce the
- * bug the server-side fix exists to remove.
- *
- * So calendar dates are manipulated as strings here, and only ever turned into
- * a Date for display, using explicitly-supplied parts.
+ * formatting, and calendar-date arithmetic on "YYYY-MM-DD" strings rather than Date:
+ * new Date("2026-09-15") is UTC midnight, which is the previous day in western timezones.
  */
 
 const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-/** Today, in the device's local calendar. */
+/** today, in the device's local calendar. */
 export function todayCalendarDate(now: Date = new Date()): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
     now.getDate(),
   ).padStart(2, "0")}`;
 }
 
-/** Shift a calendar date by whole days, staying a calendar date. */
+/** shifts a calendar date by whole days, staying a calendar date. */
 export function addCalendarDays(dateStr: string, days: number): string {
   const m = DATE_RE.exec(dateStr);
   if (!m) return dateStr;
-  // Date.UTC keeps the arithmetic away from any local-timezone shift; only the
-  // parts are read back out.
+  // Date.UTC avoids local-timezone shifts; only the parts are read back out.
   const shifted = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3] + days));
   return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, "0")}-${String(
     shifted.getUTCDate(),
@@ -34,7 +25,7 @@ export function addCalendarDays(dateStr: string, days: number): string {
 
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-/** Weekday of a calendar date. Read from the parts, never from a parsed Date. */
+/** weekday of a calendar date, read from the parts rather than a parsed Date. */
 export function calendarDayName(dateStr: string): string {
   const m = DATE_RE.exec(dateStr);
   if (!m) return "";
@@ -64,7 +55,7 @@ export function shortDate(dateStr: string): string {
   return `${Number(m[3])} ${MONTHS[Number(m[2]) - 1]} ${m[1]}`;
 }
 
-/** "10:00" → "10:00 am". Hospitals read both; the suffix removes the guess. */
+/** "10:00" → "10:00 am". */
 export function formatWallTime(time: string): string {
   const m = /^(\d{2}):(\d{2})$/.exec(time);
   if (!m) return time;
@@ -74,7 +65,7 @@ export function formatWallTime(time: string): string {
   return `${display}:${m[2]} ${suffix}`;
 }
 
-/** An instant, rendered for a human. Used for arrival times and audit rows. */
+/** an ISO instant as a local date and time. */
 export function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -95,7 +86,7 @@ export function formatTimeOnly(iso: string | null | undefined): string {
   return d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
 }
 
-/** "45 min", "2 h 10 min". For waiting times on the queue board. */
+/** "45 min", "2 h 10 min". */
 export function formatDuration(minutes: number | null | undefined): string {
   if (minutes === null || minutes === undefined) return "—";
   if (minutes < 60) return `${minutes} min`;
@@ -104,7 +95,7 @@ export function formatDuration(minutes: number | null | undefined): string {
   return m ? `${h} h ${m} min` : `${h} h`;
 }
 
-/** Indian grouping — 1,23,456 rather than 123,456. */
+/** Indian digit grouping: 1,23,456 rather than 123,456. */
 export function formatNumber(n: number): string {
   return n.toLocaleString("en-IN");
 }

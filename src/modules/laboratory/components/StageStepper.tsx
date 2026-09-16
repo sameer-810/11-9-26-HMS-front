@@ -6,13 +6,7 @@ import { Text, HStack, VStack } from "@shared/ui";
 import { formatTimeOnly } from "@shared/format";
 import { LAB_STAGES, LAB_STAGE_LABELS, type LabOrder } from "@modules/laboratory/types";
 
-/**
- * LB-03, drawn.
- *
- * Every completed stage shows who did it and when. That is the chain of
- * custody, and it is the first thing asked after a wrong-blood-in-tube
- * incident — so it is on the screen, not buried in an audit log.
- */
+/** each completed stage names who did it and when: the chain of custody, kept on screen. */
 export function StageStepper({ order }: { order: LabOrder }) {
   if (order.status === "cancelled") {
     return (

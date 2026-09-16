@@ -25,25 +25,14 @@ import { formatDateTime } from "@shared/format";
 import { useChangePassword, useMe } from "@modules/auth/hooks/useAuth";
 import { changePasswordSchema, type ChangePasswordForm } from "@modules/auth/auth.validation";
 
-/**
- * The signed-in person's own account.
- *
- * Read-only apart from the password: name, role and department are set by an
- * administrator, because they decide what this person can reach — a profile
- * screen that let someone edit their own role would be the whole access model
- * with a text box on top.
- *
- * The password form is the auth module's, reused rather than rebuilt: the same
- * schema, the same mutation, and so the same token hand-off after the change.
- */
+/** The signed-in user's own account. Read-only except the password (role etc. are admin-managed). */
 export default function ProfileScreen() {
   const stored = useAuthStore((s) => s.user);
   const hospital = useAuthStore((s) => s.hospital);
   const logout = useAuthStore((s) => s.logout);
   const me = useMe();
 
-  // /auth/me is fresher than the persisted copy — a department changed by an
-  // administrator since sign-in shows here — and it carries the last sign-in.
+  // Prefer /auth/me: fresher than the persisted copy and includes lastLoginAt.
   const user = (me.data?.user ?? stored) as (AuthUser & { lastLoginAt?: string | null }) | null;
 
   if (!user) {

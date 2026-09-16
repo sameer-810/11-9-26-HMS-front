@@ -8,24 +8,12 @@ import type { PrintJob } from "@shared/print/printDocument";
 import type { SpecimenLabelInput } from "@modules/printing/types";
 import { formatDob, printedName } from "./common";
 
-/**
- * 2" × 1" direct-thermal label (50.8 × 25.4 mm) — the stock nearly every
- * laboratory label printer is loaded with, because it wraps a standard 13 mm
- * tube lengthways without covering the fill line.
- */
+/** Standard 2" × 1" thermal tube label; wraps a 13 mm tube without covering the fill line. */
 export const SPECIMEN_LABEL = { widthMm: 50, heightMm: 25 } as const;
 
 /**
- * The label on the tube.
- *
- * Printed only once a sample number exists — i.e. at collection. A label
- * printed at ORDER time is a label that exists before the tube does, and a
- * stack of pre-printed labels is how the wrong patient's name ends up on a
- * sample (the server issues the number at collection for the same reason).
- *
- * The 1D code carries the bare sample number, because that is what an
- * analyser's reader expects. The DataMatrix carries `HMS1|S|…`, which the scan
- * screen resolves to the order.
+ * Specimen tube label, printed only at collection (pre-printed labels cause mislabelling).
+ * Code 128 holds the bare sample number for analysers; DataMatrix holds `HMS1|S|…`.
  */
 export function buildSpecimenLabel(input: SpecimenLabelInput): PrintJob {
   const { widthMm, heightMm } = SPECIMEN_LABEL;
@@ -34,10 +22,7 @@ export function buildSpecimenLabel(input: SpecimenLabelInput): PrintJob {
   const usableWidth = widthMm - 2 * pad;
 
   const identifier = bareIdentifier(input.sampleId);
-  // Up to 4 dots (0.5 mm) a module, as on the wristband: tubes are read by
-  // phone cameras at the bedside as often as by fixed imagers, and a phone
-  // resolves a 0.375 mm DataMatrix module unreliably. The 1D code keeps the
-  // smaller module because it must span the label's width.
+  // DataMatrix up to 4 dots/module so phone cameras read it; Code 128 stays at 3 to fit the width.
   const matrix = dataMatrix(specimenPayload(input.sampleId), { availableMm: topMm, maxDots: 4 });
   const barsHeightMm = heightMm - 2 * pad - topMm - 0.6 - 2.5;
   const linear = code128(identifier, { heightMm: barsHeightMm, availableMm: usableWidth, maxDots: 3 });

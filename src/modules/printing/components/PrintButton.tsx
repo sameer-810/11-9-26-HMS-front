@@ -26,12 +26,8 @@ interface Props {
 }
 
 /**
- * One print action, and what the person pressing it needs to know afterwards.
- *
- * On the web that is the print-dialog instruction: the browser owns scale and
- * margins, and a wristband printed at "Fit to page" does not scan. Said after
- * every web print rather than once, because the person at the ward desk at 3am
- * is not the person who read it last week.
+ * Print action with a result message. After every web print it repeats the scale/margins
+ * instruction, since browser scaling breaks label barcodes.
  */
 export function PrintButton({
   label,
@@ -110,10 +106,7 @@ export function PrintButton({
   );
 }
 
-/**
- * Which label printer this workstation uses. Desktop shell only — a browser
- * cannot address a printer by name, so there is nothing to choose there.
- */
+/** Label printer picker; desktop shell only, as browsers cannot target a printer by name. */
 function LabelPrinterPicker({ align }: { align: "flex-start" | "flex-end" }) {
   const bridge = desktopBridge();
   const [selected, setSelected] = useState<string | null>(() => getLabelPrinter());

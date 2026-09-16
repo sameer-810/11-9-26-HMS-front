@@ -1,31 +1,13 @@
 import { mm } from "./sizing";
 import { escapeHtml } from "./escapeHtml";
 
-/**
- * The printed document's own policy: it is data, not a program. No script, no
- * network fetch, nothing but its inline styles and inline SVG. It travels with
- * the document — the browser's print frame, the phone's print WebView, the
- * desktop shell's print window — so an escaping mistake anywhere upstream is
- * inert markup rather than code running with the app's origin and session.
- */
+/** CSP carried by every printed document: no script or fetch, so escaping bugs stay inert markup. */
 export const PRINT_CSP =
   "default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; base-uri 'none'; form-action 'none'";
 
 /**
- * A complete HTML document whose page is exactly `widthMm` × `heightMm`.
- *
- * `@page { size }` tells the print pipeline the paper size. For a label the
- * html/body box is pinned to the same size with overflow hidden, so content
- * that would spill onto a second label is clipped rather than feeding a blank
- * label out of the printer. A prescription or report instead flows onto a
- * second sheet, because clipping the last medicine off a prescription is far
- * worse than using two pages.
- *
- * What CSS cannot do is stop the browser's own print dialog from scaling the
- * page ("Fit to printable area", default margins). A web print can therefore
- * still come out shrunk, which is why the desktop shell prints through
- * `hmsDesktop.printExact` and why the web path tells the user to set scale 100%
- * and margins to none.
+ * Full HTML document sized `widthMm` × `heightMm`. Labels clip overflow (no blank second label);
+ * "flow" documents run onto more sheets so nothing is cut off a prescription.
  */
 export function pageDocument({
   title,

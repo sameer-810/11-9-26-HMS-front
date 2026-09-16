@@ -40,13 +40,7 @@ export const patientApi = {
     return res.data.data;
   },
 
-  /**
-   * RG-01. Run as the form is filled in, before submit.
-   *
-   * The server re-runs it regardless — this is the convenience, not the
-   * control — but running it here means the desk sees the match while the
-   * patient is still standing in front of them.
-   */
+  /** run as the form is filled in; a convenience only, as the server re-runs it on submit. */
   checkDuplicates: async (details: {
     firstName?: string;
     lastName?: string;

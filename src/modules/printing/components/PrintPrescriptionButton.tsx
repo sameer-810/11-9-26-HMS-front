@@ -6,14 +6,8 @@ import { buildPrescription } from "@modules/printing/documents/prescription";
 import { PrintButton } from "./PrintButton";
 
 /**
- * "Print prescription", on the dispensing screen.
- *
- * Built from the dispense context, which already carries everything paper
- * needs — the prescriber's registration number, every line, and the patient's
- * allergies as recorded NOW rather than when it was written (§17). The
- * prescribing panel was the other candidate, but it holds a draft; a printed
- * prescription should be of one that exists, can be looked up by its number,
- * and can be reprinted from the queue when a patient loses the paper.
+ * "Print prescription" on the dispensing screen, built from the dispense context
+ * (saved prescription, prescriber registration, current allergies per §17).
  */
 export function PrintPrescriptionButton({ ctx }: { ctx: DispenseContext }) {
   const hospitalName = useAuthStore((s) => s.hospital?.name ?? "");

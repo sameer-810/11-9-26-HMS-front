@@ -1,15 +1,6 @@
 /**
- * Phase 3 gate — the interception, in a real browser.
- *
- * The one thing no unit or integration test can show: that a doctor sitting at
- * this screen, with this patient, physically cannot prescribe amoxicillin to a
- * penicillin-anaphylaxis patient without typing a reason — and that the alert
- * reaches them while they are still choosing, not after the pharmacist has the
- * order.
- *
- * Also covers OP-06 in the UI: a signed note is read-only and corrections
- * become addenda.
- *
+ * Phase 3 gate (browser): prescribing Amoxil to a penicillin-anaphylaxis patient alerts
+ * on selection and needs a typed override reason; OP-06 signed notes lock to addenda.
  *   node tools/verifySafety.mjs
  */
 import http from "node:http";
@@ -83,7 +74,9 @@ const API = `http://127.0.0.1:${API_PORT}`;
 for (let waited = 0; ; waited += 300) {
   try {
     if ((await fetch(`${API}/health`)).ok) break;
-  } catch { /* not up */ }
+  } catch {
+    /* not up */
+    }
   if (waited > 40_000) throw new Error(`API did not start.\n${apiLog}`);
   await new Promise((r) => setTimeout(r, 300));
 }
@@ -236,8 +229,7 @@ page.on("response", (r) => {
     httpFailures.push(`${r.status()} ${r.request().method()} ${new URL(r.url()).pathname}`);
   }
 });
-// The live-update socket is not under test here. Blocked, so the gate never
-// reaches whatever else happens to listen on the dev port baked into the build.
+// Block the live-update socket; it is not under test and may hit a stray dev port.
 await page.route("**/socket.io/**", (route) => route.abort());
 await page.route("**/api/v1/**", async (route) => {
   const url = new URL(route.request().url());
@@ -273,8 +265,7 @@ try {
     [consultation.data.id, patient.data.id],
   );
 
-  // The linking config does not carry the consultation id, so navigate through
-  // the schedule the way a doctor actually would.
+  // Linking config lacks the consultation id, so go via the schedule.
   await page.getByRole("link", { name: "My schedule" }).first().click();
   await page.waitForTimeout(1800);
 
@@ -317,8 +308,7 @@ try {
   await page.waitForTimeout(2200);
 
   text = await page.innerText("body");
-  // The moment that matters: the doctor has chosen it, nothing is saved, and
-  // the alert is already on screen.
+  // Chosen but not saved: the alert must already be on screen.
   check(text.includes("Anaphylaxis risk"), "THE INTERCEPTION: the alert fires on choosing, before saving");
   check(text.includes("penicillins"), "and explains that Amoxil IS a penicillin");
   check(text.includes("Review this alert"), "and the line cannot simply be left as-is");
@@ -423,8 +413,7 @@ try {
   await page.waitForTimeout(2000);
   text = await page.innerText("body");
   check(text.includes("Throat swab sent"), "the correction is recorded beside the original");
-  // The field is read-only now, so its text lives in the input's value rather
-  // than in innerText.
+  // Read-only field: its text is in the input value, not innerText.
   const originalText = await page.getByTestId("cc-field").inputValue();
   check(
     originalText === "Fever and sore throat for three days",
@@ -434,8 +423,7 @@ try {
 
   // -- MR-04: what the PHARMACIST receives ----------------------------------
   const phPage = await (await browser.newContext({ viewport: { width: 1440, height: 950 } })).newPage();
-  // The live-update socket is not under test here. Blocked, so the gate never
-  // reaches whatever else happens to listen on the dev port baked into the build.
+  // Block the live-update socket, as above.
   await phPage.route("**/socket.io/**", (route) => route.abort());
   await phPage.route("**/api/v1/**", async (route) => {
     const url = new URL(route.request().url());

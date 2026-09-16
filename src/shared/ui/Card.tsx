@@ -12,11 +12,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 type Elevation = "base" | "raised" | "floating" | "overlay";
 
-/**
- * Resting cards get no shadow at all — a dense clinical screen carrying twenty
- * soft shadows turns into mud. Depth is a hairline border; shadow is reserved
- * for things that genuinely float above the page.
- */
+/** Resting cards use a hairline border, no shadow; shadows are only for floating layers. */
 const ELEV: Record<Elevation, object> = {
   base: shadows.none,
   raised: shadows.none,

@@ -19,17 +19,8 @@ interface Props {
 }
 
 /**
- * A real, cross-platform confirmation.
- *
- * Replaces `window.confirm`, which is web-only and a silent no-op on native —
- * a confirmation that does not appear on the tablet a nurse is holding is worse
- * than no confirmation, because the code believes it asked.
- *
- * For anything clinical, use ClinicalAlert instead. This is for ordinary
- * destructive actions like deactivating a user.
- *
- * Keyboard: focus moves into the dialog and stays there; Escape cancels, and
- * focus returns to whatever opened it.
+ * Cross-platform confirmation for ordinary destructive actions; use ClinicalAlert for clinical ones.
+ * Replaces `window.confirm`, which silently does nothing on native.
  */
 export function ConfirmDialog({
   visible,

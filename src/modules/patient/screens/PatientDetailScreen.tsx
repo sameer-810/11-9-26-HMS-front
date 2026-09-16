@@ -69,8 +69,7 @@ export default function PatientDetailScreen() {
     hasPermission(PERMISSIONS.CONSULTATION_MANAGE) ||
     hasPermission(PERMISSIONS.NURSING_NOTES_MANAGE) ||
     hasPermission(PERMISSIONS.PATIENTS_MANAGE);
-  // Whoever puts the band on: the desk at registration, the admitting team, and
-  // the nurse who replaces a band that is missing, illegible or wrong.
+  // Registration desk, admitting team, or a nurse replacing a band.
   const canPrintWristband =
     hasPermission(PERMISSIONS.PATIENTS_MANAGE) ||
     hasPermission(PERMISSIONS.ADMISSION_MANAGE) ||
@@ -106,8 +105,7 @@ export default function PatientDetailScreen() {
 
   return (
     <Screen
-      // The identity band. Rendered by Screen OUTSIDE the scroll view, so it
-      // cannot be scrolled away from while someone writes into the record.
+      // Identity band, rendered outside the scroll view so it never scrolls away.
       patient={banner ?? undefined}
       overline="Front office"
       title={patient.fullName}
@@ -229,12 +227,8 @@ export default function PatientDetailScreen() {
 }
 
 /**
- * The allergy panel.
- *
- * Renders three states, never two: known allergies, a recorded "none known",
- * and "nobody has asked". The third is the one that gets missed — a blank
- * panel reads as a negative finding, and missing data is not a negative
- * finding.
+ * Allergy panel with three states: known allergies, recorded "none known", and not recorded.
+ * "Not recorded" must never look like "none" (clinical safety).
  */
 function AllergySection({
   patientId,

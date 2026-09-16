@@ -9,17 +9,15 @@ import type { PrescriptionInput } from "../src/modules/printing/types";
 import { collectBreakGlassIds, isTainted } from "../src/shared/offline/mirrorPolicy";
 import { belongsTo, ownerOf, sameOwner } from "../src/shared/offline/outboxOwnership";
 
-/**
- * Client-side rules that keep one person's data from reaching the wrong place:
- * a printed document that cannot carry script, a tablet mirror that does not
- * keep emergency-access reads, and a write queue that files a nurse's vitals
- * only under that nurse.
- */
 
+/**
+ * client-side isolation: script-free print documents, no break-glass reads in the
+ * offline mirror, and outbox ops drained only by the user who queued them.
+ */
 const HOSTILE = `"><img src=x onerror=alert(1)><script>alert(2)</script>'`;
 
-// ---- Printing ----------------------------------------------------------------
 
+// ---- Printing ----------------------------------------------------------------
 test("escapeHtml escapes all five HTML-significant characters, and backtick", () => {
   assert.equal(escapeHtml(`&<>"'\``), "&amp;&lt;&gt;&quot;&#39;&#96;");
   assert.equal(escapeHtml(0), "0");
@@ -81,8 +79,7 @@ test("hostile text in every prescription field is inert, in text and attribute c
 
   const { html: doc } = buildPrescription(input);
   assert.ok(!/<img|<script/i.test(doc), "no element can be injected");
-  // The template's own `class="note"><strong>` is legitimate; what must never
-  // appear is the payload's quote closing an attribute ahead of its markup.
+  // the template's own `class="note"><strong>` is fine; the payload's quote must never close an attribute.
   assert.ok(!doc.includes(HOSTILE) && !doc.includes(`"><img`) && !doc.includes(`'><`), "no attribute can be broken out of");
   assert.ok(doc.includes("&lt;script&gt;alert(2)&lt;/script&gt;"));
 });
@@ -103,8 +100,8 @@ test("a hostile hospital name cannot inject markup into a wristband", () => {
   assert.ok(!/<img|<script/i.test(job.html));
 });
 
-// ---- Record mirror -------------------------------------------------------------
 
+// ---- Record mirror -------------------------------------------------------------
 const PATIENT = "p-restricted";
 const ADMISSION = "a-restricted";
 
@@ -136,8 +133,8 @@ test("the taint outlives the emergency read leaving the cache, and nothing is ta
   assert.ok(!isTainted(cache[1], quiet));
 });
 
-// ---- Outbox ----------------------------------------------------------------------
 
+// ---- Outbox ----------------------------------------------------------------------
 test("a queued op is filed only under the user and hospital that charted it", () => {
   const nurseA = ownerOf({ id: "u-a", hospitalId: "h-1" });
   const nurseB = ownerOf({ id: "u-b", hospitalId: "h-1" });

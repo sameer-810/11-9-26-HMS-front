@@ -12,13 +12,7 @@ import type { AgingBucket } from "@modules/billing/types";
 
 const BUCKETS: AgingBucket[] = ["0_30", "31_60", "61_90", "90_plus"];
 
-/**
- * BL-05: what is still unpaid — patient, amount and age.
- *
- * Oldest first, with the ageing buckets an accounts office works from. A list
- * sorted by newest puts the bill that has been unpaid for four months at the
- * bottom of page six.
- */
+/** BL-05 outstanding bills, oldest first, with ageing buckets. */
 export default function OutstandingScreen() {
   const navigation = useNavigation<any>();
   const { data, isLoading, isError, error, refetch, isRefetching } = useOutstanding();

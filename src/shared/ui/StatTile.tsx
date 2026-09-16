@@ -22,13 +22,7 @@ interface Props {
   testID?: string;
 }
 
-/**
- * A dashboard number.
- *
- * `attention` exists so a dashboard can distinguish "here is a count" from
- * "here is a count you need to do something about" without reaching for the
- * clinical signal ramp, which belongs to patient state rather than workload.
- */
+/** Dashboard number. `attention` flags workload needing action, without the clinical signal colours. */
 export function StatTile({
   label,
   value,
@@ -49,8 +43,7 @@ export function StatTile({
       compact
       accentColor={attention ? a.color : undefined}
       style={styles.wrap}
-      // Card carries a label, not a hint, so where the tile leads is said at the
-      // end of the label — the part a screen-reader user hears before pressing.
+      // Card has no hint prop, so the hint is appended to the label.
       accessibilityLabel={`${label}: ${value}${sublabel ? `, ${sublabel}` : ""}${onPress && hint ? `. ${hint}` : ""}`}
       testID={testID}
     >

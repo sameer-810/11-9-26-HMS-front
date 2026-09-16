@@ -33,12 +33,8 @@ import type { Department, DepartmentBody } from "@modules/admin/types";
 const CODE = /^[A-Z0-9-]{2,10}$/;
 
 /**
- * Departments.
- *
- * "Remove" in this API is deactivation, and it is refused while active staff or
- * wards still point at the department (DEPARTMENT_IN_USE). The refusal names
- * what is in the way, and that message is shown as the server words it — it is
- * the instruction the administrator needs.
+ * Departments admin. Removal is deactivation, refused while staff or wards still use it
+ * (DEPARTMENT_IN_USE); the server's message is shown verbatim because it names the blocker.
  */
 export function DepartmentsPanel() {
   const [search, setSearch] = useState("");

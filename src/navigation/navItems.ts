@@ -51,34 +51,22 @@ export const SECTION_ORDER: NavSection[] = [
 ];
 
 export interface NavItem {
-  /** Route name. Must match the key in `SCREENS` and in the linking config. */
+  /** route name; must match the key in `SCREENS` and in the linking config. */
   name: string;
   label: string;
   icon: LucideIcon;
   section: NavSection;
-  /** Visible when the user holds ANY of these. */
+  /** visible when the user holds any of these. */
   permission?: string;
   permissionAny?: string[];
   adminOnly?: boolean;
-  /**
-   * Registered as a route — reachable by deep link, a button or the command
-   * palette — but not drawn in the sidebar. For screens you arrive at from
-   * somewhere else rather than navigate to directly.
-   */
+  /** registered as a route but not drawn in the sidebar. */
   hidden?: boolean;
 }
 
 /**
- * The single source of truth for navigation.
- *
- * Both the sidebar AND the set of registered routes derive from this list. That
- * coupling is the point: a screen the user's role cannot reach is never
- * registered in the navigator at all, so a deep link to it cannot render. The
- * guard is the absence of the route, not a check inside it — there is no
- * component to forget to wrap.
- *
- * The server enforces the same thing independently. This only decides what to
- * draw.
+ * drives both the sidebar and route registration, so a route the role cannot reach is
+ * never registered and a deep link to it cannot render. the server enforces this separately.
  */
 export const NAV_ITEMS: NavItem[] = [
   // ---- Overview ----
@@ -89,8 +77,7 @@ export const NAV_ITEMS: NavItem[] = [
     section: "Overview",
     permission: PERMISSIONS.DASHBOARD_VIEW,
   },
-  // A wristband or tube label, scanned. MUST mirror the API's grant on
-  // GET /patients/scan/:code — which deliberately leaves out billing.
+  // must mirror the API's grant on GET /patients/scan/:code, which leaves out billing.
   {
     name: "Scan",
     label: "Scan",
@@ -171,15 +158,7 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Medical record",
     icon: ClipboardList,
     section: "Clinical",
-    /**
-     * MUST mirror the API's grant on GET /records/:patientId.
-     *
-     * These lists drifted once: the route was registered for record.view
-     * alone, while the API also serves nursing, laboratory and pharmacy their
-     * own scoped views. A pharmacist could therefore fetch a record they could
-     * not open — the screen was simply not registered for them, so the link
-     * went nowhere with no error to explain it.
-     */
+    /** must mirror the API's grant on GET /records/:patientId, or the link goes nowhere. */
     permissionAny: [
       PERMISSIONS.RECORD_VIEW,
       PERMISSIONS.CONSULTATION_MANAGE,
@@ -299,7 +278,7 @@ export const NAV_ITEMS: NavItem[] = [
     section: "Workspace",
     adminOnly: true,
   },
-  // US-04. MUST mirror the API's grant on /roles (roles.manage, administrator-only).
+  // must mirror the API's grant on /roles (roles.manage, administrator-only).
   {
     name: "RolePermissions",
     label: "Roles & permissions",
@@ -333,23 +312,19 @@ function itemVisible(
   return true;
 }
 
-/** Everything this user may reach — drives BOTH the sidebar and route registration. */
+/** everything this user may reach; drives both the sidebar and route registration. */
 export function useVisibleNavItems(): NavItem[] {
   const hasPermission = useAuthStore((s) => s.hasPermission);
   const isAdmin = useAuthStore((s) => s.isAdmin);
   return NAV_ITEMS.filter((it) => itemVisible(it, hasPermission, isAdmin));
 }
 
-/** What the sidebar draws — permitted AND not hidden. */
+/** what the sidebar draws: permitted and not hidden. */
 export function useSidebarNavItems(): NavItem[] {
   return useVisibleNavItems().filter((it) => !it.hidden);
 }
 
-/**
- * Screens navigation LANDS on. `Screen` reads this to decide whether to show an
- * automatic back link — history is the wrong signal, because arriving at the
- * dashboard from a deep link should not offer "back" to nowhere.
- */
+/** screens navigation lands on; `Screen` reads this to decide whether to offer a back link. */
 export const LANDING_SCREENS = new Set<string>([
   ...NAV_ITEMS.map((it) => it.name),
   "PatientsList",
@@ -362,7 +337,7 @@ export const LANDING_SCREENS = new Set<string>([
   "UsersList",
 ]);
 
-/** Pure helper, exported for tests. */
+/** pure helper, exported for tests. */
 export function visibleItemsFor(
   permissions: string[],
   role: string,

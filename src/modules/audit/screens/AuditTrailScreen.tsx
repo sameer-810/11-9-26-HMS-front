@@ -40,11 +40,8 @@ const GRANT_STATUSES: { key: GrantStatus; label: string }[] = [
 ];
 
 /**
- * The audit API filters on instants, not calendar dates. A typed date means
- * that day on this device's calendar, so it becomes local midnight (or the last
- * millisecond, for the end) built from the date's parts. `new Date("2026-09-14")`
- * would be UTC midnight instead — 05:30 in the morning here — and silently drop
- * the first five and a half hours of the day.
+ * Converts a YYYY-MM-DD to a local-day boundary instant. Built from parts because
+ * `new Date("YYYY-MM-DD")` is UTC midnight and would drop the start of an IST day.
  */
 function localDayBoundary(dateStr: string, end: boolean): string | undefined {
   if (!DATE_RE.test(dateStr)) return undefined;
@@ -80,8 +77,7 @@ function ActivityTab() {
   });
   const rows = data?.data ?? [];
 
-  // Every filter change starts again from page one; page 4 of a narrower
-  // result may not exist.
+  // Filter changes reset to page 1, since the current page may no longer exist.
   const refilter = <T,>(set: (v: T) => void) => (v: T) => {
     set(v);
     setPage(1);
@@ -92,8 +88,7 @@ function ActivityTab() {
       <Card compact>
         <VStack gap={10}>
           <HStack gap={8} wrap>
-            {/* The outcome tabs are their own tablist; the switch beside them is
-                not a tab, and must not be inside it. */}
+            { /* Outcome tablist; the switch beside it must stay outside. */ }
             <HStack gap={8} wrap role="tablist" accessibilityLabel="Outcome">
               <FilterChip label="All outcomes" active={outcome === "all"} onPress={() => refilter(setOutcome)("all")} testID="audit-outcome-all" />
               {OUTCOMES.map((o) => (
@@ -244,13 +239,7 @@ function GrantsTab() {
   );
 }
 
-/**
- * AD-04: the immutable log of who did and saw what, and the review queue for
- * break-the-glass access.
- *
- * The two share a screen because a reviewer works between them: an emergency
- * access in the queue, then the record views made under it in the trail.
- */
+/** AD-04: audit trail plus the break-glass review queue, on one screen since reviewers use both. */
 export default function AuditTrailScreen() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>("activity");

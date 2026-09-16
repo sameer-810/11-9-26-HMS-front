@@ -1,27 +1,7 @@
 /**
- * Phase 10 gate — WCAG 2.1 AA, in a real browser, for every role.
- *
- * What only a browser shows:
- *  - axe-core (wcag2a, wcag2aa, wcag21a, wcag21aa) finds no serious or critical
- *    violation on any screen a role can reach from its own sidebar, nor on the
- *    detail screens reached from those lists, at desktop and phone widths;
- *  - the primary action of the five busiest forms can be reached by Tab alone,
- *    and every stop along the way shows where focus is;
- *  - the Select sheet, ConfirmDialog and the offline review sheet keep focus
- *    inside while open, close on Escape, and hand focus back to what opened them;
- *  - key screens reflow at 320 CSS px (400% zoom of 1280) and 640 CSS px (200%)
- *    with no page-level horizontal scroll and nothing pushed off-screen;
- *  - clinical signal badges carry their meaning in words, not only colour;
- *  - a user who asks the OS for reduced motion gets no decorative animation.
- *
+ * Phase 10 gate — WCAG 2.1 AA in a real browser: axe, keyboard, reflow, motion.
  *   node tools/verifyAccessibility.mjs
- *
- * Environment:
- *   HMS_DIST        another export folder (default dist/)
- *   A11Y_ROLES      comma list to audit fewer roles while iterating
- *   A11Y_VIEWPORTS  "desktop", "phone" or both (default both)
- *   A11Y_ONLY       "axe", "keyboard", "reflow", "motion", "badges" — one section
- *   A11Y_JSON       write the raw results to this file (for before/after diffs)
+ * Env: HMS_DIST, A11Y_ROLES, A11Y_VIEWPORTS, A11Y_ONLY, A11Y_JSON.
  */
 import http from "node:http";
 import fs from "node:fs";
@@ -75,9 +55,7 @@ if (!fs.existsSync(DIST)) {
 }
 fs.mkdirSync(SHOTS, { recursive: true });
 
-// ---------------------------------------------------------------------------
-// The API, on its own in-memory database. Never the .env credentials.
-// ---------------------------------------------------------------------------
+// ---- The API, on its own in-memory database. Never the .env credentials. ----
 console.log("\nStarting the API…");
 const { MongoMemoryReplSet } = await imp(BACK, "node_modules", "mongodb-memory-server", "index.js");
 const replSet = await MongoMemoryReplSet.create({ replSet: { count: 1, storageEngine: "wiredTiger" } });
@@ -92,9 +70,7 @@ const secrets = {
 };
 const api = spawn(process.execPath, ["server.js"], {
   cwd: BACK,
-  // The device cap is not under test here, and every audited sign-in is a fresh
-  // browser context with its own device id — a full run signs one role in far
-  // more often than a real person has devices.
+  // device cap raised: every audited sign-in is a fresh context with its own device id.
   env: { ...process.env, ...secrets, NODE_ENV: "test", PORT: String(API_PORT), MONGODB_URI: mongoUri, BCRYPT_ROUNDS: "4", CORS_ORIGIN: "", MAX_DEVICES_PER_USER: "100" },
   stdio: ["ignore", "pipe", "pipe"],
 });
@@ -105,9 +81,10 @@ const API = `http://127.0.0.1:${API_PORT}`;
 for (let waited = 0; ; waited += 300) {
   try {
     if ((await fetch(`${API}/health`)).ok) break;
-  } catch { /* not up */ }
-  // Generous: other gates and seed scripts often share the machine, and index
-  // builds on a fresh in-memory replica set are slow under that load.
+  } catch {
+    /* not up */
+    }
+  // generous: index builds on a fresh in-memory replica set are slow under shared load.
   if (waited > 150_000) throw new Error(`API did not start.\n${apiLog}`);
   await new Promise((r) => setTimeout(r, 300));
 }
@@ -124,10 +101,7 @@ const { UserModel, hashPassword } = await imp(BACK, "src", "modules", "user", "u
 const { DepartmentModel } = await imp(BACK, "src", "modules", "department", "department.model.js");
 const { defaultPermissionsFor, ROLES } = await imp(BACK, "src", "config", "roles.js");
 
-// ---------------------------------------------------------------------------
-// Seed: one hospital, one user per role, and enough of everything that each
-// list and detail screen renders real content rather than an empty state.
-// ---------------------------------------------------------------------------
+// ---- Seed: one hospital, a user per role, and enough data that no screen is empty. ----
 const hospital = await HospitalModel.create({
   name: "City General Hospital", code: "CGH", approvalStatus: "approved", approvedAt: new Date(), isActive: true,
   timezone: "Asia/Kolkata", address: { line1: "12 MG Road", city: "Bengaluru" },
@@ -195,6 +169,7 @@ const rina = await register("Rina", "Case", "female", "1982-02-02", "9876500006"
 await must("allergy Anita", req("PUT", `/patients/${anita.id}/allergies`, { allergies: [{ substance: "Sulfa", severity: "moderate", reaction: "Rash", category: "drug" }] }, doctor.token));
 await must("allergy Sanjay", req("PUT", `/patients/${sanjay.id}/allergies`, { allergies: [{ substance: "Penicillin", severity: "severe", reaction: "Anaphylaxis", category: "drug" }] }, doctor.token));
 await must("allergy Bhavna", req("PUT", `/patients/${bhavna.id}/allergies`, { allergies: [] }, doctor.token));
+
 // Mohan's allergies are never asked — "Allergies not recorded" must render.
 
 // An appointment on a clinic day this week.
@@ -223,8 +198,7 @@ await must("store receipt (low stock)", req("POST", "/inventory/receipts", {
   lines: [{ itemId: glovesItem, batchNumber: "G1", expiry: "12/2030", quantity: 12 }],
 }, store.token));
 
-// Anita: a signed consultation with a prescription, one dispensed prescription,
-// one waiting at the pharmacy, and a reported blood count.
+// Anita: signed consultation, one prescription dispensed, one pending, a reported blood count.
 const consult = await must("consultation", req("POST", "/consultations", { patientId: anita.id, type: "opd" }, doctor.token));
 await must("consultation notes", req("PATCH", `/consultations/${consult.id}`, { chiefComplaint: "Tiredness and thirst", diagnoses: [{ description: "Type 2 diabetes mellitus", type: "provisional", isPrimary: true }] }, doctor.token));
 const rxPending = (await must("prescription (pending)", req("POST", "/prescriptions", {
@@ -306,9 +280,7 @@ if (seedProblems.length) {
 }
 console.log("\nSeeded: 8 roles, 6 patients, appointment, signed consultation, prescriptions, reported and critical labs, admission with escalation, ED visits, break-glass grant, stock, bills\n");
 
-// ---------------------------------------------------------------------------
-// Web server and browser
-// ---------------------------------------------------------------------------
+// ---- Web server and browser ----
 const web = http.createServer((rq, rs) => {
   const url = decodeURIComponent((rq.url || "/").split("?")[0]);
   let file = path.join(DIST, url);
@@ -350,12 +322,7 @@ async function settle(p, min = 1500) {
   await p.waitForTimeout(300);
 }
 
-/**
- * Signs in and confirms it took. Late in a long run the login form can remount
- * after the fields are filled (auth hydration finishing under load), which
- * leaves an empty form and no error — so wait for the form to be gone, and try
- * once more if it is not.
- */
+/** Signs in and confirms it took; under load the form can remount silently, so retry once. */
 const signIn = async (p, email, password) => {
   const statuses = [];
   const onResponse = (r) => {
@@ -370,8 +337,7 @@ const signIn = async (p, email, password) => {
       await p.getByTestId("login-email").fill(email);
       await p.getByTestId("login-password").fill(password);
       await p.getByTestId("login-submit").click();
-      // 45 s, not 15: under a loaded machine the first signed-in render (auth
-      // store, mirror, outbox hydration) has been seen to take longer.
+      // 45 s, not 15: the first signed-in render is slow on a loaded machine.
       const left = await p.getByTestId("login-email").waitFor({ state: "detached", timeout: 45_000 }).then(() => true).catch(() => false);
       if (left) break;
       if (attempt === 2) {
@@ -394,16 +360,8 @@ const shot = async (p, name) => {
   await p.screenshot({ path: path.join(SHOTS, `a11y-${slug(name)}.png`) }).catch(() => {});
 };
 
-// ---------------------------------------------------------------------------
-// Structural checks axe does not make on its own
-// ---------------------------------------------------------------------------
-/**
- * Runs in the page. Returns problems as strings.
- *  - an interactive element with no accessible name (icon-only buttons);
- *  - no visible level-1 heading, or a heading that skips a level on the way down;
- *  - no main landmark; no navigation landmark when the sidebar is drawn;
- *  - a clinical badge whose meaning is carried only by colour.
- */
+// ---- Structural checks axe does not make on its own ----
+/** Runs in the page: unnamed controls, heading/landmark gaps, colour-only badges. */
 async function structure(p, { signedIn }) {
   return p.evaluate(({ signedIn }) => {
     const visible = (el) => {
@@ -484,9 +442,7 @@ async function structure(p, { signedIn }) {
   }, { signedIn });
 }
 
-// ---------------------------------------------------------------------------
-// axe
-// ---------------------------------------------------------------------------
+// ---- axe ----
 const byRule = new Map(); // rule -> { impact, help, nodes, screens:Set }
 const matrix = new Map(); // screen -> role -> viewport -> cell
 const badgeTotals = { signal: 0, esi: 0, news2: 0, labFlag: 0 };
@@ -991,9 +947,7 @@ try {
   await replSet.stop().catch(() => {});
 }
 
-// ---------------------------------------------------------------------------
-// Report
-// ---------------------------------------------------------------------------
+// ---- Report ----
 if (byRule.size) {
   console.log(`\naxe results by rule (${screensAudited} screen renders audited)\n`);
   const rows = [...byRule.entries()].sort((a, b) => b[1].nodes - a[1].nodes);

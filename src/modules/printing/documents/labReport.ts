@@ -10,18 +10,8 @@ import { sexLabel } from "./common";
 export const LAB_REPORT_PAGE = { widthMm: 210, heightMm: 297, marginMm: 14 } as const;
 
 /**
- * A reported laboratory result on paper.
- *
- * Reported results only (CLINICAL_SAFETY §16): a value on the bench has been
- * checked by nobody, and paper outlives every later correction. The builder
- * refuses an order without a report time rather than trusting the button that
- * called it to have checked.
- *
- * Each value carries its flag glyph AND its reference range (§6, §15). The
- * glyph survives a greyscale photocopy; the range lets the reader see how far
- * out a value is, which the word "High" hides. A critical value is marked in
- * words as well — a critical row that is only red is a normal row on a
- * black-and-white printer.
+ * A laboratory report on paper; refuses unreported results (CLINICAL_SAFETY §16).
+ * Values print glyph, range and the word "Critical" so they survive greyscale printing (§6, §15).
  */
 export function buildLabReport(input: LabReportInput): PrintJob {
   if (!input.reportedAt) {

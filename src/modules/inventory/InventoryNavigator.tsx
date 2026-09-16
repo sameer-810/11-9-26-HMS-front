@@ -11,11 +11,7 @@ import { StockModeProvider, type StockMode } from "./StockMode";
 
 const Stack = createNativeStackNavigator();
 
-/**
- * The store's "Inventory" and the pharmacy's "Medicine stock" are the same
- * screens seen from two chairs. The mode is fixed per navigator, so each
- * sidebar entry keeps its own history and its own location rules.
- */
+/** store "inventory" and pharmacy "medicine stock" share these screens; mode is fixed per navigator. */
 function makeStockNavigator(mode: StockMode) {
   return function StockNavigator() {
     return (

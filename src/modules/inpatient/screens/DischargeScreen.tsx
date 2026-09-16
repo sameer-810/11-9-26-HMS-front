@@ -20,26 +20,11 @@ import {
 import { useAdmission, useDischarge } from "@modules/inpatient/hooks/useInpatient";
 import type { PatientBanner } from "@modules/patient/types";
 
-/**
- * IP-05: discharge.
- *
- * ---------------------------------------------------------------------------
- * Three fields, all required, and the form says why
- * ---------------------------------------------------------------------------
- * The specification requires a summary, discharge medication and follow-up
- * instructions before a discharge can complete, and it is right to. A patient
- * sent home without them has nothing the next clinician can read and nothing
- * they can follow themselves — which is how a readmission happens.
- *
- * The server enforces this independently. The form's job is to make the
- * requirement legible BEFORE someone types for five minutes and is then refused,
- * and to explain the reason rather than just marking the field red.
- *
- * "None" is an acceptable answer to two of the three. That is deliberate: the
- * requirement is that a decision was made and written down, not that there must
- * be medication.
- */
 
+/**
+ * Discharge (IP-05). Summary, medication and follow-up are required (also server-enforced);
+ * "None" is a valid answer for medication and follow-up.
+ */
 const DISCHARGE_TYPES = [
   { value: "routine", label: "Routine discharge" },
   { value: "against_advice", label: "Against medical advice" },
@@ -191,10 +176,7 @@ export default function DischargeScreen() {
                 dischargeDiagnosis: diagnosis.trim() || undefined,
                 dischargeType: type as "routine",
               },
-              // Back to the board this stack owns, not the drawer route — a
-              // navigate() to a name the current stack has never heard of is a
-              // silent no-op, and the user is left staring at the form they
-              // just submitted.
+              // Use this stack's route name; navigate() to an unknown name is a silent no-op.
               { onSuccess: () => navigation.navigate("WardBoard") },
             )
           }

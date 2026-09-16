@@ -44,17 +44,8 @@ import {
 } from "@modules/laboratory/types";
 
 /**
- * MR-01: one record, holding everything known about the patient.
- *
- * What arrives depends on the role. MR-02 to MR-04 give the nurse, the
- * laboratory and the pharmacist different parts of it, and the server assembles
- * a different record for each rather than sending everything and trusting the
- * UI to hide some of it.
- *
- * The scope is NAMED on screen. A clinician looking at a record with no
- * consultations in it needs to know whether that means the patient has never
- * been seen, or whether their role does not get to read them. Silence there is
- * how someone concludes a history is empty when it is merely withheld.
+ * Medical record (MR-01). The server scopes content by role (MR-02 to MR-04); the scope is
+ * named on screen so withheld sections are not read as an empty history.
  */
 const SCOPE_LABEL: Record<RecordScope, { label: string; note: string }> = {
   full: { label: "Full record", note: "" },
@@ -81,8 +72,7 @@ export default function MedicalRecordScreen() {
   const { data: record, isLoading, isError, error, refetch, isRefetching, fetchStatus } =
     useMedicalRecord(patientId);
 
-  // Offline, and this record was never opened here while online. The mirror
-  // holds what this user saw, not the whole hospital — and says so.
+  // Offline and never mirrored on this device.
   if (!record && fetchStatus === "paused") {
     return (
       <Screen title="Medical record" patient={banner ?? undefined}>
@@ -137,8 +127,7 @@ export default function MedicalRecordScreen() {
     ...(record.prescriptions.length > 0 || record.scope === "pharmacy"
       ? [{ key: "medication", label: "Medication", count: record.prescriptions.length }]
       : []),
-    // Shown to every scope that holds results, even when empty, so "no lab
-    // results" is a stated fact rather than a missing tab.
+    // Shown even when empty, so "no results" is stated rather than a missing tab.
     ...(record.scope !== "pharmacy"
       ? [{ key: "lab", label: "Lab results", count: record.labResults?.length ?? 0 }]
       : []),
@@ -174,10 +163,7 @@ export default function MedicalRecordScreen() {
           />
         ) : null}
 
-        {/*
-          Says plainly that this is a partial record, rather than letting a
-          missing section read as an absent history.
-        */}
+        { /* Partial-record notice for scoped views. */ }
         {scope.note ? <Banner tone="info" title={scope.label} message={scope.note} /> : null}
 
         <ChipsRow chips={chips} active={tab} onChange={setTab} />
@@ -361,7 +347,7 @@ function ConsultationsTab({ consultations }: { consultations: Consultation[] }) 
               </VStack>
             ) : null}
 
-            {/* OP-06: corrections sit beside the original, never inside it. */}
+            { /* OP-06: corrections sit beside the original, never inside it. */ }
             {c.addenda?.length ? (
               <VStack gap={6}>
                 <Text variant="label-sm" tone="tertiary">
@@ -427,12 +413,7 @@ function MedicationTab({ prescriptions }: { prescriptions: Prescription[] }) {
                     </Text>
                   ) : null}
 
-                  {/*
-                    PH-03 asks for allergies at dispensing. This is stronger:
-                    the pharmacist sees the exact alert the prescriber was shown
-                    and the reason they gave. A reason without the alert beside
-                    it is not reviewable.
-                  */}
+                  { /* PH-03: show the overridden alert beside the reason so it can be reviewed. */ }
                   {l.overrideReason ? (
                     <View style={styles.override}>
                       <HStack gap={7} align="center">
@@ -456,14 +437,7 @@ function MedicationTab({ prescriptions }: { prescriptions: Prescription[] }) {
   );
 }
 
-/**
- * LB-01 and LB-05 on the record.
- *
- * "Order a test straight from the patient's record" — so the order panel sits
- * here for anyone who may order, above the results it will eventually add to.
- * Reported results only; pending orders are listed separately so a doctor sees
- * a result is on its way before ordering the same test twice.
- */
+/** Lab tab (LB-01, LB-05): order panel, pending orders, then reported results only. */
 function LabResultsTab({
   patientId,
   results,

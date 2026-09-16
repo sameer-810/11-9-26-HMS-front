@@ -10,14 +10,8 @@ export interface CameraScannerProps {
 }
 
 /**
- * Camera scanning in the browser, with ZXing.
- *
- * Loaded on demand: the decoder is a large bundle that most sessions — a desk
- * with a USB scanner — never need, and nothing about it should delay the app
- * opening on a ward PC.
- *
- * Stops at the first read. A camera left decoding would read the same band
- * again as soon as the next screen opens and navigate a second time.
+ * Browser camera scanning with ZXing, loaded on demand (a large bundle most desks never need).
+ * Stops at the first read so the next screen does not read the same band again.
  */
 export function CameraScanner({ onCode, onClose }: CameraScannerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);

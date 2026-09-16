@@ -5,22 +5,11 @@ import { Text, HStack, VStack, Card, Button, TextField, Select, Banner, SignalBa
 import { useHandovers, useSubmitHandover, useReceiveHandover } from "@modules/inpatient/hooks/useInpatient";
 import type { Shift, Handover } from "@modules/inpatient/types";
 
-/**
- * NU-05: SBAR shift handover.
- *
- * ---------------------------------------------------------------------------
- * Why four boxes instead of one
- * ---------------------------------------------------------------------------
- * A single free-text box with a suggested layout is exactly what SBAR replaced.
- * Under time pressure at the end of a twelve-hour shift, the part that gets
- * dropped is the Recommendation — the bit that tells the next nurse what to
- * actually do. Four separate required fields make dropping it a deliberate act
- * rather than a lapse.
- *
- * The form is also unsparing about the last step: a handover nobody has
- * received has not happened, and it says so until someone takes it.
- */
 
+/**
+ * NU-05: SBAR shift handover form and history.
+ * Four separate required fields so the Recommendation is not dropped; unreceived handovers stay flagged.
+ */
 const SHIFTS: { value: Shift; label: string }[] = [
   { value: "morning", label: "Morning" },
   { value: "evening", label: "Evening" },

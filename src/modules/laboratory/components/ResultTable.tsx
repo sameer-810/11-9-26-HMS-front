@@ -8,15 +8,8 @@ import { LabFlagGlyph, flagPresentation } from "./LabFlag";
 import type { LabResult } from "@modules/laboratory/types";
 
 /**
- * A set of results, read the way a paper report is read.
- *
- * Value, glyph, then the range it was flagged against — stated beside the
- * value, so the reader can judge how far out it is rather than trusting a
- * colour. A potassium of 5.2 and one of 6.9 are both "H" to a threshold; they
- * are not the same to a patient.
- *
- * The trend line appears only when the change is significant. A delta on every
- * row is noise; a creatinine up 41% since last week is the finding.
+ * results as on a paper report: value, glyph, then the range it was flagged against.
+ * the trend line appears only when the change is significant.
  */
 export function ResultTable({ results, testID }: { results: LabResult[]; testID?: string }) {
   if (results.length === 0) {

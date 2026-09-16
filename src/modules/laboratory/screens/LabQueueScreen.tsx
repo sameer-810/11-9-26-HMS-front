@@ -26,19 +26,11 @@ import { useLabQueue } from "@modules/laboratory/hooks/useLaboratory";
 import type { LabQueueRow, LabStatus, LabUrgency } from "@modules/laboratory/types";
 import type { PatientBanner } from "@modules/patient/types";
 
-/**
- * LB-02: the laboratory's queue.
- *
- * Ordered by the server: a completed test holding a critical value first,
- * then STAT, urgent, routine — oldest first within each. A queue sorted
- * newest-first is a queue where yesterday's routine sample never reaches the
- * top, and a queue sorted by stage hides the potassium of 7 that nobody but the
- * lab knows about yet.
- *
- * Age is shown against the test's own turnaround target, not as a bare number.
- * "40 minutes" is fine for a TSH and late for a STAT troponin.
- */
 
+/**
+ * laboratory queue, ordered by the server: unreported criticals, then stat, urgent, routine, oldest first.
+ * age is shown against each test's own turnaround target.
+ */
 const FILTERS: { key: "active" | LabStatus; label: string }[] = [
   { key: "active", label: "All active" },
   { key: "requested", label: "To collect" },

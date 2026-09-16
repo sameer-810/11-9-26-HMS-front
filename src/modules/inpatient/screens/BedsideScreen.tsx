@@ -34,23 +34,11 @@ import { apiErrorCode, apiErrorDetails } from "@api/apiClient";
 import { BreakGlassPrompt, EmergencyAccessBanner } from "@modules/consultation/components/BreakGlassPrompt";
 import type { RecordAccess, RestrictedDetails } from "@modules/consultation/types";
 
-/**
- * The bedside chart — IP-04.
- *
- * ---------------------------------------------------------------------------
- * Why this is tabbed rather than one long scroll
- * ---------------------------------------------------------------------------
- * It is read standing up, on a tablet, one-handed, with the other hand holding
- * something. The four things a nurse does at a bedside — look at the trend,
- * record observations, do the drug round, write a note — are separate tasks,
- * and stacking them into one scroll means the drug round is four swipes away
- * while a patient waits.
- *
- * What is NOT in a tab: the patient banner and the current score. Those stay
- * pinned above everything, because the identity of the patient in front of you
- * and how sick they are must never be something you scrolled past.
- */
 
+/**
+ * Bedside chart (IP-04): tabs for chart, observations, drug round and notes.
+ * Patient banner and current score stay pinned above the tabs.
+ */
 type Tab = "chart" | "observations" | "drugs" | "notes";
 
 const TABS: { key: Tab; label: string }[] = [
@@ -73,13 +61,7 @@ export default function BedsideScreen() {
   const [tab, setTab] = useState<Tab>("chart");
   const { data, isLoading, isError, error, refetch, isRefetching, fetchStatus } = useBedside(admissionId);
 
-  /**
-   * The newest set charted on this device and not yet sent, scored here.
-   *
-   * The pinned score must be the patient's latest — not the latest the server
-   * happens to have. Offline, a nurse who charts an 11 and glances back at the
-   * top of the chart must not find a reassuring "0, routine" from this morning.
-   */
+  // Score the newest unsent local set, so the pinned score is never an older server one.
   const myOps = useMyOps();
   const news2Scale = data?.admission?.news2Scale;
   const pendingScore = useMemo(() => {
@@ -95,8 +77,7 @@ export default function BedsideScreen() {
   const patient = admission?.patient as PatientBanner | undefined;
   const access = (data as { access?: RecordAccess } | undefined)?.access;
 
-  // Offline, and this chart was never opened on this device while online.
-  // Said plainly — a spinner here would read as "loading", and nothing is coming.
+  // Offline with no mirrored copy: say so rather than show a spinner that never ends.
   if (!data && fetchStatus === "paused") {
     return (
       <Screen title="Bedside">
@@ -123,8 +104,7 @@ export default function BedsideScreen() {
   }
 
   if (isError || !admission) {
-    // A restricted patient's chart, and this clinician is not on the treating
-    // team: the break-the-glass prompt the record offers, not a dead end.
+    // Restricted record and not on the treating team: offer break-the-glass.
     const restricted =
       apiErrorCode(error) === "RECORD_RESTRICTED" ? apiErrorDetails<RestrictedDetails>(error) : undefined;
     return (
@@ -189,10 +169,7 @@ export default function BedsideScreen() {
       }
     >
       <VStack gap={16}>
-        {/**
-         * Pinned above the tabs. The current score and its escalation policy
-         * are not a tab you can be on the wrong side of.
-         */}
+        { /* Pinned above the tabs: access banner and current score. */ }
         {access?.viaBreakGlass && access.expiresAt ? (
           <EmergencyAccessBanner expiresAt={access.expiresAt} onExpired={() => refetch()} />
         ) : null}
@@ -281,7 +258,7 @@ function ChartTab({
       <Card>
         <VStack gap={10}>
           <Text variant="h4">Observation trend</Text>
-          {/* Sets charted offline, above the chart: newest things first, and never mistaken for filed ones. */}
+          { /* Offline sets first, styled so they are never mistaken for filed ones. */ }
           {pending.length > 0 ? (
             <VStack gap={8} testID="pending-observations">
               {pending
@@ -430,7 +407,7 @@ function Vital({
         {label}
       </Text>
       <Text variant="label-sm" tabular>
-        {/* A dash, never a zero. A blank reading is not a measurement of nothing. */}
+        { /* A dash, never a zero, for a missing reading. */ }
         {value === null || value === undefined || value === "" ? "—" : `${value}${suffix ?? ""}`}
       </Text>
     </VStack>
@@ -459,11 +436,7 @@ function TransferPanel({ admissionId }: { admissionId: string }) {
     <Card testID="transfer-form">
       <VStack gap={12}>
         <Text variant="h4">Transfer</Text>
-        {/**
-         * Only free beds are selectable, and occupied ones are SHOWN as
-         * disabled rather than hidden — a list with bed 12 quietly missing
-         * makes the user hunt for something they can see on the ward.
-         */}
+        { /* Occupied beds are shown disabled rather than hidden. */ }
         <Select
           label="New bed"
           value={bedId}

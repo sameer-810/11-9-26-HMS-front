@@ -9,15 +9,8 @@ import type { WristbandInput } from "@modules/printing/types";
 import { allergyStatement, formatDob, printedName, sexLabel } from "./common";
 
 /**
- * Wristband stock, in mm, as the page is fed through the printer.
- *
- * Direct-thermal wristbands are sold by the inch: adult 1" × 11" (25.4 ×
- * 279 mm — Zebra Z-Band Direct, Brady B-Band, PDC Smart Compatible adult) and
- * infant ¾" × 7" (19 × 178 mm). The printer feeds the band lengthways, so the
- * page is band-WIDE and band-LONG, and the layout runs along it rotated.
- *
- * `claspMm` is the end the snap or adhesive tab sits over. Nothing is printed
- * there, because it is folded under or punched through.
+ * Wristband stock in mm (adult 1" × 11", infant ¾" × 7"), fed lengthways so the layout is rotated.
+ * Nothing prints over `claspMm`, which is folded under or punched through.
  */
 export const WRISTBAND_STOCK = {
   adult: { widthMm: 25, lengthMm: 280, claspMm: 30 },
@@ -26,10 +19,7 @@ export const WRISTBAND_STOCK = {
 
 export type WristbandSize = keyof typeof WRISTBAND_STOCK;
 
-/**
- * Type and spacing per stock. Font sizes are mm, not points, so they are
- * physical sizes on the band whatever the driver thinks a point is.
- */
+/** Type and spacing per stock; font sizes are in mm so they stay physical. */
 const LAYOUT = {
   adult: {
     padMm: 1.5, gapMm: 4, identityMm: 104,
@@ -46,16 +36,8 @@ const LAYOUT = {
 } as const;
 
 /**
- * A patient wristband.
- *
- * The band is a safety object, not a name tag: it is what a nurse checks the
- * drug chart against at 3am, and what a scanner reads to open the right record.
- * So the content is the identifiers two people compare (name, hospital number,
- * date of birth), the one clinical fact that must reach everyone who touches
- * the patient — allergy status, which is never left blank — and two codes:
- * Code 128 of the bare hospital number, which any scanner reads, and a
- * DataMatrix of the versioned payload, which says unambiguously that this is a
- * patient.
+ * Patient wristband: name, hospital number, DOB, allergy status (never blank), a Code 128
+ * of the bare number and a DataMatrix of the versioned patient payload.
  */
 export function buildWristband(input: WristbandInput, size: WristbandSize = "adult"): PrintJob {
   const stock = WRISTBAND_STOCK[size];
@@ -67,8 +49,7 @@ export function buildWristband(input: WristbandInput, size: WristbandSize = "adu
   const dob = formatDob(input.dateOfBirth);
   const allergy = allergyStatement(input, L.allergyChars);
 
-  // Shrink a long name to fit rather than clip it: a clipped surname is a
-  // different surname. 0.62 em is a bold capital's average advance in Arial.
+  // Shrink long names rather than clip them. 0.62 em ≈ average bold capital width in Arial.
   const nameText = name.given ? `${name.surname}, ${name.given}` : name.surname;
   const nameMm = Math.max(L.nameMinMm, Math.min(L.nameMm, L.identityMm / (0.62 * nameText.length)));
 
@@ -77,8 +58,7 @@ export function buildWristband(input: WristbandInput, size: WristbandSize = "adu
   const linear = code128(identifier, { heightMm: barsHeightMm, availableMm: L.oneDAvailableMm, maxDots: L.oneDMaxDots });
   const matrix = dataMatrix(patientPayload(input.patientId), { availableMm: usable, maxDots: L.twoDMaxDots });
   if (!linear.fits || !matrix.fits) {
-    // Refused rather than printed small: a band whose code will not scan is
-    // worse than no code, because staff learn that scanning "doesn't work".
+    // Refuse rather than print an unscannable code.
     throw new Error("This patient's code does not fit on the band at a scannable size");
   }
 

@@ -14,12 +14,7 @@ const TABS = [
   { key: "wards", label: "Wards & beds" },
 ];
 
-/**
- * AD-01 — the hospital, its departments, and its wards, rooms and beds.
- *
- * Only the active tab is mounted. Each tab owns its queries, so opening the
- * screen to fix a phone number does not also page through every bed.
- */
+/** AD-01 hospital setup. Only the active tab is mounted, so each tab's queries run only when shown. */
 export default function HospitalConfigScreen() {
   const [tab, setTab] = useState<Tab>("hospital");
 

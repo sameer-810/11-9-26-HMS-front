@@ -1,10 +1,6 @@
 /**
- * Expiry as printed on a pack, read the same way the server reads it.
- *
- * Mirrors `stockRules.normaliseExpiry` so the receive form can show "usable
- * until 31 Mar 2027" while the date is typed. The server still parses it
- * again; this exists so a mistyped "03/27" is caught at the bench, not on
- * submit.
+ * expiry as printed on a pack. mirrors the server's `stockRules.normaliseExpiry`
+ * so a mistyped date is caught while typing; the server still parses it again.
  */
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

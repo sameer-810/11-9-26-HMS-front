@@ -1,13 +1,6 @@
 /**
- * Phase 5 gate — the laboratory, Flow 3, in a real browser.
- *
- * The things no API test can show:
- *  - a technician typing a potassium of 6.9 sees it turn critical BEFORE saving;
- *  - a doctor cannot read bench values that have not been reported;
- *  - a critical result the ordering doctor has not acknowledged reaches a
- *    colleague's screen once it escalates, and that colleague can close it;
- *  - the laboratory's record view carries results and not the diagnosis.
- *
+ * Phase 5 gate (browser, Flow 3): critical values flag while typing, unreported results
+ * stay hidden, unacknowledged criticals escalate to a colleague, lab view hides diagnosis.
  *   node tools/verifyLaboratory.mjs
  */
 import http from "node:http";
@@ -80,7 +73,9 @@ const API = `http://127.0.0.1:${API_PORT}`;
 for (let waited = 0; ; waited += 300) {
   try {
     if ((await fetch(`${API}/health`)).ok) break;
-  } catch { /* not up */ }
+  } catch {
+    /* not up */
+    }
   if (waited > 40_000) throw new Error(`API did not start.\n${apiLog}`);
   await new Promise((r) => setTimeout(r, 300));
 }
@@ -189,8 +184,7 @@ async function newPage() {
   p.on("response", (r) => {
     if (r.status() >= 400) httpFailures.push(`${r.status()} ${r.request().method()} ${new URL(r.url()).pathname}`);
   });
-  // The live-update socket is not under test here. Blocked, so the gate never
-  // reaches whatever else happens to listen on the dev port baked into the build.
+  // Block the live-update socket; it is not under test and may hit a stray dev port.
   await p.route("**/socket.io/**", (route) => route.abort());
   await p.route("**/api/v1/**", async (route) => {
     const url = new URL(route.request().url());

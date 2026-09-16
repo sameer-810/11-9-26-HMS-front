@@ -28,26 +28,8 @@ import type { DispenseContext, DispenseLine, Dispensing } from "@modules/pharmac
 import { PrintPrescriptionButton } from "@modules/printing/components/PrintPrescriptionButton";
 
 /**
- * Dispense a prescription — Flow 1 step 11.
- *
- * ---------------------------------------------------------------------------
- * Order on the screen is the order of the checks
- * ---------------------------------------------------------------------------
- *   1. Who — the banner, pinned, allergies included.
- *   2. The allergy check, as it stands NOW — changes since prescribing, lines
- *      the prescriber never considered, overrides the prescriber recorded —
- *      and the acknowledgement.
- *   3. Each medicine: stock, and the batches, expired ones visible and locked.
- *   4. Confirm.
- *
- * ---------------------------------------------------------------------------
- * Why the form remounts when the allergy list changes
- * ---------------------------------------------------------------------------
- * The form is keyed on the allergy fingerprint. If a colleague records an
- * allergy while this screen is open, the server refuses the dispense, the
- * context reloads with a new fingerprint, and the form starts again — with the
- * acknowledgement UNTICKED. An acknowledgement carried across that change
- * would be an acknowledgement of a list the pharmacist never saw.
+ * Dispense a prescription (Flow 1 step 11): banner, current allergy check, batches, confirm.
+ * The form is keyed on the allergy fingerprint so a changed list resets the acknowledgement.
  */
 export default function DispenseScreen() {
   const route = useRoute<any>();
@@ -258,7 +240,7 @@ function DispenseForm({
   );
 }
 
-/** PH-03, with everything the pharmacist is confirming shown above the box they tick. */
+/** PH-03 allergy check, with everything being confirmed shown above the tick box. */
 function AllergyCheck({
   ctx,
   ack,

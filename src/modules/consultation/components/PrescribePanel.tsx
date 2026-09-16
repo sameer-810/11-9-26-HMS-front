@@ -51,26 +51,13 @@ const FREQUENCIES = [
   { value: "SOS", label: "SOS", sublabel: "As needed" },
 ];
 
-/**
- * The prescribing panel.
- *
- * The safety check runs as each line is ADDED, not on submit. That ordering is
- * the entire point of this phase: the doctor learns about the allergy while
- * the patient is still in the room and the order does not exist yet, rather
- * than after the pharmacist has already received it.
- */
+/** Prescribing panel. The safety check runs as each line is added, not on submit. */
 export function PrescribePanel({ patientId, consultationId, disabled, onPrescribed }: Props) {
   const [lines, setLines] = useState<DraftLine[]>([]);
   /** Per-component, not module-level — two panels must not share a counter. */
   const nextLineId = useRef(0);
   const [search, setSearch] = useState("");
-  /**
-   * The last verdict, and the medicine set that produced it.
-   *
-   * Held together so a result is DISCARDED when the lines change, rather than
-   * cleared from an effect — which both fights React and leaves a frame where
-   * an alert for a removed medicine is still on screen.
-   */
+  /** Last verdict plus the medicine key it answered, so stale results are ignored without an effect. */
   const [safetyResult, setSafetyResult] = useState<{
     key: string;
     result: SafetyResult;
@@ -86,13 +73,7 @@ export function PrescribePanel({ patientId, consultationId, disabled, onPrescrib
   const check = useSafetyCheck();
   const create = useCreatePrescription();
 
-  /**
-   * Re-check whenever the set of medicines changes.
-   *
-   * Keyed on the medicine ids, so editing a dose does not re-run the check —
-   * the allergy answer does not depend on the dose, and re-running would flash
-   * the alert while somebody is typing into the field beneath it.
-   */
+  // Keyed on medicine ids only, so editing a dose does not re-run the check.
   const medicineKey = lines.map((l) => l.medicine.id).join(",");
 
   const checkKey = `${patientId}|${medicineKey}`;
@@ -110,14 +91,12 @@ export function PrescribePanel({ patientId, consultationId, disabled, onPrescrib
         if (!cancelled) setSafetyResult({ key: checkKey, result });
       })
       .catch(() => {
-        // A failed check must not stop a doctor prescribing. The server runs
-        // the same check on save and will refuse there if it needs to — that
-        // is the control, this is the early warning.
+      // A failed check must not block prescribing; the server re-checks on save.
       });
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkKey]);
 
   // Only trust a verdict that was asked about the medicines currently listed.
@@ -160,8 +139,7 @@ export function PrescribePanel({ patientId, consultationId, disabled, onPrescrib
   const submit = async () => {
     setError(null);
 
-    // Present the blocking alert rather than sending something that will be
-    // refused. The dialog is where the reason gets typed.
+    // Open the blocking alert (where the reason is typed) instead of sending a refused request.
     if (unresolvedCritical.length > 0) {
       setBlockingLineId(unresolvedCritical[0].id);
       return;
@@ -187,9 +165,7 @@ export function PrescribePanel({ patientId, consultationId, disabled, onPrescrib
       onPrescribed?.(prescription.prescriptionNumber);
     } catch (err) {
       if (apiErrorCode(err) === "OVERRIDE_REASON_REQUIRED") {
-        // The server refused. It re-ran the check and knows something this
-        // screen did not — usually an allergy a colleague recorded in the last
-        // few minutes.
+        // Server re-check found something new, usually a just-recorded allergy.
         setBlockingLineId(unresolvedCritical[0]?.id ?? lines[0]?.id ?? null);
         return;
       }
@@ -211,11 +187,7 @@ export function PrescribePanel({ patientId, consultationId, disabled, onPrescrib
       <VStack gap={14}>
         {error ? <Banner tone="danger" message={error} onDismiss={() => setError(null)} /> : null}
 
-        {/*
-          The gap alert. Raised because nobody has ASKED about allergies —
-          separate from any finding about a drug, and true whatever is being
-          prescribed.
-        */}
+        { /* Allergy status not recorded: independent of any drug-specific finding. */ }
         {safety?.allergyStatusAlert ? (
           <Banner
             tone="warning"
@@ -315,14 +287,7 @@ export function PrescribePanel({ patientId, consultationId, disabled, onPrescrib
         ) : null}
       </VStack>
 
-      {/*
-        The blocking alert.
-
-        Everything about its presentation is decided by ClinicalAlert from the
-        tier — this screen does not get to choose how interruptive it is. The
-        override requires a typed reason, and the recommended action (cancel and
-        review) is the primary button.
-      */}
+      { /* Blocking alert: ClinicalAlert sets presentation from the tier; override needs a reason. */ }
       <ClinicalAlert
         visible={Boolean(blockingAlert)}
         level="critical"
@@ -415,11 +380,7 @@ function PrescriptionLineRow({
           ) : null}
         </HStack>
 
-        {/*
-          Non-blocking alerts are rendered INLINE. The tier decides: only
-          `critical` interrupts, because an alert that stops the screen for a
-          mild finding is one that teaches people to dismiss alerts unread.
-        */}
+        { /* Non-critical alerts render inline; only critical interrupts. */ }
         {hasAlerts ? (
           <VStack gap={6}>
             {result!.alerts.map((a, i) => (

@@ -1,12 +1,8 @@
 import { Platform } from "react-native";
 
 /**
- * ARIA attributes react-native-web renders but React Native's typings do not
- * declare — `aria-describedby`, `aria-invalid`, `aria-level` and friends.
- *
- * Spread the result onto a component: `<TextInput {...webAria({ invalid })} />`.
- * On native it is empty, because the same meaning is already carried there by
- * `accessibilityHint`, `accessibilityState` and `accessibilityRole="header"`.
+ * Web-only ARIA props RN typings lack; spread as `{...webAria({ invalid })}`.
+ * Empty on native, where accessibilityState/Hint/Role carry the same meaning.
  */
 export function webAria(props: {
   describedBy?: string;
@@ -38,15 +34,7 @@ export function webAria(props: {
 }
 
 /**
- * Web behaviour for a Pressable with role checkbox, radio or switch.
- *
- * react-native-web does not turn `accessibilityState.checked` into
- * `aria-checked`, so on the web every checkbox and radio in the app announced
- * no state at all — a pharmacist using a screen reader could not tell whether
- * the allergy check was ticked. It also only activates `role="button"` on
- * Space, so a checkbox could be ticked with Enter but not with the key every
- * other checkbox on the web uses.
- *
+ * Web fix for checkbox/radio/switch Pressables: RNW omits `aria-checked` and Space-to-toggle.
  *   <Pressable accessibilityRole="checkbox" onPress={toggle} {...checkable(on, toggle)} />
  */
 export function checkable(checked: boolean, onToggle: () => void, disabled?: boolean): object {

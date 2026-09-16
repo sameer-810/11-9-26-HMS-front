@@ -15,12 +15,8 @@ interface Props {
 }
 
 /**
- * The one moment a temporary password is visible.
- *
- * There is no clipboard dependency in this app, so the password is selectable
- * text instead of a copy button. It is set large, in a fixed-width face, because
- * the usual handover is an administrator reading it aloud to the person in front
- * of them. The generator already leaves out 0/O and 1/l/I for the same reason.
+ * the one moment a temporary password is visible; selectable text as there is no
+ * clipboard dependency, set large and monospaced for reading aloud.
  */
 export function CredentialPanel({ name, employeeId, email, password, kind }: Props) {
   return (

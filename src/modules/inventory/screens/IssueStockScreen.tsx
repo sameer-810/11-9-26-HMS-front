@@ -11,16 +11,11 @@ import { useInventoryItems, useInventoryItem, useIssueStock } from "@modules/inv
 import { formatExpiry } from "@modules/inventory/utils/expiry";
 import { LOCATION_LABELS, type StockLocation } from "@modules/inventory/types";
 
-/**
- * IN-02: stock issued to a department, or transferred to the pharmacy.
- *
- * Batches are chosen from the batches that exist, with expired ones listed and
- * locked — "Expired" is the reason shown, not a missing row that makes the
- * store hunt for a box they can see. Quantities cannot exceed what a batch
- * holds; the server refuses it too, and it is the server's refusal that holds
- * when two people issue the last box at once.
- */
 
+/**
+ * issue stock to a department, or transfer it to the pharmacy.
+ * expired batches are listed but locked; on a race it is the server's refusal that holds.
+ */
 interface Line {
   batchId: string;
   itemName: string;

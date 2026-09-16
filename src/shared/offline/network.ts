@@ -3,24 +3,11 @@ import { onlineManager } from "@tanstack/react-query";
 import { Platform } from "react-native";
 import { environment } from "@config/env";
 
-/**
- * Whether this device can reach the hospital server right now.
- *
- * `navigator.onLine` alone is not that. A ward tablet on hospital WiFi whose
- * uplink has failed reports itself online, and a laptop with the VPN down
- * does too. So three signals feed one flag:
- *
- *   - the browser's own online/offline events (fast, and right when it says offline);
- *   - every API response: an answer of any status means the server is reachable,
- *     and a request that got no answer at all means it is not;
- *   - while offline, a quiet probe of /health, so the device notices the
- *     connection coming back without waiting for someone to press something.
- *
- * React Query reads the same flag. With `networkMode: "offlineFirst"` a query
- * that fails while offline PAUSES rather than erroring — which is what keeps a
- * record saved on this device on screen instead of replacing it with an error.
- */
 
+/**
+ * Server reachability flag (not just `navigator.onLine`): browser events, API responses and
+ * an offline probe. React Query shares it, so offline queries pause instead of erroring.
+ */
 interface NetworkState {
   online: boolean;
   /** When the flag last changed. The offline strip says how long it has been. */
@@ -48,9 +35,7 @@ export function isNetworkError(err: unknown): boolean {
   return Boolean(e?.isAxiosError) && !e?.response && e?.code !== "ERR_CANCELED";
 }
 
-// The API root rather than /health: it answers without a session, and it is
-// the same path — through the same proxies — that real requests take, so
-// "reachable" means reachable for the app, not merely for a load balancer.
+// Probe the API root, not /health: no session needed, and it goes through the same proxies.
 const HEALTH_URL = `${environment.apiUrl.replace(/\/+$/, "")}/`;
 const PROBE_EVERY_MS = 10_000;
 const PROBE_TIMEOUT_MS = 5_000;
@@ -75,8 +60,7 @@ export function startNetworkWatch(): () => void {
 
   if (Platform.OS === "web" && typeof window !== "undefined") {
     const goOffline = () => setOnline(false);
-    // The browser saying "online" means the cable is back, not the server —
-    // so it triggers a probe rather than flipping the flag.
+    // Browser "online" only means the link is back; probe before flipping the flag.
     const maybeOnline = () => void probeServer().then((ok) => ok && setOnline(true));
     window.addEventListener("offline", goOffline);
     window.addEventListener("online", maybeOnline);

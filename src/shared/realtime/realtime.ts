@@ -6,23 +6,11 @@ import { queryClient } from "@api/queryClient";
 import { useNetworkStore } from "@shared/offline/network";
 import { drainOutbox } from "@shared/offline/outbox";
 
-/**
- * Live updates from the server.
- *
- * The server decides who hears what — every event goes to a user, or to a role
- * within one hospital, never globally (config/socket.js). This side does two
- * things with an event: refetch the screens it affects, and, for the few that
- * need someone to act, show an alert that stays until it is dismissed.
- *
- * Events carry ids, not clinical detail. The alert says "a critical result is
- * waiting" and the screen it points to fetches the rest under the reader's own
- * permissions — a socket message is not a way round the record's access rules.
- *
- * The socket is a convenience, never the source of truth: every screen it
- * refreshes also refreshes on its own interval, so a blocked socket costs
- * seconds, not an alert.
- */
 
+/**
+ * Socket.io live updates: each event refetches affected queries and may raise a sticky alert.
+ * Events carry ids only (screens refetch under normal permissions); screens also poll, so sockets are optional.
+ */
 export interface RealtimeAlert {
   id: string;
   tone: "danger" | "warning" | "info";
@@ -104,8 +92,7 @@ export const REALTIME_EVENTS: Record<string, Rule> = {
 export function startRealtime(token: string): () => void {
   const socket = io(environment.socketUrl, {
     auth: { token },
-    // Reconnecting forever is right for a ward screen, but not every second
-    // against a server that is down.
+    // Reconnect forever, but back off to 30 s against a down server.
     reconnectionDelayMax: 30_000,
   });
 

@@ -11,12 +11,8 @@ export interface CameraScannerProps {
 }
 
 /**
- * Camera scanning on iOS and Android, with expo-camera's built-in decoder.
- * The web build resolves `CameraScanner.web.tsx` instead.
- *
- * Code 128 and DataMatrix are the two symbologies this system prints; QR is
- * accepted as well because it costs nothing and some referral letters carry
- * one. Everything else is ignored rather than sent to the server as a miss.
+ * Native camera scanning with expo-camera; the web build uses `CameraScanner.web.tsx`.
+ * Reads Code 128 and DataMatrix (what HMS prints) plus QR; other symbologies are ignored.
  */
 export function CameraScanner({ onCode, onClose }: CameraScannerProps) {
   const [permission, requestPermission] = useCameraPermissions();

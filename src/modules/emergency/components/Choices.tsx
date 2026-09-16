@@ -6,13 +6,7 @@ import { palette, radius, layout } from "@shared/designSystem";
 import { Text, VStack, HStack } from "@shared/ui";
 import { checkable } from "@shared/ui/a11y";
 
-/**
- * Selectable chips with a testID on each chip.
- *
- * The shared ChipsRow is a filter bar — one horizontally-scrolling row, no
- * per-chip ids. Triage and registration need wrapping chips, multi-select for
- * resources, and a stable handle on each choice for the end-to-end suite.
- */
+/** Wrapping, optionally multi-select chips with a testID per chip (ChipsRow has neither). */
 export function ChoiceChips({
   options,
   isSelected,

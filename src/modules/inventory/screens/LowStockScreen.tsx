@@ -9,10 +9,8 @@ import { useStockMode } from "@modules/inventory/StockMode";
 import { ExpiryBadge } from "@modules/inventory/components/StockBadges";
 
 /**
- * IN-03: before something runs out — and before something expires on the shelf.
- *
- * Three lists, because they are three problems with three fixes: order more,
- * use it first, take it off the shelf.
+ * low stock and expiry alerts.
+ * three lists, because they take three different actions: order, use first, dispose.
  */
 export default function LowStockScreen() {
   const navigation = useNavigation<any>();

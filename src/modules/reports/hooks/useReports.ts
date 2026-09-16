@@ -3,11 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { reportsApi, type ExportFormat } from "@modules/reports/api/reportsApi";
 import type { ReportFilters } from "@modules/reports/types";
 
-/**
- * A 4xx here is a decision — range too long, report not for this role — and
- * asking again returns the same answer a second later. Only a network or
- * server failure is worth one retry.
- */
+/** A 4xx is a decision (range too long, report not allowed); only network or 5xx failures retry once. */
 const retryUnlessRefused = (failureCount: number, err: unknown) => {
   const status = (err as { response?: { status?: number } })?.response?.status;
   if (status && status >= 400 && status < 500) return false;
@@ -22,9 +18,8 @@ export const useReport = (key: string | undefined, filters: ReportFilters, enabl
     queryKey: ["report", key, filters],
     queryFn: () => reportsApi.run(key!, filters),
     enabled: Boolean(key) && enabled,
-    // Keep the last result on screen while a new range loads — but only for the
-    // same report. Showing billing's table under the pharmacy chip for a second
-    // is how a number gets read against the wrong report.
+    // Keep the previous result while a new range loads, but only for the same report,
+    // so no figure is briefly shown under the wrong report.
     placeholderData: (previous) => (previous?.key === key ? previous : undefined),
     retry: retryUnlessRefused,
   });

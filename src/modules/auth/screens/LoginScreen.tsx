@@ -22,10 +22,8 @@ export default function LoginScreen({ navigation }: { navigation?: any }) {
   const lookupHospitals = useHospitalsForEmail();
 
   /**
-   * A locum may hold accounts at more than one hospital on this platform. The
-   * server refuses to guess — signing someone into the wrong hospital's patient
-   * list is both a breach and a clinical hazard — so it answers with the
-   * choices and this picker appears.
+   * Shown when one person has accounts at several hospitals; the server never guesses which,
+   * since the wrong hospital's patient list would be a breach.
    */
   const [hospitals, setHospitals] = useState<HospitalChoice[] | null>(null);
   const [hospitalId, setHospitalId] = useState<string | null>(null);

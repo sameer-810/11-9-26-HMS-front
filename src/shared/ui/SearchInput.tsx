@@ -14,13 +14,7 @@ interface Props {
   testID?: string;
 }
 
-/**
- * One search box for the whole app.
- *
- * Exists because the alternative — each screen rolling its own — is how you end
- * up with eight subtly different search affordances and a clear button that is
- * present on six of them.
- */
+/** The app's single search box, with a clear button. */
 export function SearchInput({
   value,
   onChangeText,

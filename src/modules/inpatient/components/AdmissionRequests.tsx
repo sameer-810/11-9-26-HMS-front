@@ -19,17 +19,8 @@ const OUTCOMES = (Object.keys(REQUEST_CLOSURE_LABELS) as RequestClosureOutcome[]
 }));
 
 /**
- * US-17: doctors' recommendations to admit, where the person who admits sees
- * them — the top of the admitted patients board.
- *
- * Nothing is drawn when nothing is waiting: an empty "0 requests" card on every
- * ward round is a card people learn to scroll past, and then miss the day it
- * has something in it.
- *
- * "Admit" opens the admission form with the patient, the reason and the
- * consultation already filled in, so the admission is linked to the
- * recommendation and clears it. A recommendation that will not go ahead is
- * closed with a reason rather than left to age off the list.
+ * US-17: pending admission recommendations on the admitted board; renders nothing when empty.
+ * "Admit" prefills the form (linking and clearing the request); declined ones close with a reason.
  */
 export function AdmissionRequests({ onAdmit }: { onAdmit: (request: AdmissionRequest) => void }) {
   const requests = useAdmissionRequests();

@@ -5,16 +5,8 @@ import { Text } from "@shared/ui";
 import type { LabFlag as Flag, LabEntryParameter } from "@modules/laboratory/types";
 
 /**
- * How a laboratory flag is drawn.
- *
- * The glyphs are the ones a clinician reads off a paper report — L, H, LL, HH —
- * so the flag survives greyscale printing and colour vision deficiency, and so
- * nobody has to learn a new visual language to read a potassium.
- *
- * Two flags that are NOT normal are drawn as something, never as nothing:
- *  - `none`: no reference range applies to this patient. Drawing it blank reads
- *    as "within range".
- *  - `indeterminate`: a censored value ("<5") that could be normal or critical.
+ * paper-report glyphs (L, H, LL, HH), so a flag survives greyscale printing and colour blindness.
+ * `none` and `indeterminate` are drawn as something: blank would read as "within range".
  */
 export interface FlagPresentation {
   glyph: string;
@@ -69,12 +61,8 @@ export function LabFlagGlyph({ flag, testID }: { flag: Flag; testID?: string }) 
 }
 
 /**
- * A flag previewed while the value is typed.
- *
- * Exact numbers only, against the range the server sent for this patient. The
- * SAVED flag is always the server's — this exists so a technician typing "6.9"
- * into a potassium sees it turn critical before pressing save, not after.
- * A censored or unreadable value gets no preview rather than a guess.
+ * flag previewed while typing, exact numbers only; the saved flag is always the server's.
+ * a censored or unreadable value gets no preview rather than a guess.
  */
 export function previewFlag(parameter: LabEntryParameter, text: string): Flag | "invalid" | null {
   const raw = text.trim();

@@ -11,8 +11,7 @@ export const usePatients = (params?: PatientListParams) =>
   useQuery({
     queryKey: ["patients", params],
     queryFn: () => patientApi.list(params),
-    // Keeps the previous page on screen while the next loads, so a search box
-    // does not blank the list on every keystroke.
+    // keeps the previous page on screen so search does not blank the list on every keystroke.
     placeholderData: keepPreviousData,
   });
 
@@ -28,18 +27,11 @@ export const usePatientBanner = (id?: string) =>
     queryKey: ["patient-banner", id],
     queryFn: () => patientApi.banner(id!),
     enabled: Boolean(id),
-    // The band must not show a stale allergy. Short, and refetched whenever a
-    // clinical screen mounts.
+    // short: the identity band must not show a stale allergy.
     staleTime: 15_000,
   });
 
-/**
- * RG-01, run live as the form is filled in.
- *
- * A mutation rather than a query because it is a POST and because it should
- * fire when the form says so, not when a key changes — the desk types a phone
- * number digit by digit and a query would fire ten times.
- */
+/** a mutation, not a query: it is a POST and fires when the form decides, not on every keystroke. */
 export const useCheckDuplicates = () =>
   useMutation({ mutationFn: patientApi.checkDuplicates });
 

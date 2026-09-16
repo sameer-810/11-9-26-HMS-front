@@ -84,12 +84,7 @@ export const isTokenExpired = (token: string | null) => {
   }
 };
 
-/**
- * SecureStore on native (Keychain / Keystore), localStorage on web.
- *
- * A session token here reaches a patient record, so on a device it belongs in
- * the OS keystore rather than AsyncStorage.
- */
+/** SecureStore (OS keystore) on native, not AsyncStorage; localStorage on web. */
 const secureStorage: StateStorage = {
   getItem: async (name) => {
     if (Platform.OS === "web") {
@@ -106,7 +101,7 @@ const secureStorage: StateStorage = {
       try {
         localStorage.setItem(name, value);
       } catch {
-        /* private window, quota — the session just will not persist */
+      /* private window, quota — the session just will not persist */
       }
       return;
     }
@@ -117,7 +112,7 @@ const secureStorage: StateStorage = {
       try {
         localStorage.removeItem(name);
       } catch {
-        /* nothing to do */
+      /* nothing to do */
       }
       return;
     }
@@ -151,15 +146,8 @@ export const useAuthStore = create<AuthState>()(
 
       logout: async () => {
         const { refreshToken } = get();
-        // A shared ward tablet must not show the next person what the last one
-        // read: the saved records go, and so does everything held in memory.
-        // Queued vitals and notes are NOT dropped — they belong to the nurse
-        // who charted them and send when that nurse signs in again.
-        //
-        // All of it happens BEFORE the server is told. On a ward whose uplink
-        // is down the revoke call can hang for as long as the connection takes
-        // to time out, and a sign-out that leaves the last nurse's patients on
-        // screen for that long is not a sign-out.
+        // Wipe mirrors and cache before the (possibly hanging) revoke call.
+        // Queued outbox ops are kept; they send when their author signs in again.
         const wiping = clearMirrors();
         set({
           user: null,
@@ -174,7 +162,7 @@ export const useAuthStore = create<AuthState>()(
           try {
             await axios.post(`${environment.apiUrl}/auth/logout`, { refreshToken }, { timeout: 10_000 });
           } catch {
-            // The session TTL reclaims the slot regardless.
+          // The session TTL reclaims the slot regardless.
           }
         }
       },
@@ -182,8 +170,7 @@ export const useAuthStore = create<AuthState>()(
       hasPermission: (permission) => {
         const { user } = get();
         if (!user) return false;
-        // No role short-circuit, deliberately — it mirrors the server, where an
-        // administrator holds governance permissions and no clinical ones.
+        // No admin short-circuit: as on the server, admins hold no clinical permissions.
         return Array.isArray(user.permissions) && user.permissions.includes(permission);
       },
 
@@ -210,9 +197,7 @@ export const useAuthStore = create<AuthState>()(
             updateTokens(accessToken, newRefresh);
             return accessToken;
           } catch (err) {
-            // Only a genuine rejection clears the session. A network failure
-            // must not sign a nurse out mid-shift during a WiFi dropout —
-            // that is how a ward loses access to the record it needs.
+            // Only a 401/403 clears the session; a network failure must not sign anyone out.
             const response = (err as { response?: { status?: number; data?: { error?: { code?: string; message?: string } } } })
               ?.response;
             const status = response?.status;
@@ -241,9 +226,7 @@ export const useAuthStore = create<AuthState>()(
         }
         if (refreshToken) {
           await refreshSession();
-          // Credentials surviving the attempt means it was a network failure,
-          // not a rejection — boot with the cached user so the offline record
-          // mirror is reachable.
+          // Refresh token survived, so it was a network failure: boot offline with the cached user.
           if (get().refreshToken) {
             set({ isAuthenticated: true, isAuthChecked: true });
             return;

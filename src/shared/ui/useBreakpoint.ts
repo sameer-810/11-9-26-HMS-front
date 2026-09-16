@@ -28,14 +28,7 @@ export function useBreakpoint(): Breakpoint {
   };
 }
 
-/**
- * Row density for tables.
- *
- * A ward round on a tablet and a records clerk on a 27" monitor want different
- * row heights from the same table. Rather than make each screen guess, density
- * is derived from the viewport and can be overridden per screen where the
- * content demands it.
- */
+/** Table row density derived from the viewport, with an optional per-screen override. */
 export function useDensity(override?: Density) {
   const { isWide, isPhone } = useBreakpoint();
   const resolved: Density = override ?? (isPhone ? "comfortable" : isWide ? "standard" : "standard");

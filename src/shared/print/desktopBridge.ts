@@ -1,11 +1,6 @@
 /**
- * The Electron shell's print bridge, when the app is running inside it.
- *
- * Exists because a browser cannot be made to print at an exact size: its print
- * dialog owns scaling and margins, and "Fit to page" on a 25 mm wristband
- * produces a band whose barcode no longer scans. The desktop shell prints the
- * same HTML with `webContents.print` at a fixed page size, silently, to a named
- * printer.
+ * Electron shell print bridge: exact-size silent printing, which browsers cannot do
+ * (dialog scaling breaks wristband barcodes).
  */
 
 export interface DesktopPrinter {
@@ -39,12 +34,8 @@ export function desktopBridge(): HmsDesktopBridge | null {
 }
 
 /**
- * The label printer this workstation prints wristbands and tube labels to.
- *
- * Per device, in localStorage, deliberately not per user: the Zebra is bolted
- * to the ward desk, and a nurse logging in at a different desk must print to
- * THAT desk's printer rather than to the one where they last worked. A label
- * printed to the wrong room is a label someone else picks up.
+ * This workstation's label printer. Stored per device, not per user, so labels print at the
+ * desk the nurse is actually at.
  */
 const LABEL_PRINTER_KEY = "hms.print.labelPrinter";
 
@@ -61,6 +52,6 @@ export function setLabelPrinter(name: string | null): void {
     if (name) globalThis.localStorage?.setItem(LABEL_PRINTER_KEY, name);
     else globalThis.localStorage?.removeItem(LABEL_PRINTER_KEY);
   } catch {
-    /* private window or quota — the choice just will not persist */
+  /* private window or quota — the choice just will not persist */
   }
 }

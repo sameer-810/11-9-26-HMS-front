@@ -27,11 +27,7 @@ export interface Appointment {
   patient: PatientBanner | { id: string };
   doctor: DoctorSummary | { id: string };
   department: DepartmentSummary | null;
-  /**
-   * The wall-clock pair is what a screen shows. `scheduledAt` is the derived
-   * instant and exists for sorting — rendering it directly would display the
-   * server's idea of the time rather than the hospital's.
-   */
+  /** Display scheduledDate/scheduledTime (hospital wall clock); `scheduledAt` is for sorting only. */
   scheduledDate: string;
   scheduledTime: string;
   scheduledAt: string;

@@ -15,14 +15,7 @@ interface Props {
   style?: StyleProp<ViewStyle>;
 }
 
-/**
- * A failure a clinician can act on.
- *
- * The server's own message is shown rather than a generic apology, because
- * "your session expired", "this hospital is awaiting approval" and "the network
- * is down" call for three different responses from the person reading it, and
- * collapsing them into "Something went wrong" guarantees a support call.
- */
+/** Error panel showing the server's own message, since different failures need different responses. */
 export function ErrorState({ error, title = "Couldn't load this", onRetry, retrying, style }: Props) {
   return (
     <View style={[styles.wrap, style]} accessibilityRole="alert">

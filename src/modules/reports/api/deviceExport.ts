@@ -8,12 +8,8 @@ import { EXPORT_TYPES, type ExportFormat } from "@modules/reports/api/reportsApi
 import type { ReportFilters } from "@modules/reports/types";
 
 /**
- * US-41 on a phone or tablet: download the export into the app's cache and
- * hand it to the share sheet — save to Files, send to email, open in Sheets.
- *
- * The download goes around the API client, so the token is checked and
- * refreshed here first; a stale token would come back as a 401 saved to disk
- * under a .pdf name.
+ * US-41 on native: download the export to cache and open the share sheet.
+ * Bypasses the API client, so the token is refreshed here or a 401 body is saved as the file.
  */
 export async function shareReportOnDevice(key: string, filters: ReportFilters, format: ExportFormat) {
   let token = useAuthStore.getState().token;
@@ -39,7 +35,7 @@ export async function shareReportOnDevice(key: string, filters: ReportFilters, f
     try {
       message = JSON.parse(await FileSystem.readAsStringAsync(result.uri))?.error?.message ?? message;
     } catch {
-      /* not a JSON refusal */
+    /* not a JSON refusal */
     }
     await FileSystem.deleteAsync(result.uri, { idempotent: true }).catch(() => {});
     throw new Error(message);

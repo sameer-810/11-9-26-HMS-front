@@ -4,22 +4,14 @@ import type { ExpiryStatus } from "@modules/inventory/types";
 import type { StockStatus } from "@modules/pharmacy/types";
 import { formatExpiry } from "@modules/inventory/utils/expiry";
 
-/**
- * PH-02's three states, drawn with the signal ramp so each has its own shape
- * as well as colour.
- */
+/** the three stock states on the signal ramp, so each carries a shape as well as a colour. */
 export function StockStatusBadge({ status, label }: { status: StockStatus; label?: string }) {
   const level = status === "out_of_stock" ? "urgent" : status === "low_stock" ? "caution" : "normal";
   const text = label ?? (status === "out_of_stock" ? "Out of stock" : status === "low_stock" ? "Low stock" : "In stock");
   return <SignalBadge level={level} label={text} size="sm" />;
 }
 
-/**
- * Expiry, stated rather than coloured.
- *
- * "Expired" is drawn at the critical tier on purpose: an expired batch in a
- * dispensing list is the one row that must not be misread.
- */
+/** expiry as text. "expired" sits at the critical tier: it must not be misread in a dispensing list. */
 export function ExpiryBadge({ status, date, days }: { status: ExpiryStatus; date: string; days: number }) {
   if (status === "expired") return <SignalBadge level="critical" label={`Expired ${formatExpiry(date)}`} size="sm" />;
   if (status === "short_dated") {
@@ -31,7 +23,6 @@ export function ExpiryBadge({ status, date, days }: { status: ExpiryStatus; date
       />
     );
   }
-  // With its shape. A green date alone says "fine" in colour only, which is
-  // exactly the reading the signal ramp exists to prevent.
+  // a badge, not a bare date: a green date would carry its meaning in colour alone.
   return <SignalBadge level="normal" label={formatExpiry(date)} size="sm" />;
 }

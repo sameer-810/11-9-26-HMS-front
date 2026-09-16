@@ -19,24 +19,8 @@ import { ToggleRow } from "@modules/admin/components/ToggleRow";
 import type { AdminUser } from "@modules/admin/types";
 
 /**
- * Per-person permissions (Flow 4 step 4).
- *
- * ---------------------------------------------------------------------------
- * What the server will and will not accept
- * ---------------------------------------------------------------------------
- * A save sends the WHOLE ticked set, and the escalation guard refuses it if any
- * entry is administrator-only, or is something the signed-in administrator does
- * not hold. Administrators hold no clinical permissions, so a doctor's account
- * — which starts with record.view — cannot have its individual permissions
- * saved by an administrator at all while those stay ticked. Removing them is
- * accepted; keeping or adding them is not.
- *
- * The editor says so before the button is pressed, rather than letting the
- * first explanation be a refusal. It still lets the request go: the server is
- * the authority, and its message is shown as it words it.
- *
- * The API does not say which permissions are the role's defaults, so the editor
- * does not guess. Changing the role is the way back to a clean default set.
+ * Per-person permissions (Flow 4 step 4). Saves send the whole set, which the server refuses
+ * if it holds admin-only or ungranted permissions; the editor warns first but still sends.
  */
 export function PermissionEditor({ user }: { user: AdminUser }) {
   const catalogue = usePermissionCatalogue();
@@ -85,8 +69,7 @@ export function PermissionEditor({ user }: { user: AdminUser }) {
     if (on) next.add(permission);
     else next.delete(permission);
     const known = new Set(all);
-    // Catalogue order, so the saved array reads the same way the editor does.
-    // Anything the catalogue does not list is carried through untouched.
+    // Catalogue order; permissions the catalogue does not list are kept untouched.
     setEdits([...draft.filter((p) => !known.has(p)), ...all.filter((p) => next.has(p))]);
   };
 

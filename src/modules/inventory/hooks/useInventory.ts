@@ -2,12 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { inventoryApi, type IssueBody, type ReceiveBody } from "@modules/inventory/api/inventoryApi";
 import type { ItemCategory, MovementType, StockLocation } from "@modules/inventory/types";
 
-/**
- * Every stock movement can change: item stock, batch lists, the low-stock
- * report, the ledger, the pharmacy's availability on open prescriptions, and
- * the dashboard. Invalidated together so no screen shows a count the ledger no
- * longer agrees with.
- */
+/** a movement can change stock, batches, low-stock, the ledger, pharmacy availability and the
+ *  dashboard, so all are invalidated together. */
 function invalidateStock(qc: ReturnType<typeof useQueryClient>) {
   for (const key of ["inventory-items", "inventory-item", "low-stock", "stock-movements", "pharmacy-queue", "dispense-context", "dashboard"]) {
     qc.invalidateQueries({ queryKey: [key] });
@@ -62,8 +58,7 @@ export const useIssueStock = () => {
   return useMutation({
     mutationFn: (body: IssueBody) => inventoryApi.issue(body),
     onSuccess: () => invalidateStock(qc),
-    // A refusal usually means someone else took stock from the batch. Refetch
-    // so the batch list shows what is actually left.
+    // a refusal usually means someone else took the stock; refetch so batches show what is left.
     onError: () => invalidateStock(qc),
   });
 };

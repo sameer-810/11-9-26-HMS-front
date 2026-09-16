@@ -1,19 +1,7 @@
 /**
- * Phase 1 gate, end to end.
- *
- * Boots the REAL API against an in-memory replica set, serves the REAL web
- * export, and drives Flow 4 in a real browser:
- *
- *   administrator signs in
- *     → creates a user with a role
- *     → the employee signs in with the temporary credential
- *     → is forced to set their own password
- *     → lands on a dashboard built from their role
- *
- * Nothing is mocked. The point is to catch what unit and integration tests
- * cannot: a bundle that compiles, an API that passes its own tests, and a UI
- * that nonetheless cannot complete the journey because the two disagree.
- *
+ * phase 1 gate — flow 4 in a browser: admin creates a user, who signs in with the temporary
+ * credential, is forced to set a password and lands on a role-built dashboard.
+ * boots the real api on an in-memory replica set and serves the real web export.
  *   node tools/verifyFlow4.mjs
  */
 import http from "node:http";
@@ -41,7 +29,7 @@ const TYPES = {
   ".svg": "image/svg+xml",
 };
 
-/** Windows ESM refuses a bare absolute path — it needs a file:// URL. */
+/** windows esm refuses a bare absolute path; it needs a file:// url. */
 const imp = (...segments) => import(pathToFileURL(path.join(...segments)).href);
 
 const failures = [];
@@ -59,9 +47,7 @@ if (!fs.existsSync(DIST)) {
 }
 fs.mkdirSync(SHOTS, { recursive: true });
 
-// ---------------------------------------------------------------------------
-// 1. Boot the real API on an in-memory replica set
-// ---------------------------------------------------------------------------
+// ---- 1. API ----
 console.log("\nStarting the API…");
 
 const { MongoMemoryReplSet } = await imp(BACK, "node_modules", "mongodb-memory-server", "index.js");
@@ -100,7 +86,7 @@ async function waitForApi(timeoutMs = 40_000) {
       const res = await fetch(`${API}/health`);
       if (res.ok) return;
     } catch {
-      /* not up yet */
+    /* not up yet */
     }
     if (Date.now() > deadline) {
       throw new Error(`API did not start in ${timeoutMs}ms.\n${apiLog}`);
@@ -111,12 +97,8 @@ async function waitForApi(timeoutMs = 40_000) {
 await waitForApi();
 console.log(`API ready on ${API}`);
 
-// Seed one approved hospital with one administrator, directly — there is no
-// public signup route, by design.
-//
-// The backend's env module reads process.env once at import time and freezes
-// the result, so these have to be set in THIS process before its models are
-// imported. The API child process got its own copy via spawn().
+// seeded directly: there is no public signup route.
+// the backend freezes process.env at import, so set these before importing its models.
 process.env.MONGODB_URI = mongoUri;
 process.env.JWT_ACCESS_SECRET ??= "verify-access-secret-not-real";
 process.env.JWT_REFRESH_SECRET ??= "verify-refresh-secret-not-real";
@@ -151,9 +133,7 @@ await UserModel.create({
 });
 console.log("Seeded: City General Hospital + 1 administrator");
 
-// ---------------------------------------------------------------------------
-// 2. Serve the web export
-// ---------------------------------------------------------------------------
+// ---- 2. Serve the web export ----
 const web = http.createServer((req, res) => {
   const url = decodeURIComponent((req.url || "/").split("?")[0]);
   let file = path.join(DIST, url);
@@ -169,9 +149,7 @@ await new Promise((r) => web.listen(0, "127.0.0.1", r));
 const WEB = `http://127.0.0.1:${web.address().port}`;
 console.log(`Web served on ${WEB}\n`);
 
-// ---------------------------------------------------------------------------
-// 3. Drive it
-// ---------------------------------------------------------------------------
+// ---- 3. Drive it ----
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 const page = await ctx.newPage();
@@ -182,22 +160,18 @@ page.on("console", (m) => {
 });
 page.on("pageerror", (e) => consoleErrors.push(String(e)));
 
-// Record every non-2xx so a console "Failed to load resource" can be traced
-// back to the exact request rather than guessed at.
 const httpFailures = [];
 page.on("response", (r) => {
   if (r.status() >= 400) httpFailures.push(`${r.status()} ${r.request().method()} ${new URL(r.url()).pathname}`);
 });
 
-// The bundle was built with the default API URL, so point it at this run's API.
+// the bundle was built with the default api url; point it at this run's api.
 await page.addInitScript((apiUrl) => {
   window.__HMS_API__ = apiUrl;
 }, `${API}/api/v1`);
 
-// Route the app's API calls to this run's server regardless of what was baked
-// into the bundle at export time.
-// The live-update socket is not under test here. Blocked, so the gate never
-// reaches whatever else happens to listen on the dev port baked into the build.
+// the live-update socket is not under test; blocked so the gate never reaches
+// the dev port baked into the build.
 await page.route("**/socket.io/**", (route) => route.abort());
 await page.route("**/api/v1/**", async (route) => {
   const url = new URL(route.request().url());
@@ -225,8 +199,6 @@ try {
 
   await page.screenshot({ path: path.join(SHOTS, "flow4-1-admin-dashboard.png") });
 
-  // An administrator's dashboard carries governance figures and no clinical
-  // ones — the whole access model in one screen.
   check(text.includes("Active staff"), "admin sees the staff figure");
   check(text.includes("Departments"), "admin sees the department figure");
 
@@ -239,10 +211,7 @@ try {
   );
 
   // -- Step 3: create a user through the API the UI talks to -----------------
-  // Driving the creation form itself belongs to the user-management screen,
-  // which lands with the rest of phase 1's UI. What this gate has to prove is
-  // the credential handover and the forced change, so the account is created
-  // through the same endpoint the form will call.
+  // created via the endpoint the form calls; this gate proves the handover and forced change.
   const adminLogin = await fetch(`${API}/api/v1/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -278,7 +247,7 @@ try {
     try {
       localStorage.removeItem("hms-auth-storage");
     } catch {
-      /* nothing to clear */
+    /* nothing to clear */
     }
   });
   await page.goto(WEB, { waitUntil: "networkidle" });
@@ -336,21 +305,18 @@ try {
   (HTTP non-2xx seen: ${httpFailures.join(", ") || "none"})
 `);
 
-  // A browser logs every failed HTTP response to the console, so an expected
-  // 401 during sign-in shows up here as "Failed to load resource". Those are
-  // network noise, not defects. Genuine JavaScript errors are what matter.
+  // expected 401s surface as "Failed to load resource"; only real js errors count.
   const jsErrors = consoleErrors.filter((e) => !/Failed to load resource/i.test(e));
   check(jsErrors.length === 0, "no JavaScript errors anywhere in the journey", jsErrors.slice(0, 2).join(" | "));
 
-  // And no request should fail for a reason the flow does not expect.
   const unexpected = httpFailures.filter((f) => !/^40[13] /.test(f));
   check(unexpected.length === 0, "no unexpected HTTP failures", unexpected.join(", "));
 
   // -- Step 8: the phone layout of the same journey --------------------------
   const phone = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const pPage = await phone.newPage();
-  // The live-update socket is not under test here. Blocked, so the gate never
-  // reaches whatever else happens to listen on the dev port baked into the build.
+  // the live-update socket is not under test; blocked so the gate never reaches
+  // the dev port baked into the build.
   await pPage.route("**/socket.io/**", (route) => route.abort());
   await pPage.route("**/api/v1/**", async (route) => {
     const url = new URL(route.request().url());

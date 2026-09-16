@@ -72,12 +72,8 @@ function parseCharge(v: string): { value?: number; error?: string } {
 const natural = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true });
 
 /**
- * Ward → room → bed.
- *
- * Built in that order because the API derives a bed's ward from its room, so a
- * bed cannot exist before the room it sits in. Bulk creation is the default
- * route for beds: a new ward arrives with twenty identical ones, and re-running
- * a range after adding two more skips the ones that already exist.
+ * Ward -> room -> bed setup, in that order (a bed's ward comes from its room).
+ * Beds are bulk-created by range; existing numbers are skipped.
  */
 export function WardsPanel() {
   const { data: wards = [], isLoading, isError, error, refetch } = useAdminWards();

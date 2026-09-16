@@ -11,24 +11,10 @@ import {
 import { sendOrQueue } from "@shared/offline/outbox";
 import type { RequestClosureOutcome } from "@modules/inpatient/types";
 
-/**
- * Ward data goes stale in a way that matters.
- *
- * A ward board showing a NEWS2 score from twenty minutes ago is a board showing
- * a patient who may already have deteriorated. So the boards refetch on an
- * interval and on focus, and anything that changes a patient's state invalidates
- * every list that patient appears on.
- */
+/** Ward boards refetch on an interval and on focus: stale NEWS2 scores are unsafe. */
 const WARD_REFRESH_MS = 60_000;
 
-/**
- * `enabled` matters here, not just as an optimisation.
- *
- * The ward board renders three modes from one component, and a hook that fires
- * regardless of mode sends a doctor's browser at `/admissions/my-patients` —
- * an endpoint they hold no permission for. The 403 is correct, but it is also
- * noise in the audit log and an error the user never asked to cause.
- */
+/** `enabled` stops the board querying endpoints the current mode's user cannot access (avoids 403s). */
 export const useAdmissions = (query: AdmissionQuery = {}, enabled = true) =>
   useQuery({
     queryKey: ["admissions", query],
@@ -84,8 +70,8 @@ export const useAdmit = () => {
   });
 };
 
-// ---- US-17: recommendations to admit ---------------------------------------
 
+// ---- US-17: recommendations to admit ---------------------------------------
 export const useAdmissionRequests = (enabled = true) =>
   useQuery({
     queryKey: ["admission-requests"],
@@ -145,8 +131,8 @@ export const useSetNews2Scale = (admissionId: string) => {
   });
 };
 
-// ---- Observations -----------------------------------------------------------
 
+// ---- Observations -----------------------------------------------------------
 export const useObservations = (admissionId?: string) =>
   useQuery({
     queryKey: ["observations", admissionId],
@@ -155,11 +141,8 @@ export const useObservations = (admissionId?: string) =>
   });
 
 /**
- * NU-02, and one of the only two writes that may be kept for later.
- *
- * Resolves `{ status: "sent", data }` or `{ status: "queued", op }`. The form
- * must tell those apart on screen: a queued set has not reached the escalation
- * board, and the nurse has to know that before walking away.
+ * NU-02, offline-queueable. Resolves "sent" or "queued"; the form must show which,
+ * because a queued set has not reached the escalation board.
  */
 export const useRecordObservation = () => {
   const qc = useQueryClient();
@@ -174,13 +157,7 @@ export const useRecordObservation = () => {
   });
 };
 
-/**
- * The escalation board.
- *
- * Refetched more often than anything else here, and on focus. An escalation
- * list that is a minute out of date is a list that can show a patient as still
- * waiting after someone has gone to them, or — worse — not yet show one who is.
- */
+/** Escalation board; refetched most often, as a stale list can hide a deteriorating patient. */
 export const useEscalations = (wardId?: string) =>
   useQuery({
     queryKey: ["escalations", wardId ?? "all"],
@@ -202,8 +179,8 @@ export const useAcknowledgeEscalation = () => {
   });
 };
 
-// ---- Notes ------------------------------------------------------------------
 
+// ---- Notes ------------------------------------------------------------------
 export const useNursingNotes = (admissionId?: string) =>
   useQuery({
     queryKey: ["nursing-notes", admissionId],
@@ -225,18 +202,14 @@ export const useAddNursingNote = (admissionId: string, label = "Nursing note") =
   });
 };
 
-// ---- NU-04: the drug round --------------------------------------------------
 
+// ---- NU-04: the drug round --------------------------------------------------
 export const useDrugRound = (admissionId?: string, date?: string) =>
   useQuery({
     queryKey: ["drug-round", admissionId, date ?? "today"],
     queryFn: () => inpatientApi.drugRound(admissionId!, date),
     enabled: Boolean(admissionId),
-    /**
-     * Zero stale time. The whole point of this screen is that it tells the
-     * truth about what has already been given — a cached round is how the
-     * second nurse at shift change sees an unsigned dose that is not.
-     */
+    // Never serve a cached round: it could show a given dose as still unsigned.
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
@@ -249,19 +222,15 @@ export const useAdminister = () => {
       qc.invalidateQueries({ queryKey: ["drug-round", variables.admissionId] });
       qc.invalidateQueries({ queryKey: ["bedside", variables.admissionId] });
     },
-    /**
-     * A conflict means someone else signed this dose while this screen was
-     * open. Refetch before the message is shown so the round the nurse is
-     * looking at matches what they are being told.
-     */
+    // A conflict means someone else signed the dose; refetch so the round matches the error.
     onError: (_err, variables) => {
       qc.invalidateQueries({ queryKey: ["drug-round", variables.admissionId] });
     },
   });
 };
 
-// ---- NU-05: SBAR ------------------------------------------------------------
 
+// ---- NU-05: SBAR ------------------------------------------------------------
 export const useHandovers = (admissionId?: string) =>
   useQuery({
     queryKey: ["handovers", admissionId],
@@ -291,8 +260,8 @@ export const useReceiveHandover = () => {
   });
 };
 
-// ---- IP-04 ------------------------------------------------------------------
 
+// ---- IP-04 ------------------------------------------------------------------
 export const useBedside = (admissionId?: string) =>
   useQuery({
     queryKey: ["bedside", admissionId],

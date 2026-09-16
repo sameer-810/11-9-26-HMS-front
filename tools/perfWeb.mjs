@@ -1,16 +1,8 @@
 /**
- * Web bundle size, and how long a ward workstation on a poor connection waits
- * for the sign-in screen.
+ * web bundle size, and cold-load time to the sign-in screen served gzipped under
+ * lighthouse mobile throttling (150 ms rtt, 1.6 Mbps down, 750 kbps up, 4x cpu).
  *
  *   npm run build:web && node tools/perfWeb.mjs
- *
- * Serves the real web export the way a static host does — gzip-compressed —
- * and loads it in Chromium throttled to Lighthouse's mobile profile: 150 ms
- * round trip, 1.6 Mbps down, 750 kbps up, CPU slowed four times. A hospital
- * tablet on congested ward wifi is closer to that than to a developer laptop.
- *
- * Every run is a fresh browser context with the cache disabled, so each is a
- * first visit — the worst case, and the one a newly issued device sees.
  */
 import http from "node:http";
 import fs from "node:fs";

@@ -1,21 +1,6 @@
 /**
- * HMS service worker — keeps the app openable with no connection.
- *
- * Deliberately small, and deliberately NOT a data cache:
- *
- *  - Page loads are network-first. Online, every load gets the current
- *    index.html (and through it the current bundle), so a deploy reaches the
- *    ward on the next refresh. Offline, the last index.html served is used.
- *  - Static files on this origin are cache-first. Expo's bundles are
- *    content-hashed, so a cached one can never be stale — a new build has a new
- *    file name.
- *  - The API is never touched. Patient data offline comes from the record
- *    mirror (src/shared/offline/mirror.ts), which knows who is signed in, what
- *    may be kept and for how long. A worker caching API responses would keep
- *    records past sign-out and past break-the-glass expiry, with none of that.
- *
- * Bump VERSION when this file's behaviour changes; old caches are deleted on
- * activation.
+ * App-shell service worker: network-first pages, cache-first hashed static files.
+ * Never caches the API (offline data is mirror.ts's job). Bump VERSION on behaviour changes.
  */
 const VERSION = "hms-shell-v1";
 const SHELL = ["/", "/index.html"];
@@ -38,11 +23,7 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-/**
- * The page sends the static files it loaded before this worker was active —
- * its bundle, fonts and icons. Without them an offline reload finds the page
- * but not the program, and the app never draws.
- */
+/** Caches static files the page loaded before this worker activated, so offline reloads work. */
 self.addEventListener("message", (event) => {
   const data = event.data || {};
   if (data.type !== "cache-urls" || !Array.isArray(data.urls)) return;
@@ -71,11 +52,7 @@ self.addEventListener("message", (event) => {
   );
 });
 
-/**
- * A response the server marked as not for keeping is not kept, even from this
- * origin. Today nothing same-origin carries patient data; this holds if that
- * ever changes (a same-origin API proxy, a rewrite that serves JSON).
- */
+/** Honours no-store/private even same-origin, in case patient data is ever served here. */
 function storable(response) {
   const cacheControl = (response.headers.get("Cache-Control") || "").toLowerCase();
   return response.ok && !/\b(no-store|private)\b/.test(cacheControl);

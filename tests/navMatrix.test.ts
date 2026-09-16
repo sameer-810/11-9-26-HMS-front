@@ -5,25 +5,16 @@ import path from "node:path";
 import Module from "node:module";
 import { fileURLToPath } from "node:url";
 
-/**
- * Phase 10 gate, app side: each role's drawer is exactly the screens section 5
- * of the specification gives that role, plus the HMS additions listed below
- * with their reason — nothing else.
- *
- * Driven through the pure `visibleItemsFor(permissions, role)` that also decides
- * which routes the navigator registers, with each role's DEFAULT permissions
- * read off the API's `roles.js` (the same cross-repo read the API's
- * permissionParity.test.js does in the other direction).
- *
- * navItems.ts imports icon components and the auth store, both of which pull in
- * React Native, which Node cannot load. They are stubbed at the CommonJS loader:
- * this test is about which items are visible, not how they draw.
- */
 
+/**
+ * each role's drawer is exactly its spec section 5 screens plus the listed HMS additions,
+ * using default permissions read from the API's roles.js.
+ */
 const here = path.dirname(fileURLToPath(import.meta.url));
 const ROLES_JS = path.resolve(here, "..", "..", "11-9-26-HMS-back", "src", "config", "roles.js");
 const apiAvailable = fs.existsSync(ROLES_JS);
 
+// navItems.ts pulls in react native via icons and the auth store; stubbed so node can load it.
 type Loader = { _load: (request: string, ...rest: unknown[]) => unknown };
 const loader = Module as unknown as Loader;
 const originalLoad = loader._load;
@@ -36,10 +27,10 @@ loader._load = function load(request: string, ...rest: unknown[]) {
   return originalLoad.call(this, request, ...rest);
 };
 
+
 // ---------------------------------------------------------------------------
 // Role defaults, from the API's roles.js
 // ---------------------------------------------------------------------------
-
 function block(source: string, name: string): string {
   const start = source.indexOf(`export const ${name} = Object.freeze({`);
   assert.notEqual(start, -1, `roles.js has no ${name}`);
@@ -81,10 +72,10 @@ const INV = "inventory";
 const ADM = "admin";
 const ALL = [REC, DOC, NUR, LAB, PHA, BIL, INV, ADM];
 
+
 // ---------------------------------------------------------------------------
 // Section 5 — every screen, with the navigator item it lives under
 // ---------------------------------------------------------------------------
-
 interface Screen {
   screen: string;
   route: string;
@@ -148,7 +139,7 @@ const SECTION_5: Screen[] = [
   { screen: "Low Stock Alerts", route: "/inventory/low-stock", access: [INV, ADM], item: "Inventory" },
   { screen: "User Management", route: "/admin/users", access: [ADM], item: "UserManagement" },
   { screen: "Create / Edit User", route: "/admin/users/new, /admin/users/:id", access: [ADM], within: "UserManagement" },
-  // Its own drawer item since Phase 11 (US-04 role-level permissions).
+  // own drawer item for US-04 role-level permissions.
   { screen: "Roles & Permissions", route: "/admin/roles", access: [ADM], item: "RolePermissions" },
   { screen: "Hospital Configuration", route: "/admin/config", access: [ADM], item: "HospitalConfig" },
   { screen: "Reports & Analytics", route: "/reports", access: [ADM, BIL, INV], item: "Reports" },
@@ -174,8 +165,8 @@ const HMS_ADDITIONS: { item: string; roles: string[]; reason: string }[] = [
   },
 ];
 
-// ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
 test("every navigator item is accounted for by section 5 or a listed HMS addition", { skip: !apiAvailable && "API not checked out beside the app" }, async () => {
   const { NAV_ITEMS } = await import("../src/navigation/navItems");
   const known = new Set([...SECTION_5.flatMap((s) => (s.item ? [s.item] : [])), ...HMS_ADDITIONS.map((a) => a.item)]);
@@ -202,10 +193,8 @@ for (const role of ALL) {
     const registered = visibleItemsFor(defaults, role).map((i) => i.name).sort();
     const drawer = registered.filter((n) => !hidden.has(n));
 
-    // The drawer.
     assert.deepEqual(drawer, [...expected].filter((n) => !hidden.has(n)).sort());
-    // And the routes registered but not drawn (the record, the consultation):
-    // registration is the app's route guard, so it must match section 5 too.
+    // hidden routes are still registered, and registration is the route guard, so they must match too.
     assert.deepEqual(
       registered.filter((n) => hidden.has(n)),
       [...expected].filter((n) => hidden.has(n)).sort(),

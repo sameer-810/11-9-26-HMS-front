@@ -24,7 +24,7 @@ import type {
   WardBody,
 } from "@modules/admin/types";
 
-/** The ward routes cap `limit` at 200 (validationPrimitives.limitSchema). */
+/** the ward routes cap `limit` at 200 (validationPrimitives.limitSchema). */
 const MAX_LIMIT = 200;
 
 export const adminApi = {
@@ -33,12 +33,12 @@ export const adminApi = {
     list: async (params: UserListParams = {}) =>
       (await apiClient.get<Paged<AdminUser>>("/users", { params })).data,
     get: async (id: string) => (await apiClient.get<{ data: AdminUser }>(`/users/${id}`)).data.data,
-    /** No password is sent — the server generates the temporary one. */
+    /** no password is sent; the server generates the temporary one. */
     create: async (body: CreateUserBody) =>
       (await apiClient.post<{ data: IssuedCredential }>("/users", body)).data.data,
     update: async (id: string, body: UpdateUserBody) =>
       (await apiClient.patch<{ data: AdminUser }>(`/users/${id}`, body)).data.data,
-    /** DELETE deactivates. There is no hard delete anywhere in the API. */
+    /** DELETE deactivates; there is no hard delete anywhere in the API. */
     deactivate: async (id: string) =>
       (await apiClient.delete<{ data: AdminUser }>(`/users/${id}`)).data.data,
     activate: async (id: string) =>
@@ -74,7 +74,7 @@ export const adminApi = {
       (await apiClient.post<{ data: Department }>("/departments", body)).data.data,
     update: async (id: string, body: Partial<DepartmentBody>) =>
       (await apiClient.patch<{ data: Department }>(`/departments/${id}`, body)).data.data,
-    /** Refused with DEPARTMENT_IN_USE while active staff or wards point at it. */
+    /** refused with DEPARTMENT_IN_USE while active staff or wards point at it. */
     deactivate: async (id: string) =>
       (await apiClient.delete<{ data: { message: string } }>(`/departments/${id}`)).data.data,
     activate: async (id: string) =>
@@ -100,13 +100,7 @@ export const adminApi = {
   },
 
   beds: {
-    /**
-     * Every bed matching the filter, across pages.
-     *
-     * The list is capped at 200 a page, and a bed board that silently stops at
-     * bed 200 is worse than a slow one — the missing beds are exactly the ones
-     * nobody thinks to look for.
-     */
+    /** every bed matching the filter, across pages; one page stops silently at 200. */
     listAll: async (params: { wardId?: string; roomId?: string } = {}) => {
       const out: Bed[] = [];
       for (let page = 1; ; page += 1) {
@@ -121,7 +115,7 @@ export const adminApi = {
     board: async () => (await apiClient.get<{ data: BedBoard }>("/beds/board")).data.data,
     bulk: async (body: BulkBedsBody) =>
       (await apiClient.post<{ data: BulkBedsResult }>("/beds/bulk", body)).data.data,
-    /** `occupied` is not accepted — admission and discharge own that transition. */
+    /** `occupied` is not accepted; admission and discharge own that transition. */
     setStatus: async (
       id: string,
       body: { status: Exclude<BedStatus, "occupied">; maintenanceNote?: string },

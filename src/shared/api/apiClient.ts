@@ -6,7 +6,7 @@ import { useNetworkStore, isNetworkError } from "../offline/network";
 
 interface RetryableConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
-  /** Who was signed in when this request was first sent. */
+  /** who was signed in when this request was first sent. */
   _userId?: string | null;
 }
 
@@ -17,11 +17,8 @@ export const apiClient = axios.create({
 });
 
 /**
- * A request belongs to the person who made it. On a shared ward tablet the
- * next nurse can sign in while the last one's request is still waiting on a bad
- * connection; its 401-and-retry must not go out again carrying the new
- * session's token, which would file the first nurse's vitals under the second
- * nurse's name.
+ * requests are pinned to whoever made them: on a shared tablet a retry must not go out
+ * under the next user's token and file the first user's entries under their name.
  */
 const signedInAs = () => useAuthStore.getState().user?.id ?? null;
 
@@ -31,8 +28,7 @@ apiClient.interceptors.request.use(async (config) => {
   else if (pinned._userId !== signedInAs()) {
     throw new CanceledError("The signed-in user changed before this request was sent", undefined, config);
   }
-  // Read from the store directly rather than through React, so this works
-  // outside a component tree (background sync, the offline outbox).
+  // read from the store directly so this also works outside a component tree.
   const token = useAuthStore.getState().token;
   if (token) config.headers.Authorization = `Bearer ${token}`;
   config.headers["x-device-id"] = await getDeviceId();
@@ -45,22 +41,21 @@ apiClient.interceptors.response.use(
     return response;
   },
   async (error) => {
-    // Any answer, even a refusal, proves the server is reachable. No answer at
-    // all is the fastest signal the device has that it is not.
+    // any answer, even a refusal, proves the server is reachable; no answer means offline.
     if (error?.response) useNetworkStore.getState().setOnline(true);
     else if (isNetworkError(error)) useNetworkStore.getState().setOnline(false);
 
     const originalRequest = error.config as RetryableConfig | undefined;
     if (!originalRequest) return Promise.reject(error);
 
-    // Never try to refresh the refresh call, and never loop.
+    // never try to refresh the refresh call, and never loop.
     if (originalRequest.url?.includes("/auth/refresh") || originalRequest._retry) {
       return Promise.reject(error);
     }
 
     const { token, refreshToken } = useAuthStore.getState();
     if (!token && !refreshToken) return Promise.reject(error);
-    // Someone else's session now: nothing of theirs to refresh for this request.
+    // a different user is signed in now, so there is nothing to refresh for this request.
     if (originalRequest._userId && originalRequest._userId !== signedInAs()) return Promise.reject(error);
 
     if (error.response?.status === 401) {
@@ -76,18 +71,18 @@ apiClient.interceptors.response.use(
   },
 );
 
-/** The server's machine-readable code, when it sent one. */
+/** the server's machine-readable error code, when it sent one. */
 export function apiErrorCode(err: unknown): string | undefined {
   return (err as { response?: { data?: { error?: { code?: string } } } })?.response?.data?.error
     ?.code;
 }
 
-/** The structured detail the server attached to a refusal, when it sent any. */
+/** the structured detail the server attached to a refusal, when it sent any. */
 export function apiErrorDetails<T>(err: unknown): T | undefined {
   return (err as { response?: { data?: { error?: { details?: T } } } })?.response?.data?.error?.details;
 }
 
-/** Turns a Zod path into something a receptionist can act on. */
+/** turns a Zod issue path into a readable field label. */
 function fieldLabel(path: (string | number)[]) {
   const parts = path.filter((p) => p !== "body" && p !== "query" && p !== "params");
   const idx = parts.findIndex((p) => typeof p === "number");
@@ -100,13 +95,7 @@ function fieldLabel(path: (string | number)[]) {
   return idx >= 0 ? `Item ${Number(parts[idx]) + 1} — ${pretty}` : pretty;
 }
 
-/**
- * One readable sentence out of any failure shape.
- *
- * Validation issues are unpacked into the specific fields rather than showing
- * "Validation error", because the person reading it is standing at a desk with
- * a patient in front of them and needs to know which box is wrong.
- */
+/** one readable sentence out of any failure shape; validation issues name the fields at fault. */
 export function apiErrorMessage(err: unknown, fallback = "Something went wrong") {
   const e = err as {
     code?: string;
@@ -121,7 +110,7 @@ export function apiErrorMessage(err: unknown, fallback = "Something went wrong")
     };
   };
 
-  // No response at all means the request never arrived.
+  // no response at all means the request never arrived.
   if (!e?.response) {
     if (e?.code === "ECONNABORTED") return "That took too long. Check the connection and try again.";
     if (err instanceof Error && /Network/i.test(err.message)) {

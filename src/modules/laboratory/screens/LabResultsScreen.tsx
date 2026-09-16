@@ -27,16 +27,8 @@ import type { LabOrder } from "@modules/laboratory/types";
 import type { PatientBanner } from "@modules/patient/types";
 
 /**
- * LB-05: the doctor's laboratory results.
- *
- * Bucketed rather than listed. An unacknowledged critical potassium and a
- * normal TSH from last week are not the same kind of row, and a newest-first
- * list puts them one above the other.
- *
- * The critical bucket shows EVERY unacknowledged critical result in the
- * hospital, not only this doctor's. Escalation widens the audience to the
- * department and then to every doctor; a doctor being told about a result must
- * be able to find it.
+ * the doctor's laboratory results, bucketed by what they need.
+ * the critical bucket shows every unacknowledged critical, since escalation reaches other doctors.
  */
 export default function LabResultsScreen() {
   const navigation = useNavigation<any>();
@@ -251,9 +243,7 @@ function Row({
       </Card>
     );
   }
-  // A row that opens AND carries its own button is two controls side by side.
-  // A button inside a button cannot be reached by a screen reader, and
-  // pressing it on the web also fires the row.
+  // two controls side by side: a nested button is unreachable by screen readers and fires the row on web.
   return (
     <Card compact>
       <HStack gap={10} align="center" wrap>

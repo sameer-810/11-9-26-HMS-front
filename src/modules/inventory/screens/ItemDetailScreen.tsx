@@ -26,11 +26,8 @@ import { ExpiryBadge } from "@modules/inventory/components/StockBadges";
 import { MOVEMENT_LABELS, type StockBatch } from "@modules/inventory/types";
 
 /**
- * One item: its batches in each location, and its ledger.
- *
- * There is no quantity field on this screen, and that is the design. The only
- * ways a count changes are the recorded movements — receive, issue, dispense,
- * and disposal of expired or damaged stock with a reason.
+ * one item: its batches in each location, and its ledger.
+ * no quantity field by design — a count changes only through a recorded movement.
  */
 export default function ItemDetailScreen() {
   const route = useRoute<any>();

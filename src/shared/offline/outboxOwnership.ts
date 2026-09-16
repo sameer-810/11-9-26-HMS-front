@@ -1,9 +1,6 @@
 /**
- * Whose queued write this is. Pure, so the rule can be tested without a device.
- *
- * A queued observation is a clinical statement made by one person in one
- * hospital. It is filed only with that person's own session — never under
- * whoever happens to be signed in on the shared tablet when the WiFi returns.
+ * Outbox ownership rules (pure, testable): a queued write is only sent under its author's session,
+ * never whoever is signed in on a shared device when it reconnects.
  */
 
 export interface OutboxOwner {
@@ -24,10 +21,7 @@ export function ownerOf(user: { id?: string | null; hospitalId?: string | null }
 
 export function belongsTo(op: OwnedOp, owner: OutboxOwner | null): boolean {
   if (!owner || !op.userId || op.userId !== owner.userId) return false;
-  // A user id already identifies one account in one hospital; the hospital is
-  // checked too so that holds even if accounts are ever shared across tenants.
-  // Ops from before it was recorded are matched on the user alone rather than
-  // stranded.
+  // Hospital is checked as a defensive extra; legacy ops without it match on user alone.
   return op.hospitalId === undefined || op.hospitalId === owner.hospitalId;
 }
 

@@ -10,14 +10,7 @@ export const usePharmacyQueue = (params: { urgency?: string; search?: string } =
     refetchOnWindowFocus: true,
   });
 
-/**
- * The dispensing screen's data.
- *
- * Zero stale time. The allergy list and the stock both change under this
- * screen — a colleague records an allergy, someone takes the last box — and a
- * cached context is exactly what the server's fingerprint check exists to
- * catch.
- */
+/** Dispensing screen data; staleTime 0 because allergies and stock can change underneath it. */
 export const useDispenseContext = (prescriptionId?: string) =>
   useQuery({
     queryKey: ["dispense-context", prescriptionId],
@@ -37,8 +30,7 @@ export const useDispense = (prescriptionId: string) => {
   return useMutation({
     mutationFn: (body: DispenseBody) => pharmacyApi.dispense(prescriptionId, body),
     onSuccess: refresh,
-    // A refusal for changed allergies or taken stock means the screen is out of
-    // date. Reload it so what the pharmacist sees next is the truth.
+    // Refusals (changed allergies, taken stock) mean stale data, so refetch on error too.
     onError: refresh,
   });
 };

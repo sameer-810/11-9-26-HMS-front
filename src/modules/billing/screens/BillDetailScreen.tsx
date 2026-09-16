@@ -42,13 +42,8 @@ import { BillStatusText } from "@modules/billing/components/BillStatusText";
 import { PAYMENT_METHOD_LABELS, type Bill, type Charge, type PaymentMethod } from "@modules/billing/types";
 
 /**
- * One bill — BL-02 to BL-04.
- *
- * While it is a draft, charges can be refreshed, removed with a reason, or
- * added from the tariff, and a discount can be requested. Once finalised, the
- * charges section locks and only payments move. Section 7: "Finalised bills
- * accept payment, not edits" — the screen offers no edit, and the server would
- * refuse one.
+ * Bill detail (BL-02 to BL-04): drafts allow charge edits and discount requests;
+ * finalised bills lock charges and accept payments only (section 7).
  */
 export default function BillDetailScreen() {
   const route = useRoute<any>();

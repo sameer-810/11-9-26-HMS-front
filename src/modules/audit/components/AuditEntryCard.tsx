@@ -7,14 +7,7 @@ import type { AuditEntry } from "@modules/audit/types";
 
 export const roleLabel = (role: string) => (ROLE_LABELS as Record<string, string>)[role] ?? role;
 
-/**
- * One audit entry.
- *
- * Emergency access is drawn to be found while scrolling, not read in passing:
- * a critical rule, a tinted card, a solid badge and the stated reason in full.
- * A refusal is flagged too — an administrator or billing clerk being turned
- * away from a record is exactly the line a reviewer is looking for.
- */
+/** One audit entry; break-glass and denied entries are visually prominent for reviewers. */
 export function AuditEntryCard({ entry }: { entry: AuditEntry }) {
   const accent = entry.breakGlass
     ? signal.critical.color
@@ -40,8 +33,7 @@ export function AuditEntryCard({ entry }: { entry: AuditEntry }) {
     >
       <VStack gap={6}>
         <HStack gap={8} align="center" wrap>
-          {/* Capitals match the server's own "EMERGENCY ACCESS" wording in the
-              description, so the badge and the text below read as one thing. */}
+          { /* Capitals match the server's "EMERGENCY ACCESS" description wording. */ }
           {entry.breakGlass ? <SignalBadge level="critical" size="sm" solid label="EMERGENCY ACCESS" /> : null}
           {entry.outcome === "denied" ? (
             <SignalBadge level="urgent" size="sm" label="Denied" />

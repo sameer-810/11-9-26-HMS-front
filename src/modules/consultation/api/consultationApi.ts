@@ -84,13 +84,7 @@ export const prescriptionApi = {
     return res.data.data;
   },
 
-  /**
-   * The interception. Writes nothing.
-   *
-   * Called as each line is added so the alert appears while the doctor is
-   * still choosing — which is the entire reason this check lives at
-   * prescribing time rather than only at dispensing.
-   */
+  /** Safety check as each line is added, so alerts appear while prescribing. Writes nothing. */
   check: async (patientId: string, lines: { id: string; medicineId: string }[]) => {
     const res = await apiClient.post<{ data: SafetyResult }>("/prescriptions/check", {
       patientId,
@@ -131,20 +125,13 @@ export const prescriptionApi = {
 };
 
 export const recordApi = {
-  /**
-   * MR-01. The scope in the response says which view came back, so the UI can
-   * tell a clinician they are seeing a partial record rather than leaving them
-   * to wonder whether a section is empty or withheld.
-   */
+  /** MR-01. The response scope says which view came back, so the UI can flag a partial record. */
   forPatient: async (patientId: string) => {
     const res = await apiClient.get<{ data: MedicalRecord }>(`/records/${patientId}`);
     return res.data.data;
   },
 
-  /**
-   * Emergency access to a restricted record. The reason is the whole point —
-   * it is what the reviewer reads afterwards — so the server refuses a short one.
-   */
+  /** Break-glass access to a restricted record; the server refuses a short reason. */
   breakGlass: async (patientId: string, body: { category: string; reason: string }) => {
     const res = await apiClient.post<{ data: BreakGlassGrant }>(`/access/patients/${patientId}/break-glass`, body);
     return res.data.data;

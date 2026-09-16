@@ -8,26 +8,11 @@ import { useRecordObservation } from "@modules/inpatient/hooks/useInpatient";
 import type { Consciousness, News2Result, Observation } from "@modules/inpatient/types";
 import { calculateNews2, type LocalNews2Result } from "@shared/clinical/news2";
 
-/**
- * NU-02: recording a set of observations.
- *
- * ---------------------------------------------------------------------------
- * What this form deliberately does NOT have
- * ---------------------------------------------------------------------------
- * There is no "escalate" checkbox. Whether a set of observations escalates is
- * decided by the server from the score, and a nurse at 3am on a ward of
- * twenty-eight patients should not also be carrying that judgement — it is
- * exactly the judgement that erodes with fatigue.
- *
- * There is also no Scale 2 toggle. Scale 2 belongs to the patient's respiratory
- * physiology and is a prescribing decision; applying it here by guess would
- * score a deteriorating patient as well.
- *
- * What the nurse CAN add is concern. `clinicalConcern` escalates on its own,
- * regardless of the score — every early-warning system that ignored a worried
- * nurse has had to add that back after an inquest.
- */
 
+/**
+ * NU-02 observation set. No escalate checkbox or Scale 2 toggle by design: the server
+ * decides escalation, and Scale 2 is prescribed. A stated concern escalates on its own.
+ */
 const ACVPU: { value: Consciousness; label: string; hint: string }[] = [
   { value: "alert", label: "Alert", hint: "Awake, oriented" },
   { value: "confusion", label: "Confusion", hint: "New confusion" },
@@ -46,13 +31,7 @@ interface Props {
 
 type Draft = Record<string, string>;
 
-/**
- * Blank is MISSING, never zero.
- *
- * `Number("")` is 0 in JavaScript. Sending that would record a pulse of zero
- * and score 3 for a parameter nobody measured — which is both a false alarm and
- * a corrupted record.
- */
+/** Blank is missing, never zero: `Number("")` is 0 and would score an unmeasured parameter. */
 function num(v: string | undefined): number | null {
   if (v === undefined || v.trim() === "") return null;
   const n = Number(v);
@@ -71,13 +50,7 @@ export function ObservationForm({ admissionId, patientName, useScale2, onRecorde
   const record = useRecordObservation();
   const set = (key: string) => (v: string) => setDraft((d) => ({ ...d, [key]: v }));
 
-  /**
-   * What is still missing, shown while they type.
-   *
-   * A nurse who finds out at the end that the set will not score has to go back
-   * to the patient. Telling them now is the difference between a complete
-   * observation and a partial one filed and forgotten.
-   */
+  /** Missing NEWS2 parameters, shown while typing so the nurse can complete the set. */
   const missing = useMemo(() => {
     const out: string[] = [];
     if (num(draft.respiratoryRate) === null) out.push("respiratory rate");
@@ -134,12 +107,7 @@ export function ObservationForm({ admissionId, patientName, useScale2, onRecorde
 
   return (
     <VStack gap={16}>
-      {/*
-        Charted with no connection. Three things must be said, in this order:
-        it is saved but not sent; what the score is; and — when it is worrying —
-        that the escalation board cannot see it, so escalating is on the nurse,
-        in person, now.
-      */}
+      { /* Queued offline: say it is unsent, show the local score, and if worrying, escalate in person. */ }
       {queued ? (
         <VStack gap={8} testID="observation-queued">
           <Banner
@@ -238,11 +206,7 @@ export function ObservationForm({ admissionId, patientName, useScale2, onRecorde
             />
           </View>
 
-          {/**
-           * Air or oxygen is a NEWS2 parameter in its own right, worth 2 points.
-           * A default of "air" would quietly score every patient on oxygen two
-           * points low, so it starts unanswered and has to be answered.
-           */}
+          { /* Air/oxygen starts unanswered: defaulting to air would under-score oxygen patients. */ }
           <VStack gap={6}>
             <Text variant="label">Air or oxygen</Text>
             <HStack gap={8}>

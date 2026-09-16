@@ -8,13 +8,7 @@ import PatientDetailScreen from "@modules/patient/screens/PatientDetailScreen";
 
 const Stack = createNativeStackNavigator();
 
-/**
- * The clinical stack.
- *
- * A doctor's journey is one continuous thing — schedule, consultation, record,
- * back to the schedule — so it lives in one stack rather than sending them
- * between sidebar sections mid-consultation.
- */
+/** Clinical stack: schedule, consultation and record in one stack so a doctor keeps their place. */
 export default function ClinicalNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>

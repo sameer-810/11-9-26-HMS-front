@@ -32,11 +32,7 @@ import type { ReportCell, ReportResult, ReportRow, ReportSummaryItem } from "@mo
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-/**
- * Presets are calendar strings built by string arithmetic on today's date.
- * Going through `toISOString()` would hand back the UTC date, which for the
- * first five and a half hours of every Indian morning is yesterday.
- */
+/** Calendar-string arithmetic, not `toISOString()`, which gives yesterday's UTC date early in IST. */
 const PRESETS: { key: string; label: string; range: (today: string) => { from: string; to: string } }[] = [
   { key: "today", label: "Today", range: (t) => ({ from: t, to: t }) },
   { key: "last-7-days", label: "Last 7 days", range: (t) => ({ from: addCalendarDays(t, -6), to: t }) },
@@ -119,8 +115,7 @@ function ReportTable({ table }: { table: ReportResult["table"] }) {
   });
 
   return (
-    // The testID sits on a wrapper so it exists for an empty table too, which
-    // DataTable renders as an EmptyState with nowhere to put one.
+    // testID on a wrapper so it also exists when DataTable renders its EmptyState.
     <View testID="report-table">
       <DataTable
         columns={columns}
@@ -151,15 +146,8 @@ function ReportTable({ table }: { table: ReportResult["table"] }) {
 }
 
 /**
- * AD-03 / US-39–41: hospital activity by date range and department, exported
- * as CSV, Excel or PDF.
- *
- * The list of reports comes from the server, which offers each user only what
- * their role runs — administration all ten, billing its own, the store its
- * own — so there is no client-side guess about who sees which.
- *
- * Another screen can open a particular report (the dashboard's "Total
- * patients" tile opens registrations) by passing `report` in the route params.
+ * Reports (AD-03, US-39–41) with CSV/Excel/PDF export. The server filters the catalogue by role;
+ * other screens can preselect a report via the `report` route param.
  */
 export default function ReportsScreen() {
   const navigation = useNavigation<any>();
@@ -174,8 +162,7 @@ export default function ReportsScreen() {
   const [departmentId, setDepartmentId] = useState("");
   const [notice, setNotice] = useState<{ tone: "info" | "success"; message: string } | null>(null);
 
-  // A report asked for by another screen wins until a chip is pressed here,
-  // which clears the request — so arriving again with a different one works.
+  // A requested report wins until a chip is pressed, which clears the route param.
   const requested: string | undefined = route.params?.report;
   const choose = (key: string) => {
     setSelectedKey(key);
@@ -314,7 +301,7 @@ export default function ReportsScreen() {
                   containerStyle={{ flex: 1, minWidth: 150 }}
                   testID="report-to"
                 />
-                {/* Select takes no testID, so the wrapper carries it. */}
+                { /* Select takes no testID, so the wrapper carries it. */ }
                 <View style={{ flex: 2, minWidth: 220 }} testID="report-department">
                   <Select
                     label="Department"
@@ -325,8 +312,7 @@ export default function ReportsScreen() {
                       ...(departments ?? []).map((d) => ({ value: d.id, label: d.name })),
                     ]}
                     onChange={setDepartmentId}
-                    // Stated every time: "department" means something different
-                    // in each report, and an unstated filter gets misread.
+                    // "Department" means something different in each report, so always state it.
                     hint={`What the department filter counts: ${active.departmentBasis}`}
                   />
                 </View>

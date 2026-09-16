@@ -1,18 +1,7 @@
 /**
- * Phase 4 gate — the ward, in a real browser.
- *
- * The thing no unit or integration test can show: that a nurse standing at a
- * bedside, typing six survivable-looking numbers into this form, is told on
- * this screen that the patient is high risk — and that the patient then appears
- * at the top of the ward board with the escalation policy written beside them,
- * without anyone having decided to escalate.
- *
- * Also covers, through the UI:
- *   IP-01/03  a bed becomes occupied because someone was admitted to it
- *   IP-05     a discharge cannot complete without all three fields
- *   NU-04     the same dose cannot be signed twice at shift change
- *   NU-05     SBAR refuses a handover with the recommendation left out
- *
+ * phase 4 gate — the ward in a browser: admission and bed state (IP-01/03), NEWS2 scoring and
+ * escalation (NU-02/03), drug round (NU-04), SBAR handover (NU-05) and discharge (IP-05).
+ * boots the real api on an in-memory replica set and serves the real web export.
  *   node tools/verifyInpatient.mjs
  */
 import http from "node:http";
@@ -86,7 +75,9 @@ const API = `http://127.0.0.1:${API_PORT}`;
 for (let waited = 0; ; waited += 300) {
   try {
     if ((await fetch(`${API}/health`)).ok) break;
-  } catch { /* not up */ }
+  } catch {
+    /* not up */
+    }
   if (waited > 40_000) throw new Error(`API did not start.\n${apiLog}`);
   await new Promise((r) => setTimeout(r, 300));
 }
@@ -188,7 +179,7 @@ await req("POST", "/beds/bulk", { roomId: room.data.id, prefix: "A", from: 1, to
 const bedList = await req(`GET`, `/beds?wardId=${ward.data.id}&limit=20`, null, adminToken);
 const beds = bedList.data;
 
-// ---- The patient this phase exists for --------------------------------------
+// ---- The patient ------------------------------------------------------------
 const patient = await req(
   "POST", "/patients",
   {
@@ -203,7 +194,6 @@ await req(
   doctor.token,
 );
 
-// A formulary line for the drug round.
 const enalapril = await req("POST", "/prescriptions/medicines", {
   name: "Envas 5", genericName: "Enalapril", ingredients: ["enalapril"],
   form: "tablet", strength: "5mg",
@@ -242,8 +232,8 @@ page.on("response", (r) => {
 });
 
 const proxy = async (p) => {
-  // The live-update socket is not under test here. Blocked, so the gate never
-  // reaches whatever else happens to listen on the dev port baked into the build.
+  // the live-update socket is not under test; blocked so the gate never reaches
+  // the dev port baked into the build.
   await p.route("**/socket.io/**", (route) => route.abort());
   await p.route("**/api/v1/**", async (route) => {
     const url = new URL(route.request().url());
@@ -289,7 +279,6 @@ try {
     "and her allergy status is stated before anyone reaches the drug round",
   );
 
-  // The bed list. Every bed in the ward is here, free ones selectable.
   await page.getByText("Choose a free bed").click();
   await page.waitForTimeout(800);
   const bedOptions = await page.innerText("body");
@@ -322,7 +311,7 @@ try {
   admissionId = page.url().split("/ipd/patients/")[1]?.split("?")[0] ?? "";
   check(Boolean(admissionId), "the bedside chart has its own address, linkable in a handover");
 
-  // ---- IP-03: the bed was occupied by the admission, not by hand -----------
+  // ---- IP-03 ---------------------------------------------------------------
   const bedsNow = await req(`GET`, `/beds?wardId=${ward.data.id}&limit=20`, null, adminToken);
   const a1 = bedsNow.data.find((b) => b.number === "A1");
   check(a1.status === "occupied", "IP-03: the bed became occupied as a consequence of admitting");
@@ -346,11 +335,7 @@ try {
   await nursePage.getByText("Record obs", { exact: true }).first().click();
   await nursePage.waitForTimeout(900);
 
-  /**
-   * Each of these, on its own, is something a tired nurse talks herself out of.
-   * 22 is "a bit fast". 98 systolic is "she's small". 38.2 is "a low grade
-   * fever". Together they are 7 — high risk.
-   */
+  // individually unremarkable readings that together score NEWS2 7 (high risk).
   await nursePage.getByTestId("obs-respiratoryRate").fill("22");
   await nursePage.getByTestId("obs-spo2").fill("94");
   await nursePage.getByTestId("obs-systolic").fill("98");
@@ -413,10 +398,7 @@ try {
   check(board.includes("NEWS2 7"), "with the score that raised it");
   await nursePage.screenshot({ path: path.join(SHOTS, "ipd-5-escalation-board.png") });
 
-  /**
-   * The nurse who raised it cannot close it. An escalation the raiser can
-   * dismiss is not an escalation.
-   */
+  // The nurse who raised the escalation cannot close it.
   check(
     !board.includes("I have reviewed this patient"),
     "NU-03: the nurse who raised it is not offered the button to close it",
@@ -494,13 +476,7 @@ try {
   const afterGiving = await nursePage.innerText("body");
   check(afterGiving.includes("Given by Meera"), "signing for a dose records who gave it");
 
-  /**
-   * THE SHIFT-CHANGE DOUBLE DOSE.
-   *
-   * The night nurse opens the round and tries to give the dose that was
-   * already given. Nothing on her screen said otherwise when she loaded it —
-   * so the server refuses, and the refusal names the nurse who gave it.
-   */
+  // Shift-change double dose: the night nurse must see the dose already signed for.
   const nightPage = await (await browser.newContext({ viewport: { width: 1280, height: 1000 } })).newPage();
   await proxy(nightPage);
   nightPage.on("pageerror", (e) => consoleErrors.push(String(e)));
@@ -572,10 +548,7 @@ try {
   );
   await nursePage.waitForTimeout(400);
 
-  /**
-   * The Recommendation is the part that gets dropped at the end of a
-   * twelve-hour shift, and it is the part the next shift acts on.
-   */
+  // Recommendation left blank: the SBAR must be refused.
   const partial = await nursePage.innerText("body");
   check(
     partial.includes("SBAR is not complete"),

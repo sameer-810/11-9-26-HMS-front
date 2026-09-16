@@ -52,10 +52,7 @@ export interface Consultation {
   admissionRecommended: boolean;
   admissionReason: string;
 
-  /**
-   * OP-06. Once true the note is permanent — the client renders it read-only,
-   * and the server refuses any edit regardless of what the client does.
-   */
+  /** OP-06: once true the note is read-only; the server refuses any edit. */
   isSigned: boolean;
   signedAt: string | null;
   signedByName: string;
@@ -81,7 +78,7 @@ export interface ClinicalContext {
     lastRecorded: string;
     occurrences: number;
   }[];
-  /** OP-01 with LB-05: the latest results, and what is already on its way. */
+  /** OP-01 with LB-05: latest results and tests still pending. */
   recentLabResults: RecordLabResult[];
   pendingLabOrders: PendingLabOrder[];
 }
@@ -95,8 +92,8 @@ export interface ConsultationDraft {
   startedAt: string;
 }
 
-// ---- Prescribing ------------------------------------------------------------
 
+// ---- Prescribing ------------------------------------------------------------
 export interface Medicine {
   id: string;
   name: string;
@@ -112,7 +109,7 @@ export interface Medicine {
   defaultFrequency: string;
   defaultDurationDays: number | null;
   cautionNote: string;
-  /** "Amoxil 500mg capsule" — what a prescriber recognises. */
+  /** display name, e.g. "Amoxil 500mg capsule". */
   label: string;
 }
 
@@ -142,7 +139,7 @@ export interface SafetyLineResult {
 
 export interface SafetyResult {
   highestTier: SafetyTier;
-  /** The server's verdict, not a suggestion — create refuses on the same terms. */
+  /** server verdict; create refuses on the same terms. */
   blocked: boolean;
   requiresOverrideReason: boolean;
   alertCount: number;
@@ -167,7 +164,7 @@ export interface PrescriptionLine {
   quantity: number | null;
   dispensedQuantity: number;
   status: "pending" | "partially_dispensed" | "dispensed" | "cancelled";
-  /** Frozen at the moment of prescribing — evidence, not a live check. */
+  /** frozen at prescribing time as evidence, not a live check. */
   safetyAlerts: SafetyAlert[];
   overrideReason: string;
   overriddenByName: string;
@@ -192,7 +189,7 @@ export interface Prescription {
   createdAt: string;
 }
 
-/** A line being composed, before it is sent. */
+/** a prescription line being composed, before it is sent. */
 export interface DraftLine {
   id: string;
   medicine: Medicine;
@@ -203,11 +200,11 @@ export interface DraftLine {
   overrideReason: string;
 }
 
-// ---- The medical record -----------------------------------------------------
 
+// ---- Medical record ----
 export type RecordScope = "full" | "nursing" | "laboratory" | "pharmacy";
 
-/** How this read was allowed. `viaBreakGlass` drives the emergency-access countdown. */
+/** how this read was allowed; `viaBreakGlass` drives the emergency-access countdown. */
 export interface RecordAccess {
   restricted: boolean;
   viaBreakGlass: boolean;
@@ -215,9 +212,9 @@ export interface RecordAccess {
   expiresAt: string | null;
 }
 
-/** What the server says when a restricted record refuses a read. */
+/** error details returned when a restricted record refuses a read. */
 export interface RestrictedDetails {
-  /** Whose record — a ward screen asks by admission and needs to be told. */
+  /** ward screens ask by admission, so they need the patient id back. */
   patientId?: string;
   canBreakGlass: boolean;
   categories: Record<string, string>;
@@ -237,7 +234,7 @@ export interface BreakGlassGrant {
 
 export interface MedicalRecord {
   access?: RecordAccess;
-  /** Named so the UI can say "you are seeing the nursing view". */
+  /** lets the UI tell the viewer which partial view they are seeing. */
   scope: RecordScope;
   patient: PatientBanner & Record<string, unknown>;
   allergies: Allergy[];
@@ -267,10 +264,6 @@ export interface MedicalRecord {
   /** Reported only. Empty (not absent) for the pharmacy scope. */
   labResults: RecordLabResult[];
   pendingLabOrders: PendingLabOrder[];
-  /**
-   * Per section, true when the patient has older history than the record
-   * carries (the newest 100 consultations, prescriptions and results, 50 visits
-   * and pending tests). Absent from servers that predate it.
-   */
+  /** Per section, true when older history exists beyond the returned cap (100 items, 50 visits). */
   truncated?: Partial<Record<"consultations" | "prescriptions" | "visits" | "labResults" | "pendingLabOrders", boolean>>;
 }

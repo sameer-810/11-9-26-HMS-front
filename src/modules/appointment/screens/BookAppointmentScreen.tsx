@@ -32,13 +32,8 @@ import {
 import { todayCalendarDate, addCalendarDays, formatCalendarDate } from "@shared/format";
 
 /**
- * AP-01, in order: patient, department, doctor, then a slot the roster
- * actually offers.
- *
- * Dates are calendar strings throughout — "2026-09-15", never a Date. The API
- * takes them that way because an appointment is a wall-clock fact about a
- * building, and a Date here would be reinterpreted by whatever timezone the
- * server happens to run in.
+ * Book appointment (AP-01): patient, department, doctor, then a roster slot.
+ * Dates are calendar strings ("2026-09-15"), never Date, to avoid timezone shifts.
  */
 export default function BookAppointmentScreen() {
   const navigation = useNavigation<any>();
@@ -92,8 +87,7 @@ export default function BookAppointmentScreen() {
       navigation.replace("AppointmentBooked", { id: appointment.id });
     } catch (err) {
       const code = apiErrorCode(err);
-      // The server sends the free alternatives back with the refusal, so the
-      // desk can offer one without starting the form again.
+      // Slot taken or off-roster: clear the time so another can be picked.
       if (code === "SLOT_UNAVAILABLE" || code === "SLOT_NOT_ON_ROSTER") {
         setTime(null);
       }
@@ -101,19 +95,8 @@ export default function BookAppointmentScreen() {
     }
   };
 
-  /**
-   * Doctors are NEVER disabled here.
-   *
-   * The availability shown is for the date currently selected, and the date
-   * picker sits BELOW this one — so disabling a doctor who has no clinic today
-   * makes it impossible to book them for any future day. The user would have to
-   * change a date they cannot reach without first choosing a doctor they are
-   * not allowed to choose.
-   *
-   * So availability is a hint on the option, not a gate. Picking a doctor with
-   * no clinic on this date is answered by the slot grid, which says which day
-   * to try instead.
-   */
+  // Availability is a hint, never a disabled option: the date picker comes after the doctor,
+  // so disabling would block booking a doctor with no clinic today on a future day.
   const doctorOptions = (doctors ?? []).map((d) => {
     const free = whoIsFree?.find((w) => w.doctor?.id === d.id);
     const hint = free
@@ -134,7 +117,7 @@ export default function BookAppointmentScreen() {
       <VStack gap={16} style={{ maxWidth: 860 }}>
         {error ? <Banner tone="danger" message={error} onDismiss={() => setError(null)} /> : null}
 
-        {/* 1 — patient. AP-01: they must already be registered. */}
+        { /* 1 — patient. AP-01: they must already be registered. */ }
         <Card>
           <SectionHeader title="1. Patient" subtitle="They must already be registered" />
           {patientId && banner ? (
@@ -199,7 +182,7 @@ export default function BookAppointmentScreen() {
           )}
         </Card>
 
-        {/* 2 — department and doctor. AP-01: department filters the doctors. */}
+        { /* 2 — department and doctor. AP-01: department filters the doctors. */ }
         <Card>
           <SectionHeader title="2. Department and doctor" />
           <HStack gap={12} wrap>
@@ -236,7 +219,7 @@ export default function BookAppointmentScreen() {
           </HStack>
         </Card>
 
-        {/* 3 — the day and the slot. */}
+        { /* 3 — the day and the slot. */ }
         <Card>
           <SectionHeader
             title="3. Date and time"
@@ -299,7 +282,7 @@ export default function BookAppointmentScreen() {
           )}
         </Card>
 
-        {/* 4 — why. */}
+        { /* 4 — why. */ }
         <Card>
           <SectionHeader title="4. Reason" subtitle="In the patient's own words" />
           <VStack gap={12}>

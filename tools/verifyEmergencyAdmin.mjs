@@ -1,20 +1,6 @@
 /**
- * Phase 8 gate — emergency, break-the-glass, reports and administration, in a
- * real browser.
- *
- * What only a browser shows:
- *  - the board puts the untriaged patient and the sickest patient above the one
- *    who arrived first, and says so with the badge, not just the order;
- *  - the triage form suggests a level from the answers, and an override cannot
- *    be saved without a reason;
- *  - reception registers an unidentified ambulance arrival and never sees the
- *    triage form;
- *  - a restricted record stops a clinician outside the team, the glass breaks
- *    only with a reason, and the record then opens under a countdown banner;
- *  - administration reviews that access, filters reports by date and
- *    department, exports CSV, and sees no patient name in any of it;
- *  - the admin console creates a user and hands over a one-time password.
- *
+ * Phase 8 gate — in a real browser: ED arrival, triage and board order, break-the-glass
+ * and its review, reports with CSV export, and the admin console.
  *   node tools/verifyEmergencyAdmin.mjs
  */
 import http from "node:http";
@@ -75,7 +61,9 @@ const API = `http://127.0.0.1:${API_PORT}`;
 for (let waited = 0; ; waited += 300) {
   try {
     if ((await fetch(`${API}/health`)).ok) break;
-  } catch { /* not up */ }
+  } catch {
+    /* not up */
+    }
   if (waited > 40_000) throw new Error(`API did not start.\n${apiLog}`);
   await new Promise((r) => setTimeout(r, 300));
 }
@@ -170,8 +158,7 @@ async function newPage() {
   p.on("console", (m) => { if (m.type() === "error") consoleErrors.push(m.text()); });
   p.on("pageerror", (e) => consoleErrors.push(String(e)));
   p.on("response", (r) => { if (r.status() >= 400) httpFailures.push(`${r.status()} ${r.request().method()} ${new URL(r.url()).pathname}`); });
-  // The live-update socket is not under test here. Blocked, so the gate never
-  // reaches whatever else happens to listen on the dev port baked into the build.
+  // socket blocked: not under test, and the build's dev port may belong to something else.
   await p.route("**/socket.io/**", (route) => route.abort());
   await p.route("**/api/v1/**", async (route) => {
     const url = new URL(route.request().url());

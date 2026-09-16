@@ -25,10 +25,7 @@ interface Props {
   scroll?: boolean;
   refreshing?: boolean;
   onRefresh?: () => void;
-  /**
-   * When present, the identity band is rendered above the content and pinned
-   * OUTSIDE the scroll view, so it cannot be scrolled away from.
-   */
+  /** Identity band, pinned outside the scroll view so it cannot scroll away. */
   patient?: PatientBannerData;
   patientRight?: React.ReactNode;
   onPatientPress?: () => void;
@@ -40,16 +37,7 @@ interface Props {
   testID?: string;
 }
 
-/**
- * The container every screen wraps in.
- *
- * Two structural guarantees it exists to provide:
- *   - the patient identity band is outside the scroll view, so it is on screen
- *     whenever patient data is;
- *   - content is capped at `contentMaxWidth` and centred, because a clinical
- *     table stretched across a 27" monitor is unreadable — the eye loses the
- *     row between the name and the value at the far right.
- */
+/** Screen container: patient band outside the scroll, content capped at `contentMaxWidth`. */
 export function Screen({
   children,
   title,
@@ -79,8 +67,7 @@ export function Screen({
         wrap={!isWide}
         style={{ marginBottom: title || subtitle ? 16 : 0 }}
       >
-        {/* Shrinks on narrow screens, so a long subtitle wraps at 320 px
-            instead of running off the right edge (WCAG 1.4.10). */}
+        { /* Shrinks on narrow screens so long subtitles wrap (WCAG 1.4.10). */ }
         <VStack gap={2} flex={isWide ? 1 : undefined} style={isWide ? undefined : { flexShrink: 1, minWidth: 0 }}>
           {overline ? (
             <Text variant="overline" tone="tertiary">
@@ -145,15 +132,13 @@ export function Screen({
   );
 
   return (
-    // The main landmark. Everything a screen draws — the identity band, its
-    // banners, its footer — belongs to the screen, so it all sits inside.
+    // The main landmark wraps the band, banners and footer too.
     <View style={styles.root} testID={testID} role="main">
       {patient ? (
         <PatientBanner patient={patient} right={patientRight} onPress={onPatientPress} />
       ) : null}
       {banner}
-      {/* Native keyboards push the layout; the web browser handles it itself
-          and wrapping there causes a double-adjust jump. */}
+      { /* No KeyboardAvoidingView on web: the browser adjusts itself (avoids a double jump). */ }
       {Platform.OS === "web" ? (
         body
       ) : (

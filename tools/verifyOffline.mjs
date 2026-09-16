@@ -1,18 +1,6 @@
 /**
- * Phase 9 gate — the ward with the network pulled, in a real browser.
- *
- * What only a browser shows:
- *  - with the connection gone, a RELOAD still opens the app (service worker) and
- *    the record and bedside chart this nurse opened earlier are still readable;
- *  - vitals and a nursing note can still be charted; the form says they are
- *    saved on this device, not sent, and a worrying score says "escalate in
- *    person" because the escalation board cannot see it yet;
- *  - the queue survives a reload;
- *  - on reconnect it drains in charting order with no duplicates — including
- *    a write that reached the server but whose response was lost on the way
- *    back, which is replayed and recognised;
- *  - signing out removes the saved records from the device.
- *
+ * phase 9 gate: with the network pulled the app reloads, charts and queues, then drains on
+ * reconnect without duplicates; sign-out clears saved records.
  *   node tools/verifyOffline.mjs
  */
 import http from "node:http";
@@ -25,8 +13,7 @@ import { chromium } from "playwright";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const FRONT = path.resolve(here, "..");
 const BACK = path.resolve(FRONT, "..", "11-9-26-HMS-back");
-// HMS_DIST points the gate at another export folder, for running it beside a
-// build that another gate is using.
+// HMS_DIST points the gate at another export folder, so it can run beside another gate's build.
 const DIST = process.env.HMS_DIST ? path.resolve(process.env.HMS_DIST) : path.join(FRONT, "dist");
 const SHOTS = path.join(FRONT, "docs", "shots");
 
@@ -79,7 +66,9 @@ const API = `http://127.0.0.1:${API_PORT}`;
 for (let waited = 0; ; waited += 300) {
   try {
     if ((await fetch(`${API}/health`)).ok) break;
-  } catch { /* not up */ }
+  } catch {
+    /* not up */
+    }
   if (waited > 40_000) throw new Error(`API did not start.\n${apiLog}`);
   await new Promise((r) => setTimeout(r, 300));
 }
@@ -163,13 +152,10 @@ const page = await context.newPage();
 page.on("console", (m) => { if (m.type() === "error") consoleErrors.push(m.text()); });
 page.on("pageerror", (e) => consoleErrors.push(String(e)));
 page.on("response", (r) => { if (r.status() >= 400) httpFailures.push(`${r.status()} ${r.request().method()} ${new URL(r.url()).pathname}`); });
-// Playwright's offline mode does not reach this proxy — it forwards from the
-// test process, which is still online. So "the network is pulled" has to be
-// enforced here as well, or every "offline" request would quietly succeed and
-// the gate would be testing nothing.
+// playwright's offline mode does not reach this proxy — it forwards from the
+// test process, which is still online, so the pull is enforced here too.
 let networkPulled = false;
-// The live-update socket is not under test here. Blocked, so the gate never
-// reaches whatever else happens to listen on the dev port baked into the build.
+// socket blocked so the gate never reaches whatever listens on the build's baked-in dev port.
 await page.route("**/socket.io/**", (route) => route.abort());
 await page.route("**/api/v1/**", async (route) => {
   if (networkPulled) return route.abort("internetdisconnected");
@@ -224,7 +210,7 @@ try {
     Promise.race([navigator.serviceWorker.ready.then(() => true), new Promise((r) => setTimeout(() => r(false), 10000))]),
   );
   check(workerReady, "the service worker is installed");
-  // The page hands the worker its bundle and fonts, and the mirror writes.
+  // wait for the worker to take the bundle and fonts, and the mirror to write.
   await page.waitForTimeout(6500);
   const mirrored = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith("hms-mirror:")).length);
   check(mirrored === 1, "what the nurse opened is saved on this device");
@@ -246,7 +232,6 @@ try {
   await page.waitForTimeout(3500);
   check((await body()).includes("Observation trend"), "the bedside chart is readable offline");
 
-  // Charted offline, in this order: a calm set, then a worrying one, then a note.
   await chartObservations({ respiratoryRate: 18, spo2: 96, systolic: 122, pulse: 84, temperatureC: 37.2 });
   check(await page.getByTestId("observation-queued").isVisible(), "a nurse can still chart vitals — saved on this device, not sent");
   check((await page.getByTestId("observation-queued-escalate").count()) === 0, "a calm set does not cry wolf");
@@ -265,7 +250,6 @@ try {
   check(await page.getByTestId("note-queued").isVisible(), "a nursing note is kept too");
   check((await page.getByTestId("offline-status").innerText()).includes("3 entries waiting to send"), "the strip counts three entries waiting");
 
-  // The queue is on the device, not in the page.
   await page.reload({ waitUntil: "domcontentloaded" }).catch(() => {});
   await page.waitForTimeout(3500);
   check((await page.locator('[data-testid^="pending-observation-"]').count()) === 2, "the queue survives a reload — both sets still waiting on the chart");
@@ -281,7 +265,7 @@ try {
     if (route.request().method() !== "POST" || lostOne) return route.fallback();
     lostOne = true;
     const url = new URL(route.request().url());
-    // The server receives and stores it; the device never hears back.
+    // the server receives and stores it; the device never hears back.
     await route.fetch({ url: `${API}${url.pathname}${url.search}` });
     await route.abort("connectionreset");
   });
@@ -321,8 +305,7 @@ try {
 
   // -- Health ----------------------------------------------------------------
   console.log(`\n  (HTTP non-2xx seen: ${httpFailures.join(", ") || "none"})\n`);
-  // Offline, the browser logs every request it could not make. Those are the
-  // test working, not the app failing.
+  // offline, the browser logs every request it could not make — expected here.
   const jsErrors = consoleErrors.filter((e) => !/Failed to load resource|ERR_INTERNET_DISCONNECTED|net::ERR_/i.test(e));
   check(jsErrors.length === 0, "no JavaScript errors", jsErrors.slice(0, 2).join(" | "));
   check(httpFailures.length === 0, "no HTTP failures", httpFailures.join(", "));

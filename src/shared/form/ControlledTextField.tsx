@@ -10,13 +10,7 @@ interface Props<T extends FieldValues>
   name: FieldPath<T>;
 }
 
-/**
- * Binds a TextField to react-hook-form.
- *
- * Exists so no screen ever wires `value`/`onChangeText`/`error` by hand — three
- * props that are easy to get subtly wrong, and whose failure mode is a field
- * that silently stops showing its validation error.
- */
+/** binds a TextField to react-hook-form, including its validation error. */
 export function ControlledTextField<T extends FieldValues>({
   control,
   name,

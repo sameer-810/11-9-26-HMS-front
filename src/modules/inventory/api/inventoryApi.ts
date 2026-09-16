@@ -58,10 +58,7 @@ export const inventoryApi = {
     return res.data.data;
   },
 
-  /**
-   * No quantity here, and there never will be. Section 7: stock moves only
-   * through recorded events. The server refuses a quantity field outright.
-   */
+  /** no quantity field: stock moves only through recorded events, and the server refuses one. */
   updateItem: async (id: string, patch: { name?: string; unit?: string; reorderLevel?: number; isActive?: boolean; unitPrice?: number | null }) => {
     const res = await apiClient.patch<{ data: InventoryItem }>(`/inventory/items/${id}`, patch);
     return res.data.data;

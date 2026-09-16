@@ -1,11 +1,8 @@
 import type { Role } from "@shared/permissions";
 
 /**
- * Shapes as the API sends them — see the backend's user, hospital, department
- * and ward DTOs. The server is the authority; nothing here is invented.
- *
- * Paged lists carry `meta.pages`, not `totalPages`: that is the name the
- * department, user and ward controllers put on the wire.
+ * Admin API shapes, mirroring the backend DTOs.
+ * Paged lists use `meta.pages` (not `totalPages`), as sent on the wire.
  */
 export interface PagedMeta {
   total: number;
@@ -18,13 +15,7 @@ export interface Paged<T> {
   meta: PagedMeta;
 }
 
-/**
- * One line per role, shown in the role picker.
- *
- * Transcribed from the CANNOT side of the backend's role matrix as much as the
- * CAN side — an administrator choosing between "Nurse" and "Receptionist" for a
- * ward clerk needs to see what each one does NOT open.
- */
+/** Role picker summaries; each states what the role cannot open as well as what it can. */
 export const ROLE_SUMMARIES: Record<Role, string> = {
   receptionist: "Registration, appointments, OPD queue. No clinical record.",
   doctor: "Full clinical record, prescribing, admission. No billing.",
@@ -42,8 +33,8 @@ export interface DepartmentRef {
   code: string;
 }
 
-// ---- Users ------------------------------------------------------------------
 
+// ---- Users ------------------------------------------------------------------
 export interface AdminUser {
   id: string;
   employeeId: string;
@@ -70,6 +61,7 @@ export interface AdminUser {
   lastLoginAt: string | null;
   createdAt: string;
 }
+
 
 // ---- Roles (US-04) ----------------------------------------------------------
 
@@ -104,11 +96,8 @@ export interface RoleChange {
 }
 
 /**
- * What creating an account or resetting a credential returns.
- *
- * The temporary password travels in this one response and nowhere else — the
- * server never stores it in plain text, so a screen that loses it cannot get it
- * back. It is kept in component state only, never in the query cache.
+ * Returned by account creation or credential reset. The temporary password is only in
+ * this response: keep it in component state, never in the query cache.
  */
 export interface IssuedCredential {
   user: AdminUser;
@@ -116,11 +105,8 @@ export interface IssuedCredential {
 }
 
 /**
- * The permission editor's catalogue.
- *
- * `assignable` excludes the administrator-only permissions entirely, and marks
- * the rest `grantable` only when the signed-in administrator holds them — the
- * escalation guard in user.service.js refuses anything else.
+ * Permission editor catalogue. `assignable` omits admin-only permissions; `grantable`
+ * is true only for ones the signed-in admin holds (server escalation guard).
  */
 export interface PermissionCatalogue {
   all: string[];
@@ -166,8 +152,8 @@ export interface UpdateUserBody extends ClinicalIdentity {
   wardIds?: string[];
 }
 
-// ---- Hospital ---------------------------------------------------------------
 
+// ---- Hospital ---------------------------------------------------------------
 export interface HospitalAddress {
   line1: string;
   line2: string;
@@ -223,8 +209,8 @@ export type HospitalPatch = Partial<
   > & { address: Partial<HospitalAddress> }
 >;
 
-// ---- Departments ------------------------------------------------------------
 
+// ---- Departments ------------------------------------------------------------
 export interface Department {
   id: string;
   name: string;
@@ -247,8 +233,8 @@ export interface DepartmentBody {
   opdTimings?: string;
 }
 
-// ---- Wards, rooms, beds -----------------------------------------------------
 
+// ---- Wards, rooms, beds -----------------------------------------------------
 export type WardType =
   | "general"
   | "icu"
@@ -324,10 +310,7 @@ export interface Bed {
   number: string;
   status: BedStatus;
   maintenanceNote: string;
-  /**
-   * An id and nothing more. Who is in a bed is clinical; the bed routes are
-   * reachable with beds.view alone, so the name is never attached here.
-   */
+  /** Id only: bed routes need just beds.view, so the patient name is deliberately absent. */
   currentPatientId: string | null;
   dailyCharge: number;
   features: { oxygen: boolean; ventilator: boolean; monitor: boolean };

@@ -5,11 +5,7 @@ import type { Prescription } from "@modules/consultation/types";
 export interface DispenseBody {
   /** PH-03: the pharmacist has checked the allergies shown. */
   allergiesAcknowledged: boolean;
-  /**
-   * Echoed from the context this screen loaded. If a colleague records an
-   * allergy while the screen is open, the server refuses — the acknowledgement
-   * was of a list that is no longer true.
-   */
+  /** Echoed from the loaded context; the server refuses if allergies changed since. */
   allergyFingerprint: string;
   note?: string;
   lines: { lineId: string; allocations: { batchId: string; quantity: number }[] }[];

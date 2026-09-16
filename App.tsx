@@ -24,21 +24,8 @@ import { registerServiceWorker } from "@shared/offline/serviceWorker";
 
 void SplashScreen.preventAutoHideAsync();
 
-/**
- * URL <-> route mapping.
- *
- * Mirrors the route table in the specification so the web build has the same
- * addresses the spec documents, and a link pasted into a handover note opens
- * the right screen.
- */
-/**
- * Every route the app can address.
- *
- * WHICH of these is registered at runtime depends on the signed-in user's
- * permissions (see `navItems.ts`), but the full set is static — so the route
- * names and their parameters are type-checked here, and a typo in the linking
- * table below is a compile error rather than a dead link.
- */
+// route params for every addressable screen; the linking table below is checked against them.
+// which of these is registered at runtime depends on permissions (see navItems.ts).
 type InpatientParamList = {
   WardBoard: { mode?: "ward" | "icu" | "mine" } | undefined;
   Bedside: { admissionId: string };
@@ -97,10 +84,6 @@ type AppParamList = {
   MyPatients: undefined;
   Consultation: { patientId: string };
   MedicalRecord: { patientId: string };
-  /**
-   * The inpatient stack. Addressable all the way down, because a bedside chart
-   * is exactly the kind of link that gets pasted into a handover message.
-   */
   AdmittedPatients: NavigatorScreenParams<InpatientParamList> | undefined;
   Beds: undefined;
   Icu: NavigatorScreenParams<InpatientParamList> | undefined;
@@ -139,7 +122,6 @@ const linking: LinkingOptions<RootParamList> = {
           RegisterPatient: "patients/new",
           Appointments: "appointments",
           OpdQueue: "opd/queue",
-          // An attendance has its own address, so "ED-000042 is ESI 1" is a link.
           Emergency: {
             path: "emergency",
             screens: {
@@ -178,8 +160,6 @@ const linking: LinkingOptions<RootParamList> = {
             },
           },
           Handover: "nursing/handover",
-          // A lab order has its own address, so "LAB-000123 is critical" in a
-          // handover message is a link, not a search.
           LabQueue: {
             path: "lab/requests",
             screens: { LabQueueList: "", LabOrder: ":orderId" },
@@ -188,9 +168,6 @@ const linking: LinkingOptions<RootParamList> = {
             path: "lab/reports",
             screens: { LabResultsList: "", LabOrder: ":orderId" },
           },
-          // The spec's routes: /pharmacy/prescriptions, /pharmacy/dispense/:id,
-          // /pharmacy/stock, /inventory/receive, /inventory/issue and
-          // /inventory/low-stock.
           PharmacyQueue: {
             path: "pharmacy",
             screens: { PharmacyQueueList: "prescriptions", Dispense: "dispense/:prescriptionId" },
@@ -216,9 +193,6 @@ const linking: LinkingOptions<RootParamList> = {
               StockLedger: "movements",
             },
           },
-          // The spec's routes: /billing/bills, /billing/generate/:patientId,
-          // /billing/payment/:billId, /billing/receipt/:paymentId and
-          // /billing/outstanding.
           Bills: {
             path: "billing",
             screens: {
@@ -233,11 +207,9 @@ const linking: LinkingOptions<RootParamList> = {
           Reports: "reports",
           AuditTrail: "admin/audit",
           UserManagement: "admin/users",
-          // Section 5.5's route for Roles & Permissions.
           RolePermissions: "admin/roles",
           HospitalConfig: "admin/config",
           Profile: "profile",
-          // A USB scanner types into whatever has focus; this is where it should.
           Scan: "scan",
         },
       },
@@ -256,8 +228,7 @@ export default function App() {
     if (fontsLoaded) void SplashScreen.hideAsync();
   }, [fontsLoaded]);
 
-  // Watched from the first render, before anyone signs in — the sign-in screen
-  // is where "no connection" most needs saying.
+  // started before sign-in so the login screen can already report being offline.
   useEffect(() => startNetworkWatch(), []);
   useEffect(() => registerServiceWorker(), []);
 

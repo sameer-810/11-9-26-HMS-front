@@ -11,14 +11,8 @@ import { GRANT_STATUS_LABELS, REVIEW_NOTE_MIN, type BreakGlassGrant, type GrantO
 const STATUS_TONE = { pending: "warning", appropriate: "success", inappropriate: "danger" } as const;
 
 /**
- * One emergency access, and the decision on it.
- *
- * "Appropriate" records at once — it is the common answer and asks nothing
- * more. "Inappropriate" opens a note first, because that finding is the basis
- * for any follow-up with the member of staff and has to say what was wrong.
- * The server refuses a review by the person who used the access; that refusal
- * is shown here as it arrives rather than hidden in advance, since the client
- * does not know who used a grant beyond a name.
+ * Break-glass grant review. "Inappropriate" requires a note; self-review is refused by the server
+ * and shown as it arrives (the client only knows the grantee's name).
  */
 export function GrantCard({ grant }: { grant: BreakGlassGrant }) {
   const review = useReviewGrant();

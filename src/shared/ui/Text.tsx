@@ -70,16 +70,8 @@ const TONES: Record<Tone, string> = {
 };
 
 /**
- * How far the OS font-size setting may enlarge each variant.
- *
- * Body and headings are deliberately UNCAPPED. WCAG 1.4.4 requires text to
- * survive 200% enlargement, and a clinician who has turned the system font up
- * has done so because they cannot otherwise read it — capping their setting to
- * protect a layout is choosing the layout over the reader.
- *
- * The capped variants are the ones where runaway growth breaks meaning rather
- * than appearance: a metric tile whose number wraps mid-digit is worse than a
- * slightly smaller number, and an overline that wraps stops reading as a label.
+ * Caps on OS font scaling. Body and headings stay uncapped (WCAG 1.4.4); metrics and
+ * overlines are capped because wrapping breaks their meaning.
  */
 const MAX_SCALE: Partial<Record<Variant, number>> = {
   overline: 1.3,
@@ -96,12 +88,7 @@ interface Props extends TextProps {
   /** Tabular figures. Automatic on metric variants; opt in for table cells. */
   tabular?: boolean;
   center?: boolean;
-  /**
-   * Makes this text a heading at that outline level. Deliberately separate from
-   * `variant`: how big a line is and where it sits in the document outline are
-   * different questions, and a screen reader user navigating by heading needs
-   * the second answered correctly.
-   */
+  /** Heading outline level for screen readers; separate from `variant`, which only sets size. */
   heading?: 1 | 2 | 3 | 4;
   style?: StyleProp<TextStyle>;
   children?: React.ReactNode;

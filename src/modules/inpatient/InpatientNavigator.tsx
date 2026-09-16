@@ -12,20 +12,8 @@ import type { BoardMode } from "./screens/WardBoardScreen";
 const Stack = createNativeStackNavigator();
 
 /**
- * The inpatient stack.
- *
- * A ward round is one continuous thing — board, bedside, back to the board,
- * next patient — so it stays in one stack rather than sending the user through
- * the sidebar between every patient.
- *
- * The record and patient screens are registered here too, for the same reason:
- * looking up a past result mid-round should not cost the user their place in
- * the ward list.
- *
- * Three sidebar entries share this stack — the doctor's ward, the ICU board and
- * the nurse's own allocation. They differ by ONE query parameter, so they are
- * one screen with a mode rather than three copies of the same file; the mode is
- * fixed at the navigator so each sidebar entry keeps its own history.
+ * Inpatient stack, including record screens so a ward round keeps its place.
+ * Ward, ICU and "my patients" share it; the mode is fixed per navigator so each keeps its history.
  */
 function makeInpatientNavigator(mode: BoardMode) {
   return function InpatientNavigator() {

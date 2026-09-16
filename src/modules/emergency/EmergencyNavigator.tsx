@@ -8,11 +8,7 @@ import MedicalRecordScreen from "@modules/consultation/screens/MedicalRecordScre
 
 const Stack = createNativeStackNavigator();
 
-/**
- * Board → arrival → attendance, in one stack. The record is registered here too
- * so checking a past history mid-resuscitation does not cost the doctor their
- * place on the board.
- */
+/** Emergency stack. MedicalRecord lives here too so opening history keeps the board's place. */
 export default function EmergencyNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>

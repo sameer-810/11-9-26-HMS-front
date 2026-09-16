@@ -24,12 +24,8 @@ import { ChargeTable } from "@modules/billing/components/ChargeTable";
 import type { BillType } from "@modules/billing/types";
 
 /**
- * BL-01 / BL-02: generate a bill from compiled charges.
- *
- * Flow 1 step 12: "Charges are already compiled." This screen shows what they
- * are before a bill exists — the outpatient charges, and each admission with
- * its running or final charges — and generates the bill from them. There is no
- * field here to type an amount into.
+ * BL-01 / BL-02: preview compiled OPD and admission charges and generate a bill from them.
+ * There is deliberately no field to type an amount into.
  */
 export default function GenerateBillScreen() {
   const navigation = useNavigation<any>();

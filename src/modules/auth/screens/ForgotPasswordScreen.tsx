@@ -16,14 +16,7 @@ import {
   type ResetPasswordForm,
 } from "@modules/auth/auth.validation";
 
-/**
- * Request a code, then use it. Two steps, one screen.
- *
- * Kept together because the second step needs the email from the first, and
- * splitting them across routes means either passing it through navigation state
- * or asking for it twice. The user has just typed it; asking again reads as the
- * system having lost track.
- */
+/** Password reset: request a code, then use it, on one screen so the email carries over. */
 export default function ForgotPasswordScreen({ navigation }: { navigation?: any }) {
   const [stage, setStage] = useState<"request" | "reset">("request");
   const [email, setEmail] = useState("");
@@ -51,8 +44,7 @@ export default function ForgotPasswordScreen({ navigation }: { navigation?: any 
       const res = await forgot.mutateAsync({ email: values.email });
       setEmail(values.email);
       resetForm.setValue("email", values.email);
-      // The server's wording is deliberately non-committal about whether the
-      // address exists. Passing it through unchanged keeps that property.
+      // Show the server's message verbatim: it does not reveal whether the address exists.
       setNotice(res.message);
       setStage("reset");
     } catch (err) {

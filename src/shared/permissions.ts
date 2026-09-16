@@ -1,13 +1,6 @@
 /**
- * Mirror of the API's `src/config/roles.js`.
- *
- * This file exists so the UI can decide what to draw. It is NOT the enforcer —
- * the server checks every request regardless of what the client believes, and a
- * user who edits their own bundle gains a menu item and nothing else.
- *
- * Drift between the two copies is caught in CI: the backend test
- * `src/config/permissionParity.test.js` reads THIS file off disk and fails the
- * build if the catalogues disagree.
+ * UI mirror of the API's `src/config/roles.js` (the server enforces). Kept in sync by
+ * the backend test `permissionParity.test.js`, which reads this file.
  */
 
 export const ROLES = {
@@ -98,13 +91,7 @@ export const PERMISSIONS = {
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 
-/**
- * Grouping and copy for the permission editor an administrator uses.
- *
- * `description` is written for the person granting it, not for a developer:
- * an administrator deciding whether a ward clerk should hold `record.view`
- * needs to be told what that actually exposes.
- */
+/** Permission editor groups and copy; descriptions are written for the administrator granting them. */
 export const PERMISSION_META: Record<
   string,
   { label: string; group: string; description: string; clinical?: boolean }
@@ -329,11 +316,7 @@ export const ADMIN_ONLY_PERMISSIONS: string[] = [
   PERMISSIONS.HOSPITAL_CONFIG,
 ];
 
-/**
- * Permissions that expose clinical content. The permission editor warns before
- * granting one of these, because "let the ward clerk see the record so they can
- * find the bed number" is how a hospital ends up with an unauditable leak.
- */
+/** Permissions exposing clinical content; the editor warns before granting them. */
 export const CLINICAL_PERMISSIONS: string[] = Object.entries(PERMISSION_META)
   .filter(([, meta]) => meta.clinical)
   .map(([key]) => key);

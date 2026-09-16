@@ -1,19 +1,6 @@
 /**
- * NEWS2, computed on the device.
- *
- * The server scores every observation it receives and decides escalation from
- * that score (11-9-26-HMS-back/src/modules/nursing/news2.js). This copy exists
- * for one situation only: a set charted while the ward has no connection. The
- * nurse still needs to see that the patient scores 7 — the escalation board
- * will not know until the set syncs, and "escalate in person now" has to be
- * said at the bedside, not twenty minutes later.
- *
- * It is a line-for-line port, and `tests/news2Parity.test.ts` runs both copies
- * over the same thousands of inputs and fails on any difference. Change the
- * server's thresholds and this file together, or that test stops the build.
- *
- * The device score is never sent. The server computes its own on arrival and
- * that is the one filed.
+ * device-side NEWS2: a line-for-line port of the server's, for sets charted offline.
+ * tests/news2Parity.test.ts keeps both copies in step; only the server's score is filed.
  */
 
 export type Consciousness = "alert" | "confusion" | "voice" | "pain" | "unresponsive";
@@ -177,7 +164,7 @@ export function bandFor(total: number, highestSingleScore = 0): LocalNews2Band {
 export function calculateNews2(input: News2Input | null | undefined): LocalNews2Result {
   const observations = (input || {}) as News2Input & Record<string, unknown>;
 
-  // A value that is not a number is MISSING, never a reading — see the server copy.
+  // a value that is not a number is missing, never a reading (as in the server copy).
   const numeric = (v: unknown): number | null => {
     if (v === undefined || v === null) return null;
     if (typeof v === "string" && v.trim() === "") return null;

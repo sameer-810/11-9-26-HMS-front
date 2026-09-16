@@ -10,10 +10,8 @@ import PatientDetailScreen from "@modules/patient/screens/PatientDetailScreen";
 const Stack = createNativeStackNavigator();
 
 /**
- * Two sidebar entries share one stack shape: the bench queue for the lab, and
- * the results inbox for doctors. Each keeps its own history, and both open the
- * same order screen — so a doctor and a technician looking at one order see
- * one screen that adapts to the role, not two that drift apart.
+ * two sidebar entries, one stack shape: the bench queue and the doctor's results inbox.
+ * both open the same order screen, which adapts to the role.
  */
 export function LabQueueNavigator() {
   return (

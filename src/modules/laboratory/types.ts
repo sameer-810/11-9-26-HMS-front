@@ -27,13 +27,7 @@ export const LAB_STAGE_LABELS: Record<LabStatus, string> = {
   cancelled: "Cancelled",
 };
 
-/**
- * Flags as the server assigns them.
- *
- * `none` and `indeterminate` are real answers, not gaps: "no range applies to
- * this patient" and "this censored value straddles a boundary" must never be
- * drawn as normal.
- */
+/** flags as the server assigns them; `none` and `indeterminate` must never be drawn as normal. */
 export type LabFlag =
   | "criticalLow"
   | "low"

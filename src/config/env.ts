@@ -1,9 +1,6 @@
 /**
- * EXPO_PUBLIC_* values are inlined into the bundle at export time, so they must
- * be present in the environment that runs the build — not just at runtime.
- *
- * Nothing secret belongs here. Anything in this file ships inside the app and
- * can be read by anyone who installs it.
+ * EXPO_PUBLIC_* values are inlined at export time, so they must be set in the build environment.
+ * Nothing secret belongs here: everything in this file ships inside the app.
  */
 
 const DEV_API = process.env.EXPO_PUBLIC_API_URL_DEV || "http://localhost:5003/api/v1";

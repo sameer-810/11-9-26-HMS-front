@@ -25,7 +25,6 @@ export function Sidebar({ activeRoute, onNavigate, collapsed = false, onToggleCo
 
   return (
     <View
-      // The navigation landmark: a screen reader user jumps here, and past it.
       role="navigation"
       accessibilityLabel="Main navigation"
       style={[
@@ -36,8 +35,7 @@ export function Sidebar({ activeRoute, onNavigate, collapsed = false, onToggleCo
         },
       ]}
     >
-      {/* Brand + hospital. The hospital name is shown because a user may hold
-          accounts at more than one and needs to know which they are in. */}
+      { /* the hospital name is shown because a user may hold accounts at more than one site. */ }
       <HStack
         gap={10}
         align="center"
@@ -185,8 +183,7 @@ function NavRow({
       onPress={onPress}
       accessibilityRole="link"
       accessibilityLabel={item.label}
-      // Native reads "selected"; the web has aria-current for the link to the
-      // page you are on (aria-selected is not allowed on a link).
+      // native reads "selected"; web uses aria-current instead (aria-selected is invalid on a link).
       accessibilityState={Platform.OS === "web" ? undefined : { selected: active }}
       {...webAria({ current: active ? "page" : undefined })}
       style={({ pressed }) => [

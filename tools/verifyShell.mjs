@@ -1,10 +1,6 @@
 /**
- * Foundation smoke test.
- *
- * Builds nothing and mocks nothing: it serves the real web export, drives it in
- * a real browser and asserts the shell actually renders. A bundle that compiles
- * and then throws on first paint is the failure mode this exists to catch — and
- * `expo export` exits 0 for it.
+ * shell gate — serves the real web export and asserts the login shell renders
+ * in a real browser at three viewports, with no console or request errors.
  *
  *   node tools/verifyShell.mjs
  */
@@ -82,7 +78,7 @@ try {
     page.on("requestfailed", (r) => failedRequests.push(`${r.url()} ${r.failure()?.errorText}`));
 
     await page.goto(base, { waitUntil: "networkidle" });
-    // Fonts gate the first render.
+    // fonts gate the first render.
     await page.waitForTimeout(1500);
 
     const text = await page.innerText("body");
@@ -100,21 +96,18 @@ try {
       failedRequests.slice(0, 2).join(" | "),
     );
 
-    // The hero pane is desktop-only; the phone layout must not show it.
+    // the hero pane is desktop-only.
     if (vp.name === "phone") {
       check(!text.includes("One patient, one record"), "phone: desktop hero suppressed");
     } else if (vp.name === "desktop") {
       check(text.includes("One patient, one record"), "desktop: hero shown");
     }
 
-    // Nothing may scroll sideways — a clinical form that needs horizontal
-    // scrolling on a ward tablet is a form that gets filled in wrong.
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
     );
     check(overflow <= 1, `${vp.name}: no horizontal overflow`, `${overflow}px`);
 
-    // Every input must carry an accessible name.
     const unlabelled = await page.evaluate(() =>
       Array.from(document.querySelectorAll("input")).filter(
         (el) =>

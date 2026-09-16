@@ -6,13 +6,8 @@ import { formatRupees } from "@shared/format";
 import { CATEGORY_LABELS, type Charge, type ChargeCategory } from "@modules/billing/types";
 
 /**
- * Itemised charges, grouped the way a bill is read: consultation, room,
- * laboratory, pharmacy, procedures.
- *
- * Each line says what produced it — a consultation number, a bed and its
- * dates, a lab order, a dispensing record — so a patient disputing a charge can
- * be answered from the line itself. Nothing on it is clinical: no diagnosis,
- * no indication, no result.
+ * Itemised charges grouped by category, each naming its source (consultation, bed, order).
+ * Nothing clinical is shown: no diagnosis, indication or result.
  */
 const ORDER: ChargeCategory[] = ["consultation", "room", "laboratory", "pharmacy", "procedure"];
 

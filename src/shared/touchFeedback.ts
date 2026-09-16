@@ -4,14 +4,8 @@ import * as Haptics from "expo-haptics";
 export type FeedbackTone = "select" | "impact" | "success" | "warning" | "error";
 
 /**
- * Physical confirmation that a tap landed.
- *
- * Matters more here than in a consumer app: a nurse confirming a medication
- * administration on a tablet often cannot watch the screen while doing it, and
- * "did that register?" is the question that produces double-charting.
- *
- * Silently no-ops on web and swallows its own failures — a device with haptics
- * disabled must not throw into a clinical workflow.
+ * Haptic tap confirmation (helps avoid double-charting when not looking at the screen).
+ * No-op on web; failures are swallowed so a clinical workflow never throws.
  */
 export function haptic(tone: FeedbackTone = "select") {
   if (Platform.OS === "web") return;
@@ -34,6 +28,6 @@ export function haptic(tone: FeedbackTone = "select") {
         void Haptics.selectionAsync();
     }
   } catch {
-    // Haptics unavailable. Not a reason to interrupt anything.
+  // Haptics unavailable; ignore.
   }
 }

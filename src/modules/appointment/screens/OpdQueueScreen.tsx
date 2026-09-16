@@ -44,12 +44,8 @@ import type { Appointment } from "@modules/appointment/types";
 import type { PatientBanner } from "@modules/patient/types";
 
 /**
- * The OPD queue board — Flow 1 step 4 and AP-03.
- *
- * Ordered by the server to match the waiting room: whoever is with the doctor,
- * then the people waiting in token order, then those expected later. Left open
- * on a screen all shift, so it refetches itself rather than waiting to be
- * pulled.
+ * OPD queue board (Flow 1 step 4, AP-03), in server order: with the doctor, waiting by token,
+ * then expected. Left open all shift, so it refetches itself.
  */
 export default function OpdQueueScreen() {
   const navigation = useNavigation<any>();
@@ -255,7 +251,7 @@ function QueueRow({
       testID={`queue-row-${a.appointmentNumber}`}
     >
       <HStack gap={12} align="center" wrap>
-        {/* Token — the number the waiting room is called by. */}
+        { /* Token — the number the waiting room is called by. */ }
         <View style={[styles.token, a.tokenNumber ? styles.tokenIssued : styles.tokenPending]}>
           <Text
             variant="metric-sm"

@@ -1,9 +1,6 @@
 import { z } from "zod";
 
-/**
- * US-01: an email address or the employee ID on the staff badge. Which one it
- * is decides nothing here — the server looks for an "@".
- */
+/** US-01: email or employee ID; the server tells them apart by "@". */
 export const loginSchema = z.object({
   identifier: z.string().trim().min(1, "Enter your email or employee ID").max(254, "That is too long"),
   password: z.string().min(1, "Enter your password"),
@@ -11,15 +8,7 @@ export const loginSchema = z.object({
 
 export type LoginForm = z.infer<typeof loginSchema>;
 
-/**
- * Ten characters, matching the server.
- *
- * The rule is stated up front rather than only on failure — a password field
- * that rejects after the fact is a field people fight with. There is
- * deliberately no complexity requirement: length beats a symbol nobody can
- * remember, and a rule people cannot satisfy is a rule that produces
- * "Password1!" on a sticky note beside a ward terminal.
- */
+/** Minimum 10 characters, matching the server; no complexity rule by design (length over symbols). */
 export const newPasswordSchema = z
   .string()
   .min(10, "Use at least 10 characters")

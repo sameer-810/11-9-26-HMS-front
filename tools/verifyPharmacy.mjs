@@ -1,15 +1,6 @@
 /**
- * Phase 6 gate — pharmacy and inventory, in a real browser.
- *
- * What only a browser shows:
- *  - the store types "03/27" and is stopped before submitting a whole delivery;
- *  - an expired batch is on the dispensing screen, visibly locked, not missing;
- *  - the confirm button stays disabled until the allergy check is ticked;
- *  - THE CASE: a doctor records a penicillin allergy while the pharmacist has
- *    the prescription open with the box already ticked. The dispense is
- *    refused, the screen reloads with the new allergy, the tick is gone, and
- *    the medicine is locked.
- *
+ * phase 6 gate: pharmacy and inventory in a real browser (expiry entry, locked expired batches,
+ * allergy tick, and an allergy recorded mid-dispense blocking the medicine).
  *   node tools/verifyPharmacy.mjs
  */
 import http from "node:http";
@@ -74,7 +65,9 @@ const API = `http://127.0.0.1:${API_PORT}`;
 for (let waited = 0; ; waited += 300) {
   try {
     if ((await fetch(`${API}/health`)).ok) break;
-  } catch { /* not up */ }
+  } catch {
+    /* not up */
+    }
   if (waited > 40_000) throw new Error(`API did not start.\n${apiLog}`);
   await new Promise((r) => setTimeout(r, 300));
 }
@@ -134,7 +127,6 @@ const amoxItem = await req("POST", "/inventory/items", { code: "AMOX500", name: 
 await req("PATCH", `/inventory/items/${amoxItem.data.id}`, { unitPrice: 12 }, adminToken);
 await req("POST", "/inventory/suppliers", { name: "MedLine Distributors" }, store.token);
 
-// Stock that expired on the pharmacy shelf.
 await StockBatchModel.create({
   hospitalId: hospital._id, itemId: amoxItem.data.id, location: "pharmacy", batchNumber: "P-OLD",
   expiryDate: new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10), quantityOnHand: 50,
@@ -173,8 +165,7 @@ async function newPage() {
   p.on("response", (r) => {
     if (r.status() >= 400) httpFailures.push(`${r.status()} ${r.request().method()} ${new URL(r.url()).pathname}`);
   });
-  // The live-update socket is not under test here. Blocked, so the gate never
-  // reaches whatever else happens to listen on the dev port baked into the build.
+  // socket blocked so the gate never reaches whatever listens on the build's baked-in dev port.
   await p.route("**/socket.io/**", (route) => route.abort());
   await p.route("**/api/v1/**", async (route) => {
     const url = new URL(route.request().url());
@@ -299,7 +290,6 @@ try {
   check(/DSP-\d{6} dispensed/.test(success), "PH-05: the dispense is confirmed");
   check(success.includes("batch A1"), "PH-04: with the batch handed over");
 
-  // The store traces it — to the prescription, not the patient.
   await storePage.goto(`${WEB}/inventory/movements`, { waitUntil: "networkidle" });
   await storePage.waitForTimeout(2400);
   text = await body(storePage);
@@ -321,7 +311,7 @@ try {
   await counter.waitForTimeout(300);
   check(!(await counter.getByTestId("dispense-confirm").isDisabled()), "and ticks the allergy check");
 
-  // Meanwhile, on the ward.
+  // meanwhile the doctor records an allergy while the prescription is open and ticked.
   await req("PUT", `/patients/${bhavna.id}/allergies`, {
     allergies: [{ substance: "Penicillin", severity: "anaphylaxis", reaction: "Throat swelling", category: "drug" }],
   }, doctor.token);
@@ -355,7 +345,7 @@ try {
   console.log(`\n  (HTTP non-2xx seen: ${httpFailures.join(", ") || "none"})\n`);
   const jsErrors = consoleErrors.filter((e) => !/Failed to load resource/i.test(e));
   check(jsErrors.length === 0, "no JavaScript errors", jsErrors.slice(0, 2).join(" | "));
-  // The one refusal this journey provokes on purpose: the changed allergy list.
+  // the 409 on the changed allergy list is provoked on purpose.
   const unexpected = httpFailures.filter((f) => !/^409 POST \/api\/v1\/pharmacy\/prescriptions\/[0-9a-f]+\/dispense$/.test(f));
   check(unexpected.length === 0, "no unexpected HTTP failures", unexpected.join(", "));
 } catch (err) {

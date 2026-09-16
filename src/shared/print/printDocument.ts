@@ -10,11 +10,7 @@ export interface PrintJob {
   widthMm: number;
   heightMm: number;
   title: string;
-  /**
-   * Labels go to the workstation's chosen label printer; pages go to the
-   * system default. A wristband sent to the A4 laser is wasted, and an A4
-   * report sent to a 50 mm label roll is 40 wasted labels.
-   */
+  /** Labels go to the chosen label printer; pages go to the system default. */
   printerClass: "label" | "page";
 }
 
@@ -26,14 +22,8 @@ export interface PrintOutcome {
 }
 
 /**
- * The browser gate's view of a print.
- *
- * When `globalThis.__HMS_TEST_PRINT__` is set — only `tools/verifyPrinting.mjs`
- * sets it, via `page.addInitScript` before the app loads — the job is recorded
- * on `window.__hmsLastPrint` and NOT sent to a printer. A headless browser has
- * no print dialog to dismiss, and the gate needs the exact HTML and page size
- * that would have been printed so it can render it to PDF and measure it.
- * Nothing in the app sets the flag, so production never takes this branch.
+ * Set only by tools/verifyPrinting.mjs: records the job on `__hmsLastPrint` instead of
+ * printing, so the gate can measure it. Production never sets the flag.
  */
 interface TestPrintGlobals {
   __HMS_TEST_PRINT__?: unknown;
@@ -52,8 +42,7 @@ export async function printDocument(job: PrintJob): Promise<PrintOutcome> {
     return { ok: true, channel: "test" };
   }
 
-  // Desktop first: the shell runs the web build, so Platform.OS is "web" there
-  // too, and it is the one place an exact size can actually be guaranteed.
+  // Desktop first: its shell also reports Platform.OS "web", and only it guarantees exact size.
   const bridge = desktopBridge();
   if (bridge) {
     const deviceName = job.printerClass === "label" ? getLabelPrinter() ?? undefined : undefined;
@@ -82,18 +71,8 @@ export async function printDocument(job: PrintJob): Promise<PrintOutcome> {
 }
 
 /**
- * Web: print the document from a hidden iframe.
- *
- * An iframe rather than `window.print()` on the app, because the app's own
- * layout — sidebar, banner, scroll containers — would otherwise be what gets
- * printed. The frame's document carries `@page { size: W H; margin: 0 }` and
- * mm-exact CSS, which Chromium and Firefox honour as the paper size.
- *
- * They do NOT honour it as the scale. The print dialog's "Scale" and "Margins"
- * settings are the user's, and a browser left on "Fit to printable area" will
- * shrink a 25 × 280 mm band to whatever the driver reports as printable. The
- * caller therefore tells the user to set scale 100% and margins none; the
- * desktop path above exists because that instruction is not a guarantee.
+ * Web: print from a hidden iframe so the app layout is not printed. Browsers honour
+ * `@page` size but not scale, so users must set 100% scale and no margins.
  */
 function printInHiddenFrame(job: PrintJob): Promise<PrintOutcome> {
   return new Promise((resolve) => {
@@ -130,8 +109,7 @@ function printInHiddenFrame(job: PrintJob): Promise<PrintOutcome> {
         resolve({ ok: false, channel: "web", reason: "The print frame did not open" });
         return;
       }
-      // Some browsers fire afterprint as the dialog OPENS rather than closes;
-      // the delay keeps the document alive until the spooler has it.
+      // Some browsers fire afterprint when the dialog opens; delay removal until spooled.
       win.addEventListener("afterprint", () => setTimeout(remove, 1000), { once: true });
       setTimeout(remove, 120_000);
       try {
@@ -144,11 +122,8 @@ function printInHiddenFrame(job: PrintJob): Promise<PrintOutcome> {
       }
     };
 
-    // A srcdoc frame is same-origin with the app, so a script that slipped
-    // past escaping would run with the session in reach. No `allow-scripts`
-    // means nothing inside the document runs; `allow-same-origin` is only so
-    // this code can call print() on it, and `allow-modals` so that print()
-    // is not silently ignored.
+    // No allow-scripts: a srcdoc frame is same-origin, so injected script could reach the session.
+    // allow-same-origin lets this code call print(); allow-modals stops print() being ignored.
     frame.setAttribute("sandbox", "allow-same-origin allow-modals");
     frame.srcdoc = job.html;
     document.body.appendChild(frame);

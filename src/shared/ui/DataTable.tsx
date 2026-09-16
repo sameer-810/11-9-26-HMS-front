@@ -26,13 +26,7 @@ interface Props<T> {
   rows: T[];
   keyExtractor: (row: T) => string;
   onRowPress?: (row: T) => void;
-  /**
-   * Below the narrow breakpoint the table stops being a table.
-   *
-   * A horizontally scrolling grid on a phone is unusable for clinical work —
-   * you cannot see a patient's name and their result at the same time, which is
-   * the entire point of the row. Provide a card renderer instead.
-   */
+  /** Card renderer used below the narrow breakpoint instead of a horizontally scrolling table. */
   mobileCard?: (row: T) => React.ReactNode;
   /** Tints a whole row — an abnormal result, an overdue task. */
   rowAccent?: (row: T) => string | undefined;
@@ -113,13 +107,11 @@ export function DataTable<T>({
 
   const table = (
     <View style={[styles.table, style]} testID={testID}>
-      {/* Header */}
+      { /* Header */ }
       <View style={[styles.headerRow, { minHeight: 36 }]} accessibilityRole="none">
         {columns.map((c) => {
           const active = sortKey === c.key;
-          // The column's size goes on the outer wrapper, not on this cell. A
-          // flex cell inside an unsized Pressable shrinks to its label while the
-          // body cells below it stretch, and the headers drift off their columns.
+          // Size goes on the outer wrapper: a flex cell in an unsized Pressable misaligns headers.
           const cell = (
             <View
               style={[
@@ -160,7 +152,7 @@ export function DataTable<T>({
         })}
       </View>
 
-      {/* Rows */}
+      { /* Rows */ }
       {sorted.map((row, i) => {
         const accent = rowAccent?.(row);
         const content = (
@@ -202,9 +194,7 @@ export function DataTable<T>({
     </View>
   );
 
-  // Wide viewports only. On narrow ones without a mobileCard we still allow the
-  // horizontal scroll rather than truncating data, but the card path is the
-  // intended route and DEV warns when it is missing.
+  // Narrow without mobileCard: fall back to horizontal scroll rather than truncating.
   if (isNarrow) {
     if (__DEV__ && !mobileCard) {
       console.warn("DataTable: no mobileCard provided — falling back to horizontal scroll.");

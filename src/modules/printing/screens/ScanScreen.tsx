@@ -11,18 +11,10 @@ import { useScanCode } from "@modules/printing/hooks/usePrinting";
 import { CameraScanner } from "@modules/printing/components/CameraScanner";
 import type { ScanResult } from "@modules/printing/types";
 
+
 /**
- * Scan a wristband or a tube, and open what it belongs to.
- *
- * Built first for the USB scanner that sits on every ward and bench desk. Those
- * are keyboards: they type the code and press Enter. So the screen is one
- * focused text field that submits on Enter and takes focus back afterwards —
- * a nurse scanning a row of patients should never have to click the box.
- *
- * Where a scan lands follows what the person can open, never a guess: the
- * record if they hold record access (the same grant list the MedicalRecord
- * route is registered for), the patient's page otherwise, and a tube goes to
- * its laboratory order for someone who works the laboratory queue.
+ * Scan a wristband or tube and open it. USB scanners type and press Enter, so the field
+ * refocuses after each scan. Destination depends on permissions (lab order, record, or patient page).
  */
 
 /** MUST mirror the MedicalRecord nav item's `permissionAny`. */
@@ -42,23 +34,20 @@ export default function ScanScreen() {
   const [code, setCode] = useState("");
   const [scanned, setScanned] = useState<string | null>(null);
   const [camera, setCamera] = useState(false);
-  // Remounting the field is how focus is taken back after each scan: TextField
-  // does not forward a ref, and autoFocus on a fresh mount works on every
-  // platform.
+  // Bumped to remount the field and regain focus: TextField has no ref, autoFocus works everywhere.
   const [fieldKey, setFieldKey] = useState(0);
 
   const opensRecord = RECORD_ROUTE_PERMISSIONS.some((p) => hasPermission(p));
   const opensLabOrder = hasPermission(PERMISSIONS.LAB_QUEUE_VIEW);
 
-  // Coming back to this screen after a scan starts clean, ready for the next
-  // band, rather than showing the last patient's outcome under a new scan.
+  // Reset on focus so the previous patient's result is not shown.
   useFocusEffect(
     useCallback(() => {
       scan.reset();
       setScanned(null);
       setCode("");
       setFieldKey((k) => k + 1);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []),
   );
 

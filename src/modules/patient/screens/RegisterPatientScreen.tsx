@@ -54,12 +54,8 @@ export default function RegisterPatientScreen() {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   /**
-   * The last answer the server gave, and what was asked to get it.
-   *
-   * Held together so the result can be DISCARDED when the form no longer
-   * matches the question — rather than clearing it from an effect, which both
-   * fights React and leaves a frame where a stale match is on screen next to
-   * different details.
+   * Last duplicate-check result with its query key, so a stale one is ignored on render rather
+   * than cleared in an effect (which would flash it beside the new details).
    */
   const [dupResult, setDupResult] = useState<{
     key: string;
@@ -136,7 +132,7 @@ export default function RegisterPatientScreen() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkKey, enoughToCheck]);
 
   // Only trust the answer if it was asked about the details currently typed in.
@@ -420,10 +416,7 @@ export default function RegisterPatientScreen() {
         </HStack>
       </VStack>
 
-      {/*
-        The last gate before a second record exists for one person. Deliberately
-        explicit about the consequence rather than a bare "Are you sure?".
-      */}
+      { /* Last gate before a second record for one person; spells out the consequence. */ }
       <ConfirmDialog
         visible={confirmOpen}
         title="Create a second record?"

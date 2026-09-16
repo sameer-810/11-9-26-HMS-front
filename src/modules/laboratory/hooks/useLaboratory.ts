@@ -2,11 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { laboratoryApi, type OrderTestsBody } from "@modules/laboratory/api/laboratoryApi";
 import type { LabOrder, LabStatus, LabUrgency } from "@modules/laboratory/types";
 
-/**
- * Anything that changes an order can change: the queue, the doctor's inbox,
- * the patient's record, the consultation context, and the dashboard counts.
- * Invalidated together, so no screen shows a stage the order has left.
- */
+/** an order change can move the queue, inbox, record, consultation context and dashboard,
+ *  so all are invalidated together. */
 function invalidateLab(qc: ReturnType<typeof useQueryClient>, order?: Pick<LabOrder, "id" | "patient">) {
   qc.invalidateQueries({ queryKey: ["lab-queue"] });
   qc.invalidateQueries({ queryKey: ["lab-inbox"] });
@@ -39,10 +36,7 @@ export const useCancelLabOrder = () => {
   });
 };
 
-/**
- * LB-02. Left open on a bench screen all shift, so it refetches itself.
- * Every 30 seconds: a stat request should not wait a minute to appear.
- */
+/** left open on a bench all shift, so it refetches every 30s for stat requests. */
 export const useLabQueue = (params: { status?: LabStatus; urgency?: LabUrgency; search?: string }) =>
   useQuery({
     queryKey: ["lab-queue", params],
@@ -56,8 +50,7 @@ export const useLabOrder = (id?: string) =>
     queryKey: ["lab-order", id],
     queryFn: () => laboratoryApi.get(id!),
     enabled: Boolean(id),
-    // A second technician may have moved it. The server refuses a stale
-    // transition anyway; not showing a stale stage avoids the attempt.
+    // a second technician may have moved it; showing a stale stage invites a refused transition.
     staleTime: 0,
   });
 
@@ -112,10 +105,7 @@ export const useReviewLabResult = () => {
   });
 };
 
-/**
- * LB-05: the doctor's results. Refetched often, because an unacknowledged
- * critical result is exactly the thing that must not wait for a refresh.
- */
+/** the doctor's results; refetched often, as an unacknowledged critical must not wait. */
 export const useLabInbox = (scope?: "mine" | "all") =>
   useQuery({
     queryKey: ["lab-inbox", scope ?? "default"],

@@ -1,22 +1,6 @@
 /**
- * Phase 9 gate — a wristband prints at the exact physical size and scans back
- * to the right patient.
- *
- * What only a browser shows:
- *  - the wristband the patient page prints is a 25 × 280 mm page, measured off
- *    the PDF Chromium renders from it, with the allergy strip on it;
- *  - its barcode, rendered and photographed, decodes to the hospital number —
- *    and its 2D code to the versioned payload;
- *  - that code, typed by a keyboard-wedge scanner into the scan screen, opens
- *    that patient's record, and another patient's code opens the other one;
- *  - the tube label is 50 × 25 mm and its payload opens the right lab order;
- *  - the prescription and the lab report are of the right patient.
- *
- * The app is told not to send jobs to a printer: `page.addInitScript` sets
- * `__HMS_TEST_PRINT__`, and `printDocument` then records the job on
- * `window.__hmsLastPrint` instead of opening a print dialog headless Chromium
- * does not have.
- *
+ * phase 9 gate: wristbands, tube labels, prescriptions and lab reports print at their real size
+ * and scan back to the right patient. `__HMS_TEST_PRINT__` records jobs on `window.__hmsLastPrint`.
  *   node tools/verifyPrinting.mjs
  */
 import http from "node:http";
@@ -32,9 +16,7 @@ const BACK = path.resolve(FRONT, "..", "11-9-26-HMS-back");
 const DIST = path.join(FRONT, "dist");
 const SHOTS = path.join(FRONT, "docs", "shots");
 
-// The decoder is served from node_modules rather than taken from the app
-// bundle: the gate must decode what was printed with a reader that shares no
-// code with the thing that printed it.
+// decoder served from node_modules, not the app bundle, so it shares no code with the printer.
 const ZXING = {
   "/__zxing/library.js": path.join(FRONT, "node_modules", "@zxing", "library", "umd", "index.min.js"),
   "/__zxing/browser.js": path.join(FRONT, "node_modules", "@zxing", "browser", "umd", "zxing-browser.min.js"),
@@ -85,7 +67,9 @@ const API = `http://127.0.0.1:${API_PORT}`;
 for (let waited = 0; ; waited += 300) {
   try {
     if ((await fetch(`${API}/health`)).ok) break;
-  } catch { /* not up */ }
+  } catch {
+    /* not up */
+    }
   if (waited > 40_000) throw new Error(`API did not start.\n${apiLog}`);
   await new Promise((r) => setTimeout(r, 300));
 }
@@ -202,14 +186,13 @@ const httpFailures = [];
 
 async function newPage() {
   const ctx2 = await browser.newContext({ viewport: { width: 1400, height: 1000 } });
-  // The documented test hook: record print jobs instead of printing them.
+  // test hook: record print jobs instead of printing them.
   await ctx2.addInitScript(() => { globalThis.__HMS_TEST_PRINT__ = true; });
   const p = await ctx2.newPage();
   p.on("console", (m) => { if (m.type() === "error") consoleErrors.push(m.text()); });
   p.on("pageerror", (e) => consoleErrors.push(String(e)));
   p.on("response", (r) => { if (r.status() >= 400) httpFailures.push(`${r.status()} ${r.request().method()} ${new URL(r.url()).pathname}`); });
-  // The live-update socket is not under test here. Blocked, so the gate never
-  // reaches whatever else happens to listen on the dev port baked into the build.
+  // socket blocked so the gate never reaches whatever listens on the build's baked-in dev port.
   await p.route("**/socket.io/**", (route) => route.abort());
   await p.route("**/api/v1/**", async (route) => {
     const url = new URL(route.request().url());
@@ -266,11 +249,7 @@ const decoder = await browser.newPage();
 await decoder.goto(`${WEB}/__zxing/decode.html`, { waitUntil: "load" });
 
 /**
- * Decode a photographed symbol in the browser with ZXing.
- *
- * The screenshot is cropped to the bars, so a white margin is added back as
- * the quiet zone; a band's code runs along the band, so it is turned upright
- * first.
+ * Decodes a screenshot with ZXing, padding a white quiet zone and optionally turning it upright.
  */
 async function decode(png, { rotate = false } = {}) {
   const dataUrl = `data:image/png;base64,${png.toString("base64")}`;
@@ -346,7 +325,6 @@ try {
   check(bandPayload === `HMS1|P|${anita.patientId}`, "its DataMatrix decodes to the versioned patient payload", bandPayload);
   await rendered.close();
 
-  // Mohan has never been asked — the strip must say so, not go blank.
   await ward1.goto(`${WEB}/patients`, { waitUntil: "networkidle" });
   await ward1.waitForTimeout(1800);
   await ward1.getByTestId("patient-search").fill("Mohan");

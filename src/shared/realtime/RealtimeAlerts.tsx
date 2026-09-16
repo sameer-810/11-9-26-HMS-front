@@ -5,11 +5,7 @@ import { palette } from "@shared/designSystem";
 import { Banner } from "@shared/ui";
 import { useRealtimeAlerts } from "./realtime";
 
-/**
- * Alerts pushed by the server — a critical result, a high-acuity arrival,
- * emergency access used. They stay until dismissed: an alert that fades on a
- * timer is one nobody was looking at when it went.
- */
+/** Server-pushed alerts (critical results, high-acuity arrivals, break-glass). They stay until dismissed. */
 export function RealtimeAlerts() {
   const alerts = useRealtimeAlerts((s) => s.alerts);
   const dismiss = useRealtimeAlerts((s) => s.dismiss);

@@ -25,17 +25,7 @@ interface Props {
   testID?: string;
 }
 
-/**
- * The appointment slot grid.
- *
- * Unavailable slots are RENDERED, disabled, with their reason — never removed.
- * A grid with 11:15 quietly missing makes the receptionist wonder whether the
- * system is broken, and leaves them unable to answer a patient who asks for
- * that time. "11:15 — fully booked" lets them offer 11:30 in the same breath.
- *
- * The same reasoning governs the bed picker and the batch picker: show what
- * cannot be chosen, and say why.
- */
+/** Appointment slot grid. Unavailable slots are shown disabled with their reason, never hidden. */
 export function SlotGrid({ slots, value, onChange, unavailableReason, testID }: Props) {
   if (slots.length === 0) {
     return (
@@ -67,7 +57,6 @@ export function SlotGrid({ slots, value, onChange, unavailableReason, testID }: 
               disabled={!s.available}
               accessibilityRole="button"
               accessibilityState={{ disabled: !s.available, selected }}
-              // The reason travels to a screen reader too, not just to the eye.
               accessibilityLabel={
                 s.available
                   ? s.capacity > 1
@@ -98,7 +87,7 @@ export function SlotGrid({ slots, value, onChange, unavailableReason, testID }: 
                 {s.time}
               </Text>
 
-              {/* Why it cannot be picked, in the place the eye already is. */}
+              { /* Why it cannot be picked. */ }
               {!s.available ? (
                 <Text variant="caption" numberOfLines={1} style={{ color: palette.text.disabled }}>
                   {s.unavailableReason}

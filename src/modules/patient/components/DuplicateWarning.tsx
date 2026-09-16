@@ -13,16 +13,8 @@ interface Props {
 }
 
 /**
- * RG-01's actual deliverable: the desk sees who this might already be.
- *
- * Shows the REASONS, not just a score. "Possible duplicate" gets clicked past;
- * "Same mobile number and same name" makes someone look at the screen. And the
- * matched patient is openable, because the useful action is almost always "use
- * that record" rather than "create another one".
- *
- * Deliberately NOT a modal. A blocking dialog while someone is mid-form is how
- * you train people to dismiss things unread, and the same reasoning governs
- * ClinicalAlert. This sits in the form where it can be read and acted on.
+ * possible duplicates with their reasons (not a score), each openable to use the existing record.
+ * deliberately not a modal: a blocking dialog mid-form trains people to dismiss it unread.
  */
 export function DuplicateWarning({ matches, mustConfirm, onOpenExisting }: Props) {
   if (matches.length === 0) return null;
@@ -74,7 +66,7 @@ export function DuplicateWarning({ matches, mustConfirm, onOpenExisting }: Props
                   {m.age} · {m.gender}
                 </Text>
               </HStack>
-              {/* The reasons are the whole point. */}
+              
               <Text variant="caption" style={{ color: tone.text }}>
                 {m.reasons.join(" · ")}
               </Text>

@@ -16,14 +16,7 @@ export const useAppointment = (id?: string) =>
     enabled: Boolean(id),
   });
 
-/**
- * AP-01's slot grid.
- *
- * `staleTime: 0` on purpose. Somebody else may take a slot while this list is
- * on screen, and showing a free slot that is not free sends the receptionist
- * into a 409 they cannot explain to the patient in front of them. The server
- * re-checks on booking regardless — this just keeps the screen honest.
- */
+/** AP-01 slot grid. `staleTime: 0` because other desks book slots concurrently. */
 export const useAvailability = (doctorId?: string, date?: string) =>
   useQuery({
     queryKey: ["availability", doctorId, date],
@@ -40,7 +33,7 @@ export const useDoctorsAvailable = (date?: string, departmentId?: string) =>
     staleTime: 30_000,
   });
 
-/** Everything that changes a booking has to invalidate the same four things. */
+/** Shared invalidation for every booking change. */
 function useBookingInvalidation() {
   const qc = useQueryClient();
   return () => {
@@ -106,13 +99,7 @@ export const useMarkNoShow = () => {
   });
 };
 
-/**
- * The OPD queue board.
- *
- * Refetched on an interval because it is left open on a screen all shift and
- * nobody is going to pull to refresh it. Thirty seconds is frequent enough that
- * a newly arrived patient appears while they are still walking to a seat.
- */
+/** OPD queue board; polls because it stays open on a screen all shift. */
 export const useOpdQueue = (params?: { doctorId?: string; departmentId?: string; date?: string }) =>
   useQuery({
     queryKey: ["opd-queue", params],

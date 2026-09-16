@@ -1,17 +1,12 @@
 /**
- * When someone last touched the app — the clock behind the idle sign-out
- * (US-01 "session timeout").
- *
- * Kept in module state rather than React so the navigator's touch handler and
- * the timer read the same value without re-rendering on every tap. On the web
- * it is also written to localStorage, so a nurse working in one tab keeps the
- * other tab of the same session from signing out.
+ * Last-activity clock for idle sign-out (US-01). Module state avoids re-renders per tap;
+ * on web it is mirrored to localStorage so activity in one tab keeps other tabs signed in.
  */
 
 export const ACTIVITY_KEY = "hms-last-activity";
 /** How long before the sign-out the warning appears. */
 export const WARNING_MS = 60_000;
-/** Taps closer together than this are one activity; a write per mouse move would be wasteful. */
+/** Throttle for activity writes. */
 const THROTTLE_MS = 1_000;
 
 let lastActivity = Date.now();
@@ -32,7 +27,7 @@ export function recordActivity(force = false, now = Date.now()) {
   try {
     if (typeof localStorage !== "undefined") localStorage.setItem(ACTIVITY_KEY, String(now));
   } catch {
-    /* private window or storage full: this tab's own clock still works */
+  /* private window or storage full: this tab's own clock still works */
   }
 }
 
@@ -47,7 +42,7 @@ export interface IdleState {
   expired: boolean;
 }
 
-/** Pure, for the timer and for tests. The server refuses anything under five minutes, and so does this. */
+/** Pure idle calculation; enforces the server's 5-minute minimum. */
 export function idleState(lastActive: number, now: number, idleMinutes: number): IdleState {
   const limit = Math.max(5, idleMinutes || 30) * 60_000;
   const remaining = lastActive + limit - now;

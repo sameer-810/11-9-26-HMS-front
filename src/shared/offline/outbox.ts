@@ -10,41 +10,14 @@ import { useAuthStore } from "@shared/store/useAuthStore";
 import { useNetworkStore, isNetworkError } from "./network";
 import { belongsTo, ownerOf, sameOwner, type OutboxOwner } from "./outboxOwnership";
 
-/**
- * The offline write queue.
- *
- * ---------------------------------------------------------------------------
- * What may be queued, and why nothing else
- * ---------------------------------------------------------------------------
- * Observations and nursing notes. They are facts about a moment at the
- * bedside, and a fact recorded late is still true. Prescriptions, dispensing,
- * billing, discharge and everything else depend on state this device cannot
- * see — a drug that was stopped an hour ago, stock that ran out, a bill someone
- * else finalised — and replaying them later against a changed world is how a
- * patient gets the wrong drug. Those fail visibly when offline, and that is the
- * design, not a gap. The list is closed: ENDPOINT below is the whole of it.
- *
- * ---------------------------------------------------------------------------
- * Exactly once, in order
- * ---------------------------------------------------------------------------
- * Each write gets its operation id and its charting time BEFORE the first
- * attempt. If that attempt dies on the wire after the server stored it, the
- * queued copy carries the same id, and the server answers the replay with the
- * record it already has. Ops drain oldest first, one at a time, and a new write
- * joins the back of the queue while older ones are still waiting — a chart
- * whose 03:40 set is filed before its 03:10 set tells the wrong story.
- *
- * A write the server REFUSES (a discharged patient, an impossible time) is not
- * retried forever: it is marked failed, kept, and shown to the nurse with its
- * values so it can be re-entered. It never blocks the ops behind it.
- *
- * Ops belong to the user who charted them and survive signing out. They drain
- * only when that user is signed in again — nobody's vitals are filed under
- * someone else's name, and nobody's are thrown away by a logout.
- */
 
+/**
+ * Offline write queue. Ops drain oldest first and are idempotent via their op id;
+ * they belong to their author, survive sign-out and drain only for that user.
+ */
 export type OutboxKind = "observation" | "note";
 
+// Closed list: other writes depend on server state and must fail visibly when offline.
 const ENDPOINT: Record<OutboxKind, string> = {
   observation: "/nursing/observations",
   note: "/nursing/notes",
@@ -136,10 +109,8 @@ export function useMyOps(): OutboxOp[] {
 export type SendResult<T> = { status: "sent"; data: T } | { status: "queued"; op: OutboxOp };
 
 /**
- * Send a queueable write now, or keep it on this device.
- *
- * `send` receives the payload with the operation id and charting time already
- * stamped, so the online attempt and any queued replay are the same operation.
+ * Send a queueable write now, or queue it. The op id and charting time are stamped
+ * first, so the online attempt and any replay are the same operation.
  */
 export async function sendOrQueue<B extends object, T>(
   kind: OutboxKind,
@@ -201,9 +172,7 @@ export function drainOutbox(): Promise<number> {
 
     try {
       for (const op of batch) {
-        // A batch can take minutes on a bad line. If its owner signed out
-        // meanwhile, the rest waits for them — it is not sent on the session
-        // of whoever signed in next.
+        // Owner signed out mid-batch: the rest waits rather than sending on another session.
         if (!sameOwner(owner, currentOwner())) {
           stopped = true;
           break;
@@ -216,10 +185,8 @@ export function drainOutbox(): Promise<number> {
           touched.add(op.admissionId);
         } catch (err) {
           const status = (err as { response?: { status?: number } })?.response?.status;
-          // No answer, a session that needs signing in again, or a request the
-          // client withdrew because the user changed: stop and keep
-          // everything, in order, for the next attempt. None of those is the
-          // server refusing the entry.
+          // Network error, 401 or cancelled request is not a refusal: stop and keep
+          // the rest in order for the next attempt.
           if (isNetworkError(err) || isCancel(err) || status === 401) {
             stopped = true;
             break;

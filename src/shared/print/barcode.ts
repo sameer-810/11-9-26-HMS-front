@@ -2,16 +2,11 @@ import * as bwipjs from "bwip-js";
 
 import { fitModule, mm, THERMAL_DPI } from "./sizing";
 
-/**
- * Barcodes as inline SVG, sized in millimetres from the module count.
- *
- * Not a PNG scaled to fit: a raster barcode resampled by a print driver gets
- * bars of uneven width, and Code 128 is decoded from the ratio of bar widths.
- * An SVG whose viewBox is exactly N modules wide, drawn N × moduleMm wide, puts
- * every module at the same physical width, and that width is a whole number of
- * thermal-head dots (see `fitModule`).
- */
 
+/**
+ * Barcodes as inline SVG sized in mm from the module count. SVG, not PNG: driver
+ * resampling makes bar widths uneven, and each module must be whole thermal dots.
+ */
 export interface RenderedSymbol {
   /** Markup this module built; safe to interpolate with `raw()`. */
   svg: string;
@@ -24,25 +19,14 @@ export interface RenderedSymbol {
   fits: boolean;
 }
 
-/**
- * ISO/IEC 15417 requires a 10-module quiet zone either side of a Code 128
- * symbol. Scanners find the start pattern by the silence before it; a label
- * edge or a line of text inside that silence is the commonest reason a
- * correctly printed symbol will not read.
- */
+/** ISO/IEC 15417 quiet zone each side; anything printed inside it stops scans. */
 export const CODE128_QUIET_MODULES = 10;
 
 /** ISO/IEC 16022 asks for one module; two survive a slightly misaligned label. */
 export const DATAMATRIX_QUIET_MODULES = 2;
 
-/*
- * Module counts are read off the SVG bwip-js draws, not from `bwipjs.raw()`.
- * `raw()` only works in the Node build — in the browser and React Native builds
- * it demands a canvas — and the SVG is what is actually printed, so measuring
- * it measures the right thing. The unit suite cross-checks these counts against
- * `raw()` under Node.
- */
 
+// Module counts come from the drawn SVG: `bwipjs.raw()` needs a canvas outside Node.
 function viewBox(svg: string) {
   const match = /^<svg viewBox="0 0 (\d+(?:\.\d+)?) (\d+(?:\.\d+)?)"/.exec(svg);
   if (!match) throw new Error("Unexpected barcode SVG from bwip-js");
@@ -51,29 +35,21 @@ function viewBox(svg: string) {
 
 function wholeModules(units: number, perModule: number, what: string): number {
   const modules = units / perModule;
-  // Not whole modules means padding or text crept into the drawing, and every
-  // mm below would be wrong. Fail loudly rather than print bars 3% too wide.
+  // Non-whole modules mean padding or text crept in; fail rather than print wrong widths.
   if (!Number.isFinite(modules) || Math.abs(modules - Math.round(modules)) > 1e-6) {
     throw new Error(`Barcode SVG ${what} is ${units} units, not a whole number of ${perModule}-unit modules`);
   }
   return Math.round(modules);
 }
 
-/**
- * Code 128's narrowest stroke is one module. Every symbol has one: the stop
- * pattern (2-3-3-1-1-1-2) contains a single-module bar whatever the data.
- */
+/** Narrowest stroke is one module; the stop pattern always contains one. */
 function code128UnitsPerModule(svg: string): number {
   const widths = [...svg.matchAll(/stroke-width="(\d+(?:\.\d+)?)"/g)].map((m) => Number(m[1]));
   if (widths.length === 0) throw new Error("Code 128 SVG has no bars");
   return Math.min(...widths);
 }
 
-/**
- * A DataMatrix is drawn as polygons on its module grid, and its timing pattern
- * alternates every module along two edges — so the greatest common divisor of
- * the coordinates is exactly one module.
- */
+/** The timing pattern alternates every module, so the GCD of coordinates is one module. */
 function matrixUnitsPerModule(svg: string): number {
   const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
   const values = [...svg.matchAll(/ d="([^"]+)"/g)]
@@ -87,11 +63,8 @@ function matrixUnitsPerModule(svg: string): number {
 }
 
 /**
- * Stamps the physical size onto the SVG.
- *
- * preserveAspectRatio="none": a 1D symbol's bar HEIGHT is free and its WIDTH is
- * not, so the axes are sized independently. crispEdges stops the rasteriser
- * anti-aliasing a bar edge into a grey column.
+ * Stamps physical size onto the SVG. Axes are sized independently (bar height is free);
+ * crispEdges stops anti-aliased grey bar edges.
  */
 function sized(svg: string, open: string, widthMm: number, heightMm: number, label: string): string {
   const { unitsWide, unitsHigh } = viewBox(svg);
@@ -122,13 +95,8 @@ export function code128(
 }
 
 /**
- * DataMatrix of `text`, for the versioned payload.
- *
- * DataMatrix rather than QR: for a 20-character payload it is 18×18 modules
- * against QR's 21×21 plus a four-module quiet zone, which is the difference
- * between fitting across a 19 mm infant band at a readable module size and
- * not. Every scanner this app uses — phone cameras via expo-camera, ZXing in
- * the browser, 2D imagers on a ward — reads both.
+ * DataMatrix of `text`, for the versioned payload. Chosen over QR because it is
+ * smaller and still fits a 19 mm infant band at a readable module size.
  */
 export function dataMatrix(
   text: string,

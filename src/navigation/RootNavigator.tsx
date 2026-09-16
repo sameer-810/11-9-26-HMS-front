@@ -15,21 +15,8 @@ function ForcedPasswordChange() {
 }
 
 /**
- * Three mutually exclusive states, as branches of one navigator rather than
- * redirects between them:
- *
- *   signed out            → the auth stack
- *   signed in, temp cred  → nothing but the password change
- *   signed in             → the app
- *
- * The middle branch mirrors the server, which refuses every other route with
- * PASSWORD_CHANGE_REQUIRED until the credential is replaced. Rendering the app
- * and then redirecting would leave a window in which app screens are mounted
- * and firing requests that are all going to be refused.
- *
- * The `key` forces a full remount whenever the state changes, which drops every
- * cached screen holding patient data. On a shared ward tablet the next person
- * to sign in must not inherit the previous user's rendered state.
+ * picks one branch: the auth stack, a forced password change, or the app.
+ * the `key` remounts on change so a shared tablet drops the previous user's patient screens.
  */
 export default function RootNavigator() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);

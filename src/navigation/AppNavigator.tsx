@@ -53,17 +53,7 @@ import { OfflineStatusBar } from "@shared/offline/OfflineStatusBar";
 import { startRealtime } from "@shared/realtime/realtime";
 import { RealtimeAlerts } from "@shared/realtime/RealtimeAlerts";
 
-/**
- * Route name -> screen component.
- *
- * Kept here rather than on the nav items themselves so `navItems.ts` stays a
- * pure data module that anything can import without pulling in the entire
- * screen graph.
- *
- * Entries not yet built resolve to a placeholder. That is deliberate for the
- * foundation phase: the navigation, permissions and routing are exercised for
- * real now, and each phase swaps its placeholders for the real screens.
- */
+/** route name -> screen component; kept out of navItems.ts so that stays a pure data module. */
 const SCREENS: Record<string, React.ComponentType<Record<string, unknown>>> = {
   Dashboard: DashboardScreen,
   Patients: PatientsNavigator,
@@ -116,8 +106,7 @@ export default function AppNavigator() {
   const drawerNav = useRef<DrawerContentComponentProps["navigation"] | null>(null);
   const items = useVisibleNavItems();
 
-  // Services that live as long as a signed-in session: the record mirror for
-  // this user, the offline write queue, and live updates on this user's token.
+  // session-scoped services; restarted when the signed-in user or token changes.
   const userId = useAuthStore((s) => s.user?.id);
   const token = useAuthStore((s) => s.token);
   useEffect(() => (userId ? startMirror(queryClient, userId) : undefined), [userId]);
@@ -139,9 +128,8 @@ export default function AppNavigator() {
   return (
     <View
       style={{ flex: 1 }}
-      // Every touch counts as activity for the idle sign-out, without taking
-      // the touch: returning false lets it through to whatever was pressed.
-      // (On the web, IdleTimeout listens to the window instead.)
+      // records activity for the idle sign-out without consuming the touch (false passes it on).
+      // on web, IdleTimeout listens to the window instead.
       onStartShouldSetResponderCapture={() => {
         recordActivity();
         return false;
@@ -185,9 +173,7 @@ export default function AppNavigator() {
           sceneStyle: { backgroundColor: palette.surface.secondary },
         }}
       >
-        {/* Only routes this role may reach are registered. A deep link to a
-            route absent from this list cannot render — the guard is the
-            absence of the screen, not a check inside it. */}
+        { /* only permitted routes are registered, so a deep link to any other cannot render. */ }
         {items.map((item) => {
           const Component = SCREENS[item.name] ?? PlaceholderScreen;
           return (

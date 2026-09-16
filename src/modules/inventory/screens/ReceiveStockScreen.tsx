@@ -12,14 +12,11 @@ import { useStockMode } from "@modules/inventory/StockMode";
 import { parseExpiry, formatExpiry } from "@modules/inventory/utils/expiry";
 import { LOCATION_LABELS, type StockLocation } from "@modules/inventory/types";
 
-/**
- * IN-01: record stock received against a supplier and invoice.
- *
- * The expiry is typed as printed on the pack — "03/2027" — and read back as a
- * date while it is typed. A two-digit year is refused here, on the bench, not
- * after the whole delivery has been keyed in.
- */
 
+/**
+ * record stock received against a supplier and invoice.
+ * expiry is typed as printed on the pack and parsed while typing; a two-digit year is refused.
+ */
 interface Line {
   key: number;
   itemId: string | null;

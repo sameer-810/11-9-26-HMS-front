@@ -1,19 +1,6 @@
 /**
- * Phase 11 gate — the gaps found checking the build against "User Story
- * Hospital Management" v1.0, in a real browser.
- *
- * What only a browser shows:
- *  - US-01  staff sign in with the employee ID on their badge; a screen left
- *           idle warns for a minute, can be kept, then signs out and says why;
- *  - US-05  dashboard cards open the list behind their number, and a figure
- *           administration may see but not list leads to its report instead;
- *  - US-17  a doctor's recommendation to admit waits on the admitted patients
- *           board, opens the admission form already filled in, or is closed
- *           with a reason;
- *  - US-04  the roles screen locks clinical access a role never had, applies a
- *           saved change to existing staff, and resets;
- *  - US-23  a ward allocation puts the ward's patients on a nurse's list;
- *  - US-39/41 doctor activity, downloaded as a real Excel workbook and PDF.
+ * phase 11 gate — the v1.0 user story gaps (US-01, 04, 05, 17, 23, 39, 41) in a real browser,
+ * against a live API on an in-memory mongo.
  *
  *   node tools/verifyStories.mjs
  */
@@ -80,7 +67,9 @@ const API = `http://127.0.0.1:${API_PORT}`;
 for (let waited = 0; ; waited += 300) {
   try {
     if ((await fetch(`${API}/health`)).ok) break;
-  } catch { /* not up */ }
+  } catch {
+    /* not up */
+    }
   if (waited > 40_000) throw new Error(`API did not start.\n${apiLog}`);
   await new Promise((r) => setTimeout(r, 300));
 }

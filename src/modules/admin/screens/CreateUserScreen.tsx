@@ -50,15 +50,8 @@ const EMPTY: CreateUserForm = {
 };
 
 /**
- * Flow 4, steps 1–5: create an account at a role.
- *
- * No password field. The server generates a readable temporary one, returns it
- * exactly once, and forces a change at first sign-in — so the form ends on a
- * screen whose only job is getting that credential to the person safely.
- *
- * Permissions are not set here. The account is created with the role's
- * defaults, and per-person adjustment happens on the account screen, where the
- * editor can show what this administrator is allowed to grant.
+ * Create an account at a role. No password field: the server issues a temporary one, shown once.
+ * Permissions start at role defaults; per-person changes happen on the account screen.
  */
 export default function CreateUserScreen() {
   const navigation = useNavigation<any>();
@@ -86,7 +79,7 @@ export default function CreateUserScreen() {
         role: v.role as Role,
         designation: v.designation || undefined,
         departmentId: v.departmentId || undefined,
-        // Clinical identity only for the roles it is printed for.
+        // clinical identity only for the roles it is printed for
         ...(clinical
           ? {
               registrationNumber: v.registrationNumber || undefined,

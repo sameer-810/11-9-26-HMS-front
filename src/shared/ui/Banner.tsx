@@ -23,15 +23,7 @@ interface Props {
   style?: StyleProp<ViewStyle>;
 }
 
-/**
- * Non-interrupting, operational feedback — "saved", "offline", "3 items need
- * attention".
- *
- * Deliberately separate from ClinicalAlert. A banner is for the state of the
- * software; ClinicalAlert is for the state of a patient. Sharing one component
- * between the two would let "changes saved" and "critical potassium" end up
- * looking like the same class of thing.
- */
+/** Non-interrupting software feedback ("saved", "offline"); patient state belongs in ClinicalAlert. */
 export function Banner({ tone = "info", title, message, action, onDismiss, style }: Props) {
   const t = TONES[tone];
   const Icon = t.Icon;

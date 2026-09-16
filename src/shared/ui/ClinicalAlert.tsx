@@ -7,30 +7,11 @@ import { Text } from "./Text";
 import { HStack, VStack } from "./Stack";
 import { Button } from "./Button";
 
-/**
- * The tiered clinical alert.
- *
- * Every interrupting alert in this application goes through here, so the rules
- * live in one place and stay enforceable:
- *
- *   - Interruptiveness matches the tier. `critical` blocks; `urgent` asks for an
- *     acknowledgement inline; `caution` and `normal` never interrupt at all.
- *     A low-value alert that blocks the screen is how a hospital trains its
- *     staff to dismiss alerts without reading them, and once that habit forms
- *     the important alert is dismissed too.
- *   - Title is short and sentence case. ALL CAPS measurably slows reading and
- *     these are the sentences nobody can afford to read slowly.
- *   - Body is capped at roughly 30 words. Longer alerts are not read.
- *   - The recommended action is the primary button; the override is secondary.
- *     Deliberate friction — the safe path should be the easy one.
- *   - Overriding a critical alert requires a typed reason. It forces a moment of
- *     thought, and it leaves the clinical reasoning in the record where the next
- *     person can see it.
- *
- * Anything wanting to bypass this has to justify it here rather than quietly in
- * a screen, which is the point.
- */
 
+/**
+ * Tiered clinical alert; every interrupting alert goes through here. Only critical and
+ * urgent tiers render; the safe action is primary and critical overrides need a reason.
+ */
 const ICONS = {
   critical: OctagonAlert,
   urgent: TriangleAlert,
@@ -83,9 +64,7 @@ export function ClinicalAlert({
   const Icon = ICONS[level];
   const needsReason = tier.requireReason;
 
-  // A non-blocking tier has no business rendering a modal. If a caller asks for
-  // one, that is a bug in the caller — render nothing rather than teach staff
-  // that a caution-level finding is worth stopping for.
+  // Lower tiers never get a modal; a caller asking for one is a bug.
   if (tier.presentation !== "blocking" && tier.presentation !== "confirm") return null;
 
   const reasonOk = reason.trim().length >= MIN_REASON;
@@ -124,7 +103,7 @@ export function ClinicalAlert({
                 <Text variant="overline" style={{ color: s.text }}>
                   {s.label}
                 </Text>
-                {/* Sentence case, short. Never uppercased in code. */}
+                { /* Sentence case, short. Never uppercased in code. */ }
                 <Text variant="h2" tone="primary" heading={2}>
                   {title}
                 </Text>
@@ -181,8 +160,7 @@ export function ClinicalAlert({
               </Text>
             ) : null}
 
-            {/* The safe action is primary and sits on the right, where the
-                confirming tap lands. The override is quieter on purpose. */}
+            { /* Safe action is primary, on the right; the override is deliberately quieter. */ }
             <HStack gap={10} justify="flex-end" style={{ marginTop: 18 }} wrap>
               {onOverride ? (
                 <Button
@@ -259,5 +237,5 @@ const styles = StyleSheet.create({
   },
 });
 
-/** Unused export kept alongside so callers can reason about tiers without importing the token file. */
+/** Re-exported so callers can read tiers without importing the token file. */
 export { alertTier };

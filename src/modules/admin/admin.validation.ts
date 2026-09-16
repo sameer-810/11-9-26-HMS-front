@@ -1,14 +1,9 @@
 import { z } from "zod";
 import { ROLES } from "@shared/permissions";
 
-/**
- * Client-side mirrors of user.validation.js.
- *
- * Checked here so an administrator learns about a malformed email before the
- * round trip, not instead of it — the server re-validates everything, and its
- * refusals (a clashing employee ID, a taken email) are shown as it words them.
- */
 
+// client-side mirrors of user.validation.js; the server re-validates everything
+// and its refusals (clashing employee ID, taken email) are shown as worded.
 const phone = z
   .string()
   .trim()

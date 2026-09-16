@@ -1,14 +1,6 @@
 /**
- * What the 2D code on a label carries.
- *
- * `HMS1|P|<patientId>` on a wristband, `HMS1|S|<sampleId>` on a tube. The kind
- * letter means nothing has to be inferred from the shape of an identifier, and
- * the version means a later format can be refused instead of misread.
- *
- * The server's `scanCode.js` is the reader and the authority; this is only the
- * writer. The identifier check below mirrors its alphabet so a label is never
- * printed carrying something the scan endpoint will refuse — a band that
- * cannot scan is found out at the bedside, not at the printer.
+ * 2D label payloads: `HMS1|P|<patientId>` on wristbands, `HMS1|S|<sampleId>` on tubes.
+ * The server's scanCode.js reads them; IDENTIFIER mirrors its alphabet so every printed label scans.
  */
 
 export const SCAN_PAYLOAD_VERSION = "HMS1";

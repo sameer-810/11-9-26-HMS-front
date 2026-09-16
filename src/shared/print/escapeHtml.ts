@@ -1,12 +1,6 @@
 /**
- * Every value interpolated into a printed document goes through this.
- *
- * Printed documents are built as HTML strings, and the strings come from the
- * record: names, allergy substances, instructions, lab comments. Any of those
- * can contain `<` — "<5 mmol/L" is a real result — and a name typed as
- * `<img src=x onerror=…>` would otherwise run in the print frame with this
- * app's origin and session. Escaping at the one interpolation helper, rather
- * than per field, means a new field cannot be added unescaped by forgetting.
+ * HTML escaping for printed documents. All interpolation goes through `html`, so record
+ * text (which can contain `<`) can never inject markup into the print frame.
  */
 const ENTITIES: Record<string, string> = {
   "&": "&amp;",
@@ -22,22 +16,12 @@ export function escapeHtml(value: unknown): string {
   return String(value).replace(/[&<>"'`]/g, (c) => ENTITIES[c]);
 }
 
-/**
- * Tagged template that escapes every interpolation.
- *
- * `raw()` marks markup this module built itself (a barcode SVG, a nested
- * fragment) as already safe. Anything else — including a number — is escaped.
- */
+/** Markup from `html` or `raw()`; every other interpolated value is escaped. */
 export interface SafeHtml {
   readonly __html: string;
 }
 
-/**
- * Only markup made by `raw()` or `html` is trusted — not anything shaped like
- * it. Record fields arrive as parsed JSON, and a field that came back as
- * `{ "__html": "<img onerror=…>" }` must be escaped like any other value rather
- * than waved through because it has the right key.
- */
+/** Trust only objects minted here, not any JSON that happens to have an `__html` key. */
 const minted = new WeakSet<object>();
 
 function mint(markup: string): SafeHtml {

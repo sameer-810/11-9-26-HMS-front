@@ -18,13 +18,7 @@ import { formatCalendarDate, formatWallTime } from "@shared/format";
 import { useAppointment } from "@modules/appointment/hooks/useAppointments";
 import type { PatientBanner } from "@modules/patient/types";
 
-/**
- * Confirmation.
- *
- * Exists so the desk has something to read back to the patient and, later,
- * something to print. The appointment number is the thing the patient quotes
- * on the phone, so it is the largest element on the screen.
- */
+/** Booking confirmation for the desk to read back; the appointment number is shown largest. */
 export default function AppointmentBookedScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
@@ -75,7 +69,7 @@ export default function AppointmentBookedScreen() {
               </VStack>
             </HStack>
 
-            {/* The number the patient will quote on the phone. */}
+            { /* The number the patient will quote on the phone. */ }
             <View style={numberBox}>
               <Text variant="overline" tone="tertiary">
                 Appointment number

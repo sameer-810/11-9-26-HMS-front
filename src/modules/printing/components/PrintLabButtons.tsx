@@ -10,12 +10,8 @@ import { buildLabReport } from "@modules/printing/documents/labReport";
 import { PrintButton } from "./PrintButton";
 
 /**
- * The tube label, once a sample number exists.
- *
- * The patient is fetched at press time for the date of birth, which the order's
- * identity band does not carry. A tube is checked against the request form by
- * name AND a second identifier, and the date of birth is the one a patient can
- * confirm out loud at the bedside.
+ * Tube label, once a sample number exists. The patient is fetched on press for the date of birth
+ * (the second identifier), which the order's banner lacks.
  */
 export function PrintTubeLabelButton({ order }: { order: LabOrder }) {
   const qc = useQueryClient();
@@ -55,7 +51,7 @@ export function PrintTubeLabelButton({ order }: { order: LabOrder }) {
   );
 }
 
-/** The report, for a reported order only — the caller hides it otherwise, and the builder refuses. */
+/** Lab report print, for reported orders only (the builder also refuses otherwise). */
 export function PrintLabReportButton({ order }: { order: LabOrder }) {
   const hospitalName = useAuthStore((s) => s.hospital?.name ?? "");
   const printedBy = useAuthStore((s) => s.user?.fullName ?? "");

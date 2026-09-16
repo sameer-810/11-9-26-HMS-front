@@ -1,12 +1,10 @@
 import { shortDate } from "@shared/format";
 import type { PrintAllergies } from "@modules/printing/types";
 
-/**
- * Rules every printed document shares, so a wristband and the prescription
- * handed over with it cannot disagree about how a name or an allergy reads.
- */
 
-/** "1 Jan 1970". Month as a word, so 03/04 is never read the American way. */
+/** Name, date and allergy formatting shared by every printed document. */
+
+/** "1 Jan 1970": month as a word, so the date is never ambiguous. */
 export function formatDob(dateOfBirth: string | null | undefined): string | null {
   if (!dateOfBirth) return null;
   const calendar = String(dateOfBirth).slice(0, 10);
@@ -30,17 +28,8 @@ export interface PrintedName {
 }
 
 /**
- * The name as identity labels print it: SURNAME, Given.
- *
- * The surname in capitals is the wristband convention (NPSA 2007, "Standardising
- * wristbands improves patient safety") — two patients called Priya on one ward
- * are told apart by the surname, so it is the part that must be read first. The
- * design system's no-ALL-CAPS rule is about sentences someone has to read
- * quickly; a surname on a label is matched, not read.
- *
- * An unidentified emergency patient is registered as "Unidentified ED-000042"
- * (emergency.service.js). That prints as UNIDENTIFIED with the visit number,
- * never as a surname "ED-000042" that looks like a real person's.
+ * "SURNAME, Given" per the NPSA wristband convention. Unidentified ED patients print
+ * as UNIDENTIFIED plus visit number, never with "ED-000042" as a surname.
  */
 export function printedName(firstName: string, lastName: string): PrintedName {
   const first = (firstName || "").trim();
@@ -55,12 +44,8 @@ export function printedName(firstName: string, lastName: string): PrintedName {
 export type AllergyState = "known" | "none" | "unrecorded";
 
 /**
- * The allergy statement, never blank.
- *
- * "Not recorded" and "none" are opposite clinical statements (CLINICAL_SAFETY
- * §2) and each prints as words. When the list is too long for the space, the
- * substances that fit are printed and the rest are COUNTED — "+2 more, see
- * record" — because a silently truncated allergy list reads as a complete one.
+ * Allergy statement, never blank. "Not recorded" and "none" both print as words;
+ * overflow is counted ("+2 more"), as a silently truncated list reads as complete.
  */
 export function allergyStatement(
   { recorded, allergies }: PrintAllergies,
@@ -80,9 +65,7 @@ export function allergyStatement(
   const full = prefix + names.join(", ");
   if (full.length <= maxChars) return { state: "known", text: full };
 
-  // The instruction to look at the record is dropped before the most dangerous
-  // substance is: "ALLERGIES: Penicillin +3 more" still stops a hand reaching
-  // for amoxicillin; "4 recorded" does not.
+  // Drop "see record" before dropping the most dangerous substance name.
   for (const suffix of [" more, see record", " more"]) {
     for (let shown = names.length - 1; shown >= 1; shown--) {
       const text = `${prefix}${names.slice(0, shown).join(", ")} +${names.length - shown}${suffix}`;

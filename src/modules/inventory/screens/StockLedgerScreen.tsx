@@ -8,11 +8,8 @@ import { useStockMovements } from "@modules/inventory/hooks/useInventory";
 import { MOVEMENT_LABELS, type MovementType } from "@modules/inventory/types";
 
 /**
- * IN-04: where stock went.
- *
- * Read-only by construction — the ledger refuses edits at the model. A
- * dispensed movement names its prescription number and never its patient: the
- * store holds no patient access, and does not need it to trace a box.
+ * stock ledger: every movement in and out, read-only at the model.
+ * a dispensed movement names its prescription number, never its patient.
  */
 export default function StockLedgerScreen() {
   const [type, setType] = useState<"all" | MovementType>("all");

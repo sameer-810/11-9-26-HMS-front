@@ -29,10 +29,8 @@ export interface SessionSummary {
 
 export const authApi = {
   /**
-   * Which hospitals these credentials open, for the picker.
-   *
-   * The password is required by the server: an email alone used to be enough,
-   * which let anyone look up where a named member of staff works.
+   * Hospitals these credentials open, for the picker.
+   * The server needs the password so an email alone cannot reveal where someone works.
    */
   hospitalsForEmail: async (params: { identifier: string; password: string }) => {
     const res = await apiClient.post<{ data: { hospitals: HospitalChoice[] } }>(
@@ -52,13 +50,7 @@ export const authApi = {
     return res.data.data;
   },
 
-  /**
-   * Deliberately uses a bare axios call rather than `apiClient`.
-   *
-   * The shared client's 401 interceptor calls refresh — so refreshing through
-   * it risks a loop where a failing refresh triggers another refresh. Keeping
-   * this one off the interceptor chain makes that impossible by construction.
-   */
+  /** Bare axios, not `apiClient`: its 401 interceptor calls refresh and could loop. */
   refresh: async (refreshToken: string) => {
     const res = await axios.post<{
       data: { accessToken: string; refreshToken: string };

@@ -36,13 +36,7 @@ const STATUS_CHIPS = [
   { key: "inactive", label: "Deactivated" },
 ];
 
-/**
- * Every staff account in this hospital.
- *
- * Deactivated accounts are listed rather than hidden by default, because they
- * are never deleted — history stays attached to them — and the question "did
- * we already make an account for this person?" has to find them.
- */
+/** Staff accounts. Deactivated ones are listed by default (never deleted) to avoid duplicate accounts. */
 export default function UsersScreen() {
   const navigation = useNavigation<any>();
   const [search, setSearch] = useState("");

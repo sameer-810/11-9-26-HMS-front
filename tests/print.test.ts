@@ -13,15 +13,11 @@ import { allergyStatement, printedName, formatDob } from "../src/modules/printin
 import { buildWristband, WRISTBAND_STOCK } from "../src/modules/printing/documents/wristband";
 import { buildSpecimenLabel } from "../src/modules/printing/documents/specimenLabel";
 
-/**
- * The printing core: sizes that stay physical, codes that scan, and a band
- * that is never blank where it matters.
- *
- * The browser gate (tools/verifyPrinting.mjs) measures a real PDF and decodes a
- * real render. These pin the arithmetic underneath it, where a regression is a
- * one-line diff rather than a label that will not scan on a ward.
- */
 
+/**
+ * printing core: physical sizes, scannable codes, escaping and label content.
+ * the browser-level check lives in tools/verifyPrinting.mjs.
+ */
 const here = path.dirname(fileURLToPath(import.meta.url));
 const serverScanCode = path.resolve(here, "..", "..", "11-9-26-HMS-back", "src", "modules", "patient", "scanCode.js");
 
@@ -40,8 +36,8 @@ const anita = {
 
 const widthOf = (svg: string) => Number(/width="([\d.]+)mm"/.exec(svg)?.[1]);
 
-// ---- Units ----------------------------------------------------------------
 
+// ---- Units ----------------------------------------------------------------
 test("mm and points convert exactly, as expo-print sizes a page in points", () => {
   assert.equal(mmToPt(25.4), 72);
   assert.ok(Math.abs(mmToPt(25) - 70.866) < 0.001);
@@ -71,8 +67,8 @@ test("a symbol that cannot fit at the minimum module says so rather than shrinki
   assert.ok(fit.moduleMm >= MIN_NARROW_BAR_MM);
 });
 
-// ---- Barcodes ---------------------------------------------------------------
 
+// ---- Barcodes ---------------------------------------------------------------
 test("Code 128 is drawn exactly modules × module width wide", () => {
   const sym = code128("CGH-P000001", { heightMm: 15, availableMm: 72, maxDots: 3 });
   assert.equal(sym.modules, 134);
@@ -83,10 +79,7 @@ test("Code 128 is drawn exactly modules × module width wide", () => {
   assert.match(sym.svg, /height="15mm"/);
 });
 
-/**
- * The app reads module counts off the SVG, because `raw()` needs a canvas in
- * the browser build. Under Node `raw()` works, so it is the independent answer.
- */
+/** the app counts modules from the SVG (raw() needs a canvas in the browser); under node raw() cross-checks it. */
 test("module counts read from the SVG agree with bwip-js's own encoder", () => {
   for (const text of ["CGH-P000001", "SMP-000001", "OGH-P123456", "A1"]) {
     const [symbol] = bwipjs.raw({ bcid: "code128", text }) as unknown as { sbs: number[] }[];
@@ -107,8 +100,8 @@ test("DataMatrix modules are square and sized from the module count", () => {
   assert.ok(sym.widthMm + 2 * sym.quietMm <= 22);
 });
 
-// ---- Payload ----------------------------------------------------------------
 
+// ---- Payload ----------------------------------------------------------------
 test("the payload the label carries is the payload the server reads", async () => {
   const { parseScanCode } = (await import(pathToFileURL(serverScanCode).href)) as {
     parseScanCode: (raw: string) => { ok: boolean; kind?: string; id?: string };
@@ -125,8 +118,8 @@ test("a label is never printed carrying something the scan endpoint will refuse"
   assert.throws(() => patientPayload(""));
 });
 
-// ---- Escaping -----------------------------------------------------------------
 
+// ---- Escaping -----------------------------------------------------------------
 test("every interpolated value is escaped; only markup this code built is not", () => {
   assert.equal(escapeHtml(`<img src=x onerror="a('b')">&`), "&lt;img src=x onerror=&quot;a(&#39;b&#39;)&quot;&gt;&amp;");
   assert.equal(escapeHtml(null), "");
@@ -134,8 +127,8 @@ test("every interpolated value is escaped; only markup this code built is not", 
   assert.equal(out, `<p title="&quot;&gt;&lt;script&gt;">&lt;5 mmol/L<b>ok</b><i>&lt;</i></p>`);
 });
 
-// ---- Content rules ------------------------------------------------------------
 
+// ---- Content rules ------------------------------------------------------------
 test("allergy status is three statements, and none of them is blank", () => {
   assert.deepEqual(allergyStatement({ recorded: false, allergies: [] }), { state: "unrecorded", text: "Allergies not recorded" });
   assert.deepEqual(allergyStatement({ recorded: true, allergies: [] }), { state: "none", text: "No known allergies" });
@@ -180,8 +173,8 @@ test("names print SURNAME first; an unidentified patient prints as unidentified"
   assert.equal(formatDob(null), null);
 });
 
-// ---- Documents ---------------------------------------------------------------
 
+// ---- Documents ---------------------------------------------------------------
 test("the adult wristband is a 25 × 280 mm page with the band's safety content", () => {
   const job = buildWristband(anita);
   assert.equal(job.widthMm, WRISTBAND_STOCK.adult.widthMm);

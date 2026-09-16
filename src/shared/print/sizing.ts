@@ -1,35 +1,15 @@
 /**
- * Physical sizes, in millimetres, and the arithmetic that keeps them physical.
- *
- * Everything printed in this app is specified in mm, because the things it is
- * printed on — wristband stock, tube labels, A5 and A4 — are specified in mm.
- * Pixels are the unit of the screen the document was designed on, and a label
- * designed in pixels comes out whatever size the driver guesses.
- *
- * Pure: no React Native, no DOM, so it is unit-tested directly.
+ * Print sizing in millimetres (labels and paper are specified in mm, not pixels).
+ * Pure: no React Native or DOM, so it is unit-tested directly.
  */
 
 export const MM_PER_INCH = 25.4;
 export const POINTS_PER_INCH = 72;
 
-/**
- * The thermal head this sizing targets. 203 dpi (8 dots/mm) is the resolution
- * of practically every desktop wristband and specimen-label printer a hospital
- * buys — Zebra HC100 / ZD410 / ZD621, Brother TD-4 series, Honeywell PC42. A
- * 300 dpi head divides the same modules more finely, so what is right at 203
- * is right there too; the reverse is not true.
- */
+/** Target thermal head: 203 dpi, the common label printer resolution. Sizes also work at 300 dpi. */
 export const THERMAL_DPI = 203;
 
-/**
- * The narrowest bar we will print. At 203 dpi that is two dots (0.2502 mm).
- *
- * One dot is physically printable and practically unreadable: a single burnt
- * dot bleeds on direct-thermal stock, a worn head drops it entirely, and a
- * wristband is scanned through a plastic sleeve, curved round a wrist, in a
- * dim room at 3am. The scanners on a ward are set up for ≥ 10 mil (0.254 mm)
- * symbols; 0.25 mm is the floor, not the target.
- */
+/** Narrowest printable bar: two dots at 203 dpi. One-dot bars bleed or drop out on thermal stock. */
 export const MIN_NARROW_BAR_MM = 0.25;
 
 /** Points, the unit `expo-print` sizes a page in (1 pt = 1/72 inch). */
@@ -59,16 +39,8 @@ export interface ModuleFit {
 }
 
 /**
- * The module size for a symbol, as a WHOLE number of printer dots.
- *
- * Why whole dots rather than "scale it to the space": a module of 2.4 dots is
- * printed as 2 dots in some places and 3 in others, depending on where it falls
- * against the head's dot grid. The bars and spaces then no longer share one
- * width ratio, and Code 128 decodes by ratio — a symbol that looks perfect on
- * screen fails at the bedside. Snapping to dots keeps every module identical.
- *
- * Takes the largest module that fits, capped at `maxDots`: bigger reads from
- * further away and through a creased sleeve, but a band is also only so long.
+ * Largest module that fits (capped at `maxDots`), in WHOLE printer dots.
+ * Fractional dots print unevenly and break Code 128's bar-width ratios.
  */
 export function fitModule({
   modules,
@@ -103,7 +75,7 @@ export function fitModule({
   };
 }
 
-/** Rounded for CSS. Four places is a tenth of a micron — well below a dot. */
+/** Rounded to four places for CSS, far below one dot. */
 export function mm(value: number): string {
   return `${Number(value.toFixed(4))}mm`;
 }

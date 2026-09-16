@@ -19,14 +19,7 @@ interface Props {
   testID?: string;
 }
 
-/**
- * A labelled checkbox.
- *
- * A row rather than a bare switch because every place this is used — the
- * permission editor, bed equipment, the clinical flag — needs the consequence
- * spelled out beside the control. An unlabelled toggle next to "record.view" is
- * how access gets granted by someone who did not know what it exposed.
- */
+/** Labelled checkbox row with description, so each toggle's consequence is spelled out. */
 export function ToggleRow({
   label,
   description,

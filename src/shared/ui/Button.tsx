@@ -46,14 +46,7 @@ const DESKTOP = {
   lg: { height: 40, px: 18, fontSize: 14 },
 } as const;
 
-/**
- * Phone sizes never drop below 44pt regardless of the requested size.
- *
- * WCAG 2.5.5 asks for 44; a ward tablet is often operated with a gloved hand,
- * and a mis-tap in this app can open the wrong patient. An `xs` button on a
- * phone is therefore visually small and physically full-size — the padding
- * shrinks, the target does not.
- */
+/** Phone sizes never drop below the 44pt touch target (WCAG 2.5.5); only padding shrinks. */
 const PHONE = {
   xs: { height: layout.minTouchTarget, px: 12, fontSize: 13 },
   sm: { height: layout.minTouchTarget, px: 14, fontSize: 13 },
@@ -161,8 +154,7 @@ function getVariantColors(v: Variant) {
         border: palette.danger.text,
         borderWidth: 0,
       };
-    // Reserved for the confirm action inside a critical clinical alert, so it
-    // is visually distinct from an ordinary destructive action like "delete".
+    // Only for confirming inside a critical clinical alert; distinct from "destructive".
     case "critical":
       return {
         bg: signal.critical.color,

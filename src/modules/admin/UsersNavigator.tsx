@@ -14,11 +14,8 @@ export type UsersStackParamList = {
 const Stack = createNativeStackNavigator<UsersStackParamList>();
 
 /**
- * Staff accounts — list, create, one account.
- *
- * Create is its own screen rather than a panel on the list because it ends on
- * the one-time temporary password, and that deserves the whole screen: an
- * administrator reading it aloud should not have a list scrolling beside it.
+ * staff accounts stack: list, create, detail.
+ * create is a full screen because it ends on the one-time temporary password.
  */
 export default function UsersNavigator() {
   return (

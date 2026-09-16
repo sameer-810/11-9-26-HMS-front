@@ -9,13 +9,8 @@ import { formatDateTime, formatRupees } from "@shared/format";
 import { useReceipt } from "@modules/billing/hooks/useBilling";
 
 /**
- * BL-04: a printable receipt for a payment.
- *
- * The amount appears in figures AND in words, because the words are what is
- * checked against the figure — "₹1,250" misread as "₹12,50" is caught by
- * "One Thousand Two Hundred Fifty". A voided payment's receipt still opens, and
- * says VOID across it; a receipt that simply disappears is one a patient
- * cannot use to show what happened.
+ * BL-04 printable receipt. Amount in figures and words (catches misreads);
+ * voided payments still open, marked VOID.
  */
 export default function ReceiptScreen() {
   const route = useRoute<any>();

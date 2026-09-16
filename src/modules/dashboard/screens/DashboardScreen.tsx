@@ -36,17 +36,8 @@ interface Target {
 }
 
 /**
- * AC-02: the dashboard is built from the role.
- *
- * The tiles rendered here are exactly the tiles the server chose to compute for
- * this user — nothing is fetched and then hidden, so a figure a receptionist
- * must not see never reaches their device at all.
- *
- * US-05: every tile opens the list behind its number. A tile only becomes a
- * button when this user can reach where it leads — a figure administration
- * may see but whose list it may not open (total patients) leads to the report
- * instead, and a tile with nowhere to go stays a plain number rather than a
- * button that goes nowhere.
+ * Role-based dashboard (AC-02): renders only the tiles the server computed for this user.
+ * Tiles open their list when reachable (US-05), else a report, else stay plain numbers.
  */
 export default function DashboardScreen() {
   const navigation = useNavigation<any>();
@@ -201,8 +192,6 @@ export default function DashboardScreen() {
                       sublabel={`of ${tiles.beds.total}`}
                       icon={BedDouble}
                       accent="green"
-                      // Nearly full is an operational problem the ward needs to
-                      // see before the next admission arrives, not after.
                       attention={tiles.beds.occupancyPercent >= 90}
                       testID="tile-beds"
                       {...open({ route: "Beds", hint: "Opens bed management" })}
@@ -245,11 +234,7 @@ export default function DashboardScreen() {
                         { route: "LabReports", hint: "Opens lab reports" },
                       )}
                     />
-                    {/*
-                      Beside the pending count, never instead of it. "12 pending"
-                      without "1 critical nobody has acknowledged" is the wrong
-                      number to lead with.
-                    */}
+                    { /* Shown beside the pending count, never instead of it. */ }
                     <StatTile
                       label="Critical, unacknowledged"
                       value={tiles.lab.criticalOpen}
@@ -292,7 +277,7 @@ export default function DashboardScreen() {
                         { route: "MedicineStock", params: { screen: "LowStock" }, hint: "Opens low stock" },
                       )}
                     />
-                    {/* A separate tile: expired stock is a different problem, and the one that ends with an expired box handed over. */}
+                    { /* Separate tile: expired stock is a different problem from low stock. */ }
                     <StatTile
                       label="Expired on the shelf"
                       value={tiles.inventory.expiredOnShelf}

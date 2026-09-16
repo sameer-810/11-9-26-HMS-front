@@ -2,13 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@api/apiClient";
 import type { DepartmentSummary, DoctorSummary } from "@modules/appointment/types";
 
-/**
- * Departments and doctors.
- *
- * Lives here rather than in its own module because these two lists exist only
- * to populate pickers — appointment, admission, user assignment. A module of
- * its own would be a folder containing two queries.
- */
+/** Department and doctor lists for pickers (appointment, admission, user assignment). */
 export const useDepartments = (params?: { isClinical?: boolean }) =>
   useQuery({
     queryKey: ["departments", params],

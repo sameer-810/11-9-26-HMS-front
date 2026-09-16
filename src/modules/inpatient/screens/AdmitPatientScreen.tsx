@@ -22,20 +22,11 @@ import { useSelectableBeds } from "@modules/inpatient/hooks/useBeds";
 import { useAdmit } from "@modules/inpatient/hooks/useInpatient";
 import type { PatientBanner } from "@modules/patient/types";
 
-/**
- * IP-01: admit a patient.
- *
- * ---------------------------------------------------------------------------
- * Bed choice is the whole screen
- * ---------------------------------------------------------------------------
- * Everything else here is text. The one thing that can go wrong in a way that
- * matters is the bed: pick one that has just been taken and a second patient is
- * sent to an occupied bay. So the bed list is never cached, unavailable beds
- * are shown with their reason rather than hidden, and a losing race comes back
- * as "someone was admitted to that bed a moment ago" rather than a generic
- * failure.
- */
 
+/**
+ * IP-01: admit a patient. The bed list is never cached, unavailable beds show their reason,
+ * and a lost bed race is reported as such rather than as a generic failure.
+ */
 const ADMISSION_TYPES = [
   { value: "planned", label: "Planned" },
   { value: "emergency", label: "Emergency" },

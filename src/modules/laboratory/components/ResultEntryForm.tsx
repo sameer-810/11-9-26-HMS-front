@@ -9,21 +9,8 @@ import { LabFlagGlyph, previewFlag, flagPresentation } from "./LabFlag";
 import type { LabOrder, LabEntryParameter } from "@modules/laboratory/types";
 
 /**
- * LB-04: entering results against reference ranges.
- *
- * Each field shows the range for THIS patient — sex and age applied — with the
- * basis stated, and a flag that appears as the value is typed. The flag that
- * is saved is the server's; the one on screen exists so a technician sees a
- * potassium of 6.9 turn critical before they press save rather than after.
- *
- * Mount with a `key` that changes when the server's results change. The form
- * then starts from what was saved, without copying server state into local
- * state inside an effect.
- *
- * The confirmation banners after a save are derived from the SAVED ORDER, not
- * held in local state. They were held in state once, and the remount that a
- * save causes threw them away — so the technician typed a critical potassium,
- * pressed save, and the server's confirmation vanished before it was read.
+ * result entry against this patient's ranges; the flag saved is always the server's.
+ * mount with a `key` that changes on save; banners derive from the order, as a remount drops state.
  */
 export function ResultEntryForm({ order }: { order: LabOrder }) {
   const [values, setValues] = useState<Record<string, string>>(() =>

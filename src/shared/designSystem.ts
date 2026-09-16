@@ -1,45 +1,12 @@
 /**
- * HMS design system.
- *
- * ---------------------------------------------------------------------------
- * The one rule everything else follows
- * ---------------------------------------------------------------------------
- * Colour is reserved for clinical signal. Red, amber and green mean something
- * specific at a bedside, and they must not also mean "this is our brand" or
- * "this button is the important one". So the brand is BLUE, the interface is
- * near-monochrome, and the signal ramp below is the only place warm colour and
- * green appear.
- *
- * That is why the primary action colour is not green even though green reads as
- * "health": a green Save button sitting beside a green "Normal" result badge
- * teaches staff to stop reading green as a clinical answer. Once that happens
- * the whole signal system is decoration.
- *
- * ---------------------------------------------------------------------------
- * Where the alert rules come from
- * ---------------------------------------------------------------------------
- * The `signal` ramp and the `alertTier` model implement published EHR alerting
- * guidance rather than taste:
- *   - at most four alert colours, or staff stop distinguishing them;
- *   - every colour paired with a SHAPE, because roughly 1 in 12 men has a
- *     colour vision deficiency and a red/green-only scheme is invisible to them;
- *   - interruptiveness matched to severity — a low-value alert that interrupts
- *     is how a hospital trains its staff to dismiss alerts unread;
- *   - sentence case, never ALL CAPS, which measurably slows reading.
- *
- * ---------------------------------------------------------------------------
- * Accessibility floor
- * ---------------------------------------------------------------------------
- * WCAG 2.1 AA throughout: 4.5:1 for body text, 3:1 for large text and UI
- * boundaries. Contrast ratios against their stated background are recorded
- * beside each status pair so a future edit cannot quietly drop below the line.
- * Touch targets are 44px on phone, because the person tapping may be wearing
- * gloves.
+ * HMS design tokens. Brand is blue; red/amber/green are reserved for clinical signal.
+ * WCAG 2.1 AA throughout; contrast ratios are noted beside each status pair.
  */
 
 // ---------------------------------------------------------------------------
 // Palette
 // ---------------------------------------------------------------------------
+
 
 export const palette = {
   /** Cool slate. The interface is built almost entirely out of this ramp. */
@@ -127,26 +94,21 @@ export const palette = {
   },
 
   // ---- Generic UI status (banners, toasts, form feedback) ------------------
-  // Distinct from the clinical `signal` ramp below on purpose: "saved
-  // successfully" and "this patient's potassium is lethal" must not share a
-  // visual language.
+  // Deliberately separate from the clinical `signal` ramp.
   success: { bg: "#E6F4EC", text: "#0B6B3F", border: "#B6E0C9" }, // 6.05:1
   warning: { bg: "#FDF2DC", text: "#8A5304", border: "#F5DDA8" }, // 6.34:1
   danger: { bg: "#FCEAE8", text: "#A82418", border: "#F5C6C0" }, // 6.48:1
   info: { bg: "#E9F1FB", text: "#104E82", border: "#C3DBF2" }, // 7.12:1
 } as const;
 
+
 // ---------------------------------------------------------------------------
 // Clinical signal — the sacred ramp
 // ---------------------------------------------------------------------------
 
 /**
- * Four tiers, no more.
- *
- * `shape` is not decorative. It is the redundant encoding that keeps the tier
- * readable to a colour-blind clinician, and every component that renders a
- * signal MUST render the shape alongside the colour. A bare coloured dot is a
- * bug, not a style choice.
+ * Clinical alert tiers (four, no more). Always render `shape` with the colour
+ * so the tier stays readable to colour-blind staff.
  */
 export const signal = {
   /** Act now. Anaphylaxis risk, critical lab value, arrest call, ESI 1. */
@@ -198,22 +160,8 @@ export const signal = {
 export type SignalLevel = keyof typeof signal;
 
 /**
- * How intrusive an alert of a given tier is allowed to be.
- *
- * Deliberately a data table rather than a decision scattered across screens.
- * When someone later asks for "just one more popup", the request has to be made
- * here, in one place, where the cost is visible.
- *
- *  - `blocking`  — a modal the user must resolve. Reserved for critical.
- *  - `confirm`   — inline, but the action cannot proceed unacknowledged.
- *  - `inline`    — shown in place, no interruption.
- *  - `passive`   — a badge or row tint only.
- *
- * `requireReason` implements the override rule: dismissing a critical alert
- * means typing why, which both forces a moment of thought and leaves a record
- * behind. The absence of that field on lower tiers is equally deliberate —
- * demanding a rationale for a routine alert is how you get "asdf" typed a
- * hundred times a day.
+ * How intrusive each tier may be: blocking modal, confirm, inline, or passive badge.
+ * Only critical overrides require a typed reason, so routine alerts do not breed junk reasons.
  */
 export const alertTier = {
   critical: { presentation: "blocking", requireReason: true, dismissible: false },
@@ -222,13 +170,7 @@ export const alertTier = {
   normal: { presentation: "passive", requireReason: false, dismissible: true },
 } as const;
 
-/**
- * Where a measured value sits against its reference range.
- *
- * `criticalLow`/`criticalHigh` are not just "further out" — they are the panic
- * values that trigger an escalation to the ordering clinician, which is a
- * different thing from an out-of-range flag on a chart.
- */
+/** Result flags against the reference range; critical ones are panic values that escalate. */
 export const valueFlag = {
   criticalLow: { signal: "critical" as SignalLevel, glyph: "LL", label: "Critically low" },
   low: { signal: "urgent" as SignalLevel, glyph: "L", label: "Low" },
@@ -256,18 +198,12 @@ export const bedState = {
   maintenance: { label: "Under maintenance", color: "#5B6779", bg: "#EDF0F4", border: "#DCE1E7" },
 } as const;
 
+
 // ---------------------------------------------------------------------------
 // Dark theme
 // ---------------------------------------------------------------------------
 
-/**
- * Night shift is not an edge case — a ward runs 24 hours and an ICU at 03:00 is
- * a dim room. This is an elevation model, not an inversion: surfaces get
- * lighter as they come forward, the way they do in daylight.
- *
- * The signal ramp is re-tuned rather than reused. The daylight reds and ambers
- * glare on a dark surface and lose their ordering against each other.
- */
+/** Dark theme: raised surfaces get lighter (elevation, not inversion). */
 export const darkPalette = {
   surface: {
     primary: "#141C2B",
@@ -300,6 +236,7 @@ export const darkPalette = {
   info: { bg: "#0E2842", text: "#79B6E8", border: "#1C4468" },
 } as const;
 
+/** Signal ramp re-tuned for dark surfaces, where daylight reds and ambers glare. */
 export const darkSignal = {
   critical: {
     color: "#F2655A",
@@ -343,10 +280,10 @@ export const darkSignal = {
   },
 } as const;
 
+
 // ---------------------------------------------------------------------------
 // Status accents — KPI tiles and chart series
 // ---------------------------------------------------------------------------
-
 export const accents = {
   clinical: { color: "#1463A6", tint: "#E9F1FB" },
   teal: { color: "#10806F", tint: "#E3F4F1" },
@@ -357,11 +294,7 @@ export const accents = {
   neutral: { color: "#5B6779", tint: "#EDF0F4" },
 } as const;
 
-/**
- * Categorical series for charts, ordered so that adjacent entries stay
- * distinguishable in greyscale and to the common colour vision deficiencies.
- * Never assign these by hashing a label — walk the array in order.
- */
+/** Chart series colours, ordered for greyscale/CVD contrast. Assign in order, never by hash. */
 export const chartSeries = [
   "#1463A6",
   "#10806F",
@@ -372,6 +305,7 @@ export const chartSeries = [
   "#5B6779",
   "#4A9BDA",
 ] as const;
+
 
 // ---------------------------------------------------------------------------
 // Spacing, radius, elevation
@@ -413,11 +347,7 @@ const soft = (y: number, blur: number, opacity: number, elev: number) => ({
   elevation: elev,
 });
 
-/**
- * Resting surfaces get a hairline border, not a shadow. A dense clinical table
- * covered in soft shadows turns into visual mud; borders stay crisp at the
- * densities this app actually runs at.
- */
+/** Shadows for floating layers only; resting surfaces use a hairline border. */
 export const shadows = {
   none: {},
   xs: soft(1, 2, 0.03, 1),
@@ -444,17 +374,14 @@ export const motion = {
   },
 } as const;
 
+
 // ---------------------------------------------------------------------------
 // Typography
 // ---------------------------------------------------------------------------
 
 /**
- * One family, three weights, stopping at 600.
- *
- * Sentence case everywhere, never ALL CAPS in alert or instruction text — it
- * measurably slows reading, and the places it appears in this app are exactly
- * the places nobody can afford to read slowly. The `overline` variant is the
- * single exception, and it never carries clinical content.
+ * One family, weights up to 600. Sentence case everywhere; `overline` is the only
+ * uppercase style and never carries clinical content.
  */
 export const fonts = {
   display: "Inter_600SemiBold",
@@ -467,12 +394,7 @@ export const fonts = {
   mono: "monospace",
 } as const;
 
-/**
- * Every number that can be compared down a column gets this: vitals, doses,
- * results, amounts. Without tabular figures a column of readings jitters and
- * the eye cannot scan it for the outlier, which is the entire reason the column
- * exists.
- */
+/** Tabular figures for any number compared down a column (vitals, doses, amounts). */
 export const numeric = { fontVariant: ["tabular-nums" as const] };
 
 export const typography = {
@@ -510,19 +432,13 @@ export const typography = {
   metricSmall: { fontSize: 18, lineHeight: 22, fontFamily: fonts.display, ...numeric },
 } as const;
 
+
 // ---------------------------------------------------------------------------
 // Layout
 // ---------------------------------------------------------------------------
-
 export const breakpoints = { sm: 640, md: 760, lg: 900, xl: 1100, xxl: 1280 } as const;
 
-/**
- * Density.
- *
- * A ward round on a tablet and a records clerk on a 27" monitor want different
- * row heights out of the same table, and neither should have to zoom. Screens
- * read this rather than hard-coding a height.
- */
+/** Table density presets; screens read these rather than hard-coding row heights. */
 export const density = {
   comfortable: { rowHeight: 52, cellPaddingY: 12, fontScale: 1 },
   standard: { rowHeight: 44, cellPaddingY: 8, fontScale: 1 },
@@ -557,11 +473,7 @@ export const layout = {
   rowHeightPhone: 60,
   tableHeaderHeight: 36,
 
-  /**
-   * The patient identity band. Persistent, never scrolled away, never collapsed
-   * on any screen that shows patient data — wrong-patient error is the single
-   * most common serious EHR failure and this band is the control against it.
-   */
+  /** Patient identity band: never scrolled away or collapsed (wrong-patient safety). */
   patientBannerHeight: 64,
   patientBannerHeightPhone: 76,
 

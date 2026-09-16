@@ -24,14 +24,7 @@ interface Props {
   formatValue: (n: number) => string;
 }
 
-/**
- * Day-by-day bars out of plain Views.
- *
- * No chart library: one series, one colour, one axis is all a trend over a
- * date range needs, and a dependency that renders differently on web and
- * native is a larger cost than forty lines of layout. The table below it
- * carries the exact numbers; this only has to show the shape.
- */
+/** Daily bar chart from plain Views (no chart library, consistent on web and native). */
 export function SeriesChart({ series, field, title, formatValue }: Props) {
   const values = series.map((p) => {
     const v = p[field];
@@ -63,8 +56,7 @@ export function SeriesChart({ series, field, title, formatValue }: Props) {
               <View
                 style={[
                   styles.bar,
-                  // A non-zero day always shows at least a sliver, so "one" is
-                  // not drawn the same as "none" beside a peak of hundreds.
+                  // Non-zero days get a minimum 2px sliver so they differ from zero.
                   { height: max > 0 ? Math.max(v > 0 ? 2 : 0, (v / max) * PLOT_HEIGHT) : 0 },
                 ]}
               />

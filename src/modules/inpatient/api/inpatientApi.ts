@@ -56,13 +56,8 @@ export interface ObservationBody {
   /** Stamped before the first attempt; see shared/offline/outbox.ts. */
   clientOpId?: string;
   takenAt?: string;
-  /**
-   * Note what is NOT here: there is no `escalationRequired`, and no
-   * `useScale2`. Whether an observation escalates is decided by the server from
-   * the score, and the NEWS2 scale belongs to the admission because it is a
-   * prescribing decision. A client that could send either could make a
-   * deteriorating patient look well.
-   */
+// No escalationRequired or useScale2 by design: the server decides escalation, and the NEWS2
+// scale is set on the admission, so a client cannot make a deteriorating patient look well.
 }
 
 export interface AdministerBody {

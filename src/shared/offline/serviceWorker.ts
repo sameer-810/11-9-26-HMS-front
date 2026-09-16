@@ -11,16 +11,8 @@ function loadedAssets(): string[] {
 }
 
 /**
- * Registers `public/sw.js` on the web build.
- *
- * The record mirror is useless if the app itself cannot open: a ward browser
- * refreshed during an outage would otherwise show the browser's own "no
- * internet" page, with every saved record sitting unreachable behind it. The
- * worker keeps the app shell — the page and its bundles — so a reload with no
- * connection still boots the app, which then shows what this device saved.
- *
- * Not in development: a cached bundle in front of a hot-reloading dev server is
- * how an afternoon disappears into "why is my change not showing".
+ * Registers `public/sw.js` on web so an offline reload still boots the app shell.
+ * Skipped in development, where a cached bundle would hide hot-reload changes.
  */
 export function registerServiceWorker(): void {
   if (Platform.OS !== "web" || __DEV__) return;
@@ -31,17 +23,14 @@ export function registerServiceWorker(): void {
       .register("/sw.js")
       .then(() => navigator.serviceWorker.ready)
       .then((registration) => {
-        // The worker installs AFTER this page already loaded its bundle and
-        // fonts, so it never saw them go past. Hand it the list, now and once
-        // more after late assets (fonts, icons) have arrived — without the
-        // fonts the app waits forever on an offline reload.
+        // The worker installs after assets loaded, so send it the list now and again for late fonts;
+        // without fonts an offline reload hangs.
         const send = () => registration.active?.postMessage({ type: "cache-urls", urls: loadedAssets() });
         send();
         setTimeout(send, 5000);
       })
       .catch(() => {
-        // No worker (a private window, an http origin that is not localhost).
-        // The app works online exactly as before.
+      // No worker (private window, non-localhost http); the app still works online.
       });
   };
   if (document.readyState === "complete") register();

@@ -12,11 +12,7 @@ interface StackProps {
   style?: StyleProp<ViewStyle>;
   testID?: string;
   accessibilityLabel?: string;
-  /**
-   * For a group whose children need a named parent: "tablist" around tab
-   * chips, "radiogroup" around radio chips. Without it a screen reader reads
-   * orphaned tabs with no position or count.
-   */
+  /** Parent role for tab or radio chips, so screen readers announce position and count. */
   role?: "tablist" | "radiogroup" | "group" | "list";
 }
 

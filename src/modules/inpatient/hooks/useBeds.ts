@@ -40,18 +40,8 @@ export const useBedBoard = () =>
   useQuery({ queryKey: ["bed-board"], queryFn: bedsApi.board, refetchInterval: 60_000 });
 
 /**
- * Beds as Select options.
- *
- * ---------------------------------------------------------------------------
- * Unavailable beds are SHOWN, disabled, with the reason
- * ---------------------------------------------------------------------------
- * The tempting version filters them out. That is worse: a doctor standing on
- * the ward can see bed 12, and a list where bed 12 is simply absent makes them
- * hunt for it and eventually ask someone. "Bed 12 — Occupied" answers the
- * question in the list.
- *
- * `staleTime: 0` because the answer changes as other people admit patients, and
- * a cached "available" is how two admissions race for the same bed.
+ * Beds as Select options; unavailable beds are shown disabled with a reason rather than hidden.
+ * `staleTime: 0` so a cached "available" does not let two admissions race for one bed.
  */
 export const useSelectableBeds = (params: { wardId?: string; gender?: string } = {}) => {
   const query = useQuery({

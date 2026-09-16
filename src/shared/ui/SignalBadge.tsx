@@ -10,19 +10,11 @@ import {
 import { signal, radius, type SignalLevel } from "../designSystem";
 import { Text } from "./Text";
 
-/**
- * The clinical signal badge.
- *
- * Colour is never the only carrier of meaning here. Each level owns a distinct
- * ICON SHAPE — octagon, triangle, diamond-ish, circle — so the tier survives
- * greyscale printing and the roughly 1-in-12 male readers with a colour vision
- * deficiency. Passing `showIcon={false}` is available for genuinely dense
- * contexts, and the caller then owes the reader the meaning some other way.
- *
- * There is deliberately no `color` prop. A caller that wants a custom colour
- * wants a Chip, not a signal.
- */
 
+/**
+ * Clinical signal badge. Each level has a distinct icon shape so meaning survives greyscale and
+ * colour blindness. No `color` prop on purpose; use a Chip for custom colours.
+ */
 const ICONS: Record<SignalLevel, LucideIcon> = {
   critical: OctagonAlert,
   urgent: TriangleAlert,
@@ -56,8 +48,6 @@ export function SignalBadge({
 
   return (
     <View
-      // Screen readers get the tier spoken even though sighted users read it
-      // from shape and colour.
       accessibilityRole="text"
       accessibilityLabel={`${s.label}: ${text}`}
       style={[

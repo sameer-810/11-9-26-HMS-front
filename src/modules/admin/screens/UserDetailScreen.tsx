@@ -50,14 +50,8 @@ const ROLE_OPTIONS = (Object.values(ROLES) as Role[]).map((r) => ({
 }));
 
 /**
- * One account: profile, role, permissions, credential and status.
- *
- * Each section saves on its own. A single "Save" for everything would send a
- * role change and a permission tweak in one request, and the server treats
- * those as different acts — a role change re-seeds the permission set, and a
- * permission list is checked against the escalation guard. Mixing them makes
- * the outcome depend on field order in a way no administrator should need to
- * reason about.
+ * One account: profile, role, permissions, credential and status. Each section saves
+ * separately, as a role change re-seeds permissions and must not mix with permission edits.
  */
 export default function UserDetailScreen() {
   const navigation = useNavigation<any>();
@@ -146,14 +140,12 @@ function ProfileSection({ user }: { user: AdminUser }) {
 
   const submit = handleSubmit((v) => {
     setResult(null);
-    // Only what changed — the audit trail records the field names sent, and
-    // "updated firstName, lastName, email, phone…" for a one-letter fix is noise.
+    // Send only changed fields; the audit trail records the field names sent.
     const patch: UpdateUserBody = {};
     if (v.firstName !== user.firstName) patch.firstName = v.firstName;
     if ((v.lastName ?? "") !== user.lastName) patch.lastName = v.lastName ?? "";
     if (v.email.toLowerCase() !== user.email) patch.email = v.email;
-    // The API reads an empty phone as "no change", so a number can be replaced
-    // but not cleared from here.
+    // The API treats an empty phone as "no change", so it can be replaced but not cleared.
     if (v.phone && v.phone !== user.phone) patch.phone = v.phone;
     if ((v.designation ?? "") !== user.designation) patch.designation = v.designation ?? "";
     if (clinical) {
@@ -265,8 +257,7 @@ function RoleSection({ user }: { user: AdminUser }) {
     { value: "", label: "No department" },
     ...departments.map((d) => ({ value: d.id, label: d.name, sublabel: d.code })),
   ];
-  // The picker lists active departments only. A person still attached to a
-  // deactivated one must not look as though they have no department at all.
+  // The picker lists active departments only; keep a current inactive one visible.
   if (user.department && !departments.some((d) => d.id === user.department!.id)) {
     options.push({ value: user.department.id, label: user.department.name, sublabel: "Inactive department" });
   }
@@ -350,13 +341,7 @@ function RoleSection({ user }: { user: AdminUser }) {
   );
 }
 
-/**
- * US-23: the wards a nurse works on.
- *
- * Everyone admitted to these wards is on the nurse's list, and counts as their
- * patient for a restricted record — so this is access, and saved on its own
- * like the permissions, not folded into the profile.
- */
+/** US-23 nurse ward allocation. It grants record access, so it saves separately from the profile. */
 function WardSection({ user }: { user: AdminUser }) {
   const update = useUpdateUser(user.id);
   const wards = useAdminWards();

@@ -44,27 +44,12 @@ function countOf(beds: Bed[]): BedCounts {
 }
 
 /**
- * Bed management — IP-02, "bed status at a glance".
- *
- * ---------------------------------------------------------------------------
- * No patient on this screen, by construction
- * ---------------------------------------------------------------------------
- * It is reachable with beds.view alone, and administrators hold beds.view with
- * no clinical permission at all. The bed API sends an occupied bed's patient as
- * a bare id and nothing more, and this screen does not follow that id anywhere.
- * "Occupied" is the whole answer here; who is in the bed belongs to the
- * admission screens, behind the grants that cover it.
- *
- * ---------------------------------------------------------------------------
- * The only manual transition is out of service and back
- * ---------------------------------------------------------------------------
- * Admission occupies a bed and discharge frees it. The server refuses any hand
- * edit of an occupied bed, so the toggle is not drawn on one. Taking a bed out
- * asks why, so the ward can read the reason instead of asking around.
+ * Bed management (IP-02). Shows no patient: reachable with beds.view alone, so the
+ * occupant id is never followed. The only manual transition is out of service and back.
  */
 export default function BedsScreen() {
   const hasAnyPermission = useAuthStore((s) => s.hasAnyPermission);
-  // Mirrors the ward routes: PATCH /beds/:id/status takes either grant.
+  // mirrors the ward routes: PATCH /beds/:id/status takes either grant
   const canManage = hasAnyPermission(PERMISSIONS.BEDS_MANAGE, PERMISSIONS.HOSPITAL_CONFIG);
 
   const beds = useAllBeds();
@@ -74,8 +59,7 @@ export default function BedsScreen() {
   const [notice, setNotice] = useState<string | null>(null);
 
   const active = useMemo(() => (beds.data ?? []).filter((b) => b.isActive), [beds.data]);
-  // Looked up from the fresh list each render, so a bed someone admitted into
-  // a moment ago is not acted on from a stale copy.
+  // looked up from the fresh list each render so a just-admitted bed is not acted on from a stale copy
   const selected = active.find((b) => b.id === selectedId) ?? null;
 
   const groups = useMemo<WardGroup[]>(() => {
@@ -87,7 +71,7 @@ export default function BedsScreen() {
     const sortBeds = (list: Bed[]) =>
       [...list].sort((a, b) => natural(a.room?.number ?? "", b.room?.number ?? "") || natural(a.number, b.number));
 
-    // The board fixes the ward order and includes wards with no beds yet.
+    // the board fixes the ward order and includes wards with no beds yet
     const out: WardGroup[] = (board.data?.wards ?? []).map((w) => {
       const list = sortBeds(byWard.get(w.wardId) ?? []);
       return { id: w.wardId, name: w.name, code: w.code, type: w.type, beds: list, counts: countOf(list) };
@@ -266,8 +250,7 @@ function BedTile({
           </Text>
         ) : null}
       </HStack>
-      {/* The status is written, not only coloured — the same rule the signal
-          badges follow, for readers who cannot tell the tints apart. */}
+      
       <Text variant="label-sm" style={{ color: s.color }} testID={`bed-status-${bed.id}`}>
         {s.label}
       </Text>

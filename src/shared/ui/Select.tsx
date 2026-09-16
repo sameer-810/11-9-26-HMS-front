@@ -30,15 +30,8 @@ interface Props {
 }
 
 /**
- * A disabled option is shown, not hidden.
- *
- * This matters in this application specifically. When a doctor cannot pick bed
- * 12, the useful answer is "bed 12 is occupied", not a list with bed 12 quietly
- * missing — the second makes the user hunt for something they can see on the
- * ward. Same for an expired batch in the dispensing screen.
- *
- * Keyboard: the trigger opens on Enter or Space; the sheet keeps focus inside
- * while open, Escape closes it, and focus returns to the trigger.
+ * Modal select; disabled options are shown with their reason rather than hidden.
+ * Keyboard: Enter/Space opens, focus stays in the sheet, Escape closes and restores focus.
  */
 export function Select({
   label,
@@ -76,8 +69,7 @@ export function Select({
         onPress={() => !disabled && setOpen(true)}
         disabled={disabled}
         accessibilityRole="button"
-        // "Required" is spoken at the end: aria-required is not allowed on a
-        // button, and the label must still start with the field name.
+        // aria-required is invalid on a button, so "Required" is appended to the label.
         accessibilityLabel={`${label ? `${label}. ${selected?.label ?? placeholder}` : placeholder}${required ? ". Required" : ""}`}
         accessibilityState={{ disabled: Boolean(disabled), expanded: open }}
         {...webAria({ hasPopup: "menu", expanded: open, describedBy: error || hint ? messageId : undefined, invalid: Boolean(error) })}
@@ -93,8 +85,7 @@ export function Select({
       >
         <Text
           variant="body"
-          // The placeholder is read, so it meets text contrast: tertiary is
-          // 5.9:1 on white where the old disabled grey was 3.0:1.
+          // Tertiary tone keeps the placeholder at text contrast (5.9:1).
           tone={selected ? "primary" : "tertiary"}
           numberOfLines={1}
           style={{ flex: 1 }}
@@ -120,8 +111,7 @@ export function Select({
         animationType={reduceMotion ? "none" : "fade"}
         onRequestClose={() => setOpen(false)}
       >
-        {/* Neither the backdrop nor the sheet is a Tab stop: they exist for the
-            pointer, and a nameless focus stop is noise to a keyboard user. */}
+        { /* Backdrop and sheet are pointer-only, not Tab stops. */ }
         <Pressable style={styles.overlay} onPress={() => setOpen(false)} focusable={false}>
           <Pressable style={styles.sheet} onPress={() => {}} focusable={false}>
             {label ? (
@@ -154,8 +144,7 @@ export function Select({
                         <Text variant="body" tone={o.disabled ? "disabled" : "primary"}>
                           {o.label}
                         </Text>
-                        {/* The reason it is unavailable, in the place the user
-                            is already looking. */}
+                        {}
                         {o.disabled && o.disabledReason ? (
                           <Text variant="caption" tone="danger">
                             {o.disabledReason}

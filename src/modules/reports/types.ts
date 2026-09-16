@@ -1,8 +1,4 @@
-/**
- * AD-03 reports. Every one is aggregate — counts, rates, times and amounts —
- * and no row names a patient; the server builds them that way so a report
- * cannot become the medical record by another door.
- */
+/** AD-03 report types; reports are aggregate only and never name a patient. */
 
 export type SummaryUnit = "%" | "min" | "days" | "₹";
 

@@ -4,35 +4,16 @@ import type { Query, QueryClient, QueryKey } from "@tanstack/react-query";
 
 import { collectBreakGlassIds, isTainted, readViaBreakGlass } from "./mirrorPolicy";
 
-/**
- * The read-only record mirror.
- *
- * A ward that cannot read the record during an outage is more dangerous than
- * one that cannot write to it (ARCHITECTURE: Offline). So what a clinician has
- * already opened on this device — the record, allergies, the bedside chart,
- * their patient list, the drug round — is kept, and shown when the server
- * cannot be reached, labelled with how old it is.
- *
- * ---------------------------------------------------------------------------
- * What is kept, and what is deliberately not
- * ---------------------------------------------------------------------------
- *  - Only the query families below. Billing, reports, the audit trail and
- *    administration are never written to the device.
- *  - Nothing read under break-the-glass. Emergency access is sixty minutes on
- *    the server; a copy on the tablet would outlive it indefinitely.
- *  - Nothing older than twelve hours — a record from yesterday's shift is a
- *    different patient's day.
- *  - Per user, and every mirror on the device is deleted at sign-out, so a
- *    shared ward tablet never shows the next person what the last one read.
- *
- * It is what this user already SAW, not a download of the ward. A patient
- * nobody opened here is not available offline, and the screen says so.
- */
 
+/**
+ * Read-only offline mirror of clinical queries this user already opened, per user.
+ * Never break-the-glass reads, nothing over 12 h old; all mirrors wiped at sign-out.
+ */
 const PREFIX = "hms-mirror:";
 export const MIRROR_MAX_AGE_MS = 12 * 60 * 60 * 1000;
 const MAX_ENTRIES = 300;
 
+// Billing, reports, audit and admin are deliberately never written to the device.
 const MIRRORED = [
   "medical-record",
   "clinical-context",
@@ -71,12 +52,7 @@ function keepable(query: Query): boolean {
   return !readViaBreakGlass(query.state.data);
 }
 
-/**
- * Bumped by every sign-out. A mirror remembers the generation it started in
- * and never writes once it has moved on: a save already waiting on its debounce
- * or on storage when someone signs out would otherwise put the last user's
- * records back on disk straight after they were deleted.
- */
+/** Bumped on sign-out. Older-generation mirrors never write, so a pending save cannot restore wiped data. */
 let generation = 0;
 
 const hash = (key: QueryKey) => JSON.stringify(key);
@@ -92,10 +68,7 @@ async function read(storageKey: string): Promise<{ savedAt: number; entries: Mir
   }
 }
 
-/**
- * Hydrate this user's mirror into the cache, then keep it up to date as
- * mirrored queries succeed. Returns a stop function.
- */
+/** Hydrates this user's mirror into the cache and keeps it updated. Returns a stop function. */
 export function startMirror(qc: QueryClient, userId: string): () => void {
   const storageKey = `${PREFIX}${userId}`;
   const startedIn = generation;
@@ -105,9 +78,7 @@ export function startMirror(qc: QueryClient, userId: string): () => void {
   /** Patients read under break-the-glass this session — see mirrorPolicy. */
   const tainted = new Set<string>();
 
-  // Kept in memory as long as the mirror would keep them on disk, so a record
-  // opened this morning is still in the cache when the WiFi drops this
-  // afternoon — not garbage-collected five minutes after the screen closed.
+  // Match gcTime to the mirror's age limit so records stay cached when the network drops.
   for (const family of MIRRORED) qc.setQueryDefaults([family], { gcTime: MIRROR_MAX_AGE_MS });
 
   const save = async () => {
@@ -128,8 +99,7 @@ export function startMirror(qc: QueryClient, userId: string): () => void {
       }
     }
 
-    // A patient now being read under emergency access loses every copy —
-    // their other families, and anything saved before the access began.
+    // A patient read under break-the-glass loses every stored copy, including older ones.
     const entries = [...merged.values()]
       .filter((e) => now - e.updatedAt < MIRROR_MAX_AGE_MS && !isTainted(e, tainted))
       .sort((a, b) => b.updatedAt - a.updatedAt)
@@ -140,8 +110,7 @@ export function startMirror(qc: QueryClient, userId: string): () => void {
       await AsyncStorage.setItem(storageKey, JSON.stringify({ v: 1, savedAt: now, entries }));
       useMirrorStore.getState().setSavedAt(now);
     } catch {
-      // Storage full or unavailable. The app still works online; offline it
-      // shows what it has, and says a record is not saved when it is not.
+    // Storage full or unavailable; online use is unaffected.
     }
   };
 
@@ -177,15 +146,14 @@ export function startMirror(qc: QueryClient, userId: string): () => void {
 
 /** Removes every user's mirror from this device. Called at sign-out. */
 export async function clearMirrors(): Promise<void> {
-  // Synchronously, before the first await, so no save that is already under
-  // way can land after the delete below.
+  // Before the first await, so an in-flight save cannot land after the delete.
   generation += 1;
   try {
     const keys = await AsyncStorage.getAllKeys();
     const mine = keys.filter((k) => k.startsWith(PREFIX));
     if (mine.length) await AsyncStorage.multiRemove(mine);
   } catch {
-    /* nothing stored, or storage unavailable */
+  /* nothing stored, or storage unavailable */
   }
   useMirrorStore.getState().setSavedAt(null);
 }

@@ -12,8 +12,7 @@ export const useClinicalContext = (patientId?: string) =>
     queryKey: ["clinical-context", patientId],
     queryFn: () => consultationApi.context(patientId!),
     enabled: Boolean(patientId),
-    // Fresh every time the screen opens. A stale allergy on a consultation
-    // screen is the single worst thing this application could show.
+    // Always fresh: a stale allergy list here is a clinical risk.
     staleTime: 0,
     retry: (count, err) => apiErrorCode(err) !== "RECORD_RESTRICTED" && count < 1,
   });
@@ -42,8 +41,7 @@ export const useUpdateConsultation = (id: string) => {
   return useMutation({
     mutationFn: (patch: ConsultationPatch) => consultationApi.update(id, patch),
     onSuccess: (data) => {
-      // Written straight into the cache rather than refetched: the doctor is
-      // typing, and a refetch would replace the field under the cursor.
+      // Set cache directly; a refetch would overwrite the field the doctor is typing in.
       qc.setQueryData(["consultation", id], data);
     },
   });
@@ -75,8 +73,8 @@ export const useAddAddendum = (id: string) => {
 export const useMyDrafts = () =>
   useQuery({ queryKey: ["consultation-drafts"], queryFn: consultationApi.myDrafts });
 
-// ---- Prescribing ------------------------------------------------------------
 
+// ---- Prescribing ------------------------------------------------------------
 export const useMedicineSearch = (search: string) =>
   useQuery({
     queryKey: ["medicines", search],
@@ -85,13 +83,7 @@ export const useMedicineSearch = (search: string) =>
     staleTime: 5 * 60_000,
   });
 
-/**
- * The live safety check.
- *
- * A mutation rather than a query: it fires when a line is added or removed,
- * not when a render happens, and the result is held beside the lines that
- * produced it so a stale verdict can never be applied to a changed list.
- */
+/** Live prescribing safety check; a mutation so it runs on line changes, not renders. */
 export const useSafetyCheck = () => useMutation({ mutationFn: ({ patientId, lines }: {
   patientId: string;
   lines: { id: string; medicineId: string }[];
@@ -115,15 +107,14 @@ export const usePrescriptions = (params?: { patientId?: string; status?: string 
     queryFn: () => prescriptionApi.list(params),
   });
 
-// ---- The record -------------------------------------------------------------
 
+// ---- The record -------------------------------------------------------------
 export const useMedicalRecord = (patientId?: string) =>
   useQuery({
     queryKey: ["medical-record", patientId],
     queryFn: () => recordApi.forPatient(patientId!),
     enabled: Boolean(patientId),
-    // A restriction refusal is an answer, not a network blip. Retrying it only
-    // delays the break-the-glass prompt.
+    // Do not retry a restriction refusal; it only delays the break-glass prompt.
     retry: (count, err) => apiErrorCode(err) !== "RECORD_RESTRICTED" && count < 1,
   });
 
@@ -135,8 +126,7 @@ export const useBreakGlass = (patientId: string) => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["medical-record", patientId] });
       qc.invalidateQueries({ queryKey: ["clinical-context", patientId] });
-      // The ward screens are closed by the same restriction, and ask by
-      // admission rather than patient — so every ward family reloads.
+      // Ward queries are keyed by admission, not patient, so reload them all.
       for (const key of ["bedside", "observations", "nursing-notes", "drug-round", "handovers", "admission"]) {
         qc.invalidateQueries({ queryKey: [key] });
       }

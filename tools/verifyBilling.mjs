@@ -1,15 +1,6 @@
 /**
- * Phase 7 gate — billing and payments, in a real browser.
- *
- * What only a browser shows:
- *  - the billing screen compiles charges with nothing to type an amount into,
- *    and nothing clinical on it;
- *  - an unpriced medicine stops finalisation until administration prices it;
- *  - a discount waits for administration's approval, on a different login;
- *  - once finalised, the charge controls are gone, and only payment moves;
- *  - a payment above the balance cannot be submitted; the receipt reads the
- *    amount back in words.
- *
+ * Phase 7 gate — billing in a real browser: compiled charges, unpriced lines,
+ * discount approval, finalisation, payments and the receipt.
  *   node tools/verifyBilling.mjs
  */
 import http from "node:http";
@@ -70,7 +61,9 @@ const API = `http://127.0.0.1:${API_PORT}`;
 for (let waited = 0; ; waited += 300) {
   try {
     if ((await fetch(`${API}/health`)).ok) break;
-  } catch { /* not up */ }
+  } catch {
+    /* not up */
+    }
   if (waited > 40_000) throw new Error(`API did not start.\n${apiLog}`);
   await new Promise((r) => setTimeout(r, 300));
 }
@@ -187,8 +180,7 @@ async function newPage() {
   p.on("console", (m) => { if (m.type() === "error") consoleErrors.push(m.text()); });
   p.on("pageerror", (e) => consoleErrors.push(String(e)));
   p.on("response", (r) => { if (r.status() >= 400) httpFailures.push(`${r.status()} ${r.request().method()} ${new URL(r.url()).pathname}`); });
-  // The live-update socket is not under test here. Blocked, so the gate never
-  // reaches whatever else happens to listen on the dev port baked into the build.
+  // socket blocked: not under test, and the build's dev port may belong to something else.
   await p.route("**/socket.io/**", (route) => route.abort());
   await p.route("**/api/v1/**", async (route) => {
     const url = new URL(route.request().url());

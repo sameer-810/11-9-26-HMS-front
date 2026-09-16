@@ -36,11 +36,8 @@ import { formatExpiry } from "@modules/inventory/utils/expiry";
 import type { InventoryItem, ItemCategory } from "@modules/inventory/types";
 
 /**
- * Stock at a glance — the store's inventory, or the pharmacy's shelf.
- *
- * Usable and expired stock are separate columns, never summed. "60 on hand"
- * where 50 expired last month is the number that gets a box promised to a
- * patient.
+ * stock at a glance: the store's inventory, or the pharmacy's shelf.
+ * usable and expired stock are separate columns and are never summed.
  */
 export default function InventoryScreen() {
   const navigation = useNavigation<any>();
@@ -183,7 +180,7 @@ function Qty({ label, value, unit, testID }: { label: string; value: number; uni
   );
 }
 
-/** Adding an item. A medicine item is linked to its formulary entry — that link is how dispensing finds stock. */
+/** a medicine item is linked to its formulary entry; that link is how dispensing finds stock. */
 function NewItemForm() {
   const [open, setOpen] = useState(false);
   const [code, setCode] = useState("");

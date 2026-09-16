@@ -50,11 +50,8 @@ import {
 const DISPOSITIONS = Object.keys(DISPOSITION_LABELS) as DispositionType[];
 
 /**
- * One emergency attendance, from the door to the disposition.
- *
- * What is drawn depends on who is looking, mirroring the server: reception
- * registers, marks arrivals and records a patient who left; nurses and doctors
- * triage; only a doctor takes the patient and decides where they go.
+ * One emergency attendance, door to disposition. Cards follow the server's roles: reception handles
+ * arrival and leaving, nurses and doctors triage, only doctors treat and dispose.
  */
 export default function EmergencyVisitScreen() {
   const route = useRoute<any>();

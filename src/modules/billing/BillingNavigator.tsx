@@ -9,11 +9,7 @@ import OutstandingScreen from "./screens/OutstandingScreen";
 
 const Stack = createNativeStackNavigator();
 
-/**
- * Bills → generate → bill → payment → receipt, in one stack. The spec's
- * `/billing/payment/:billId` is the bill screen, where the payment form lives
- * beside the balance it changes.
- */
+/** Billing stack. RecordPayment (`/billing/payment/:billId`) reuses the bill screen's payment form. */
 export default function BillingNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>

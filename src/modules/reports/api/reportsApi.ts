@@ -10,26 +10,18 @@ export const EXPORT_TYPES: Record<ExportFormat, { mime: string; label: string }>
   pdf: { mime: "application/pdf", label: "PDF" },
 };
 
-/**
- * With `responseType: "blob"` a refusal arrives as a Blob too, and
- * `apiErrorMessage` would find no `error.message` inside it. Parse it back into
- * the JSON envelope so "A report covers at most 366 days" reaches the screen
- * instead of "Something went wrong".
- */
+/** With `responseType: "blob"` errors arrive as Blobs; parse back to JSON so apiErrorMessage works. */
 async function unwrapBlobError(err: unknown) {
   const response = (err as { response?: { data?: unknown } })?.response;
   if (!response || typeof Blob === "undefined" || !(response.data instanceof Blob)) return;
   try {
     response.data = JSON.parse(await response.data.text());
   } catch {
-    /* not JSON — leave it for the generic message */
+  /* not JSON — leave it for the generic message */
   }
 }
 
-/**
- * The server names the file. A browser only exposes Content-Disposition when
- * CORS lists it, so the fallback reproduces the server's own naming.
- */
+/** Filename from Content-Disposition; the fallback mirrors server naming (header may be hidden by CORS). */
 function filenameFrom(disposition: unknown, fallback: string) {
   const m = /filename="?([^";]+)"?/i.exec(String(disposition ?? ""));
   return m ? m[1] : fallback;

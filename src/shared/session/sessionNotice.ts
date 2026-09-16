@@ -1,13 +1,8 @@
 import { create } from "zustand";
 
 /**
- * Why the last session ended, for the sign-in screen to say.
- *
- * A person who comes back to a ward computer and finds the sign-in screen
- * should be told they were signed out for inactivity — otherwise it looks like
- * the app crashed, or like someone signed them out.
- *
- * In memory only: a notice that survived a reload would greet the next person.
+ * Why the last session ended (e.g. inactivity), shown on the sign-in screen.
+ * In memory only, so a reload does not show it to the next person.
  */
 interface SessionNoticeState {
   notice: string | null;

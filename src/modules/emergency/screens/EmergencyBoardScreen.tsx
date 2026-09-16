@@ -28,12 +28,8 @@ import { EsiBadge } from "@modules/emergency/components/EsiBadge";
 import { ARRIVAL_MODE_LABELS, hasBanner, type EdVisit } from "@modules/emergency/types";
 
 /**
- * The emergency department board.
- *
- * Ordered by the server — untriaged first, then acuity, then longest wait —
- * and deliberately never re-sorted here. Arrival order is how the chest pain
- * waits behind four sprained ankles, and a client sort is one innocent
- * "sort by time" away from reintroducing it.
+ * ED board. Server order (untriaged, acuity, wait) is deliberately never re-sorted here,
+ * so high-acuity patients never fall back into arrival order.
  */
 export default function EmergencyBoardScreen() {
   const navigation = useNavigation<any>();
@@ -236,9 +232,7 @@ function ActiveRow({ visit: v, wide, onOpen }: { visit: EdVisit; wide: boolean; 
   const arrival = (
     <HStack gap={5} align="center">
       {v.arrivalMode === "ambulance" ? (
-        // Decorative: the words beside it already say "Ambulance". A label
-        // passed to the icon lands on every <path> inside the SVG, where it is
-        // not allowed and gets read out once per stroke.
+        // Decorative; a label on the icon would be repeated on every SVG <path>.
         <Ambulance size={14} color={palette.clinical[700]} strokeWidth={2.1} aria-hidden />
       ) : null}
       <Text variant="caption" tone="secondary" tabular numberOfLines={1}>
@@ -283,7 +277,7 @@ function ActiveRow({ visit: v, wide, onOpen }: { visit: EdVisit; wide: boolean; 
       <Card compact onPress={onOpen} accentColor={accent} style={styles.wideRow} testID={`ed-row-${v.visitNumber}`}>
         <HStack gap={12} align="center">
           <View style={{ width: COL.esi }}>{badge}</View>
-          {/* One line: a visit number broken at its hyphen reads as two numbers. */}
+          { /* One line: a visit number broken at its hyphen reads as two numbers. */ }
           <Text variant="label-sm" tone="secondary" tabular numberOfLines={1} style={{ width: COL.visit }}>
             {v.visitNumber}
           </Text>
@@ -346,10 +340,7 @@ function MlcFlag() {
 const ageSex = (v: EdVisit) => (hasBanner(v.patient) ? `${v.patient.age} · ${v.patient.gender}` : "");
 const patientLine = (v: EdVisit) => (hasBanner(v.patient) ? `${v.patient.fullName}, ${ageSex(v)}` : "Patient");
 
-/**
- * Waiting is shown against the level's target, because "25 min" means nothing
- * on its own — it is fine for an ESI 4 and an incident for an ESI 2.
- */
+/** Wait text relative to the ESI level's target. */
 function waitSummary(v: EdVisit): { primary: string; secondary?: string } {
   const wait = v.waitMinutes ?? null;
   if (wait === null) return { primary: "—" };

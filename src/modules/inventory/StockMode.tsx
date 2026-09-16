@@ -1,15 +1,7 @@
 import React, { createContext, useContext } from "react";
 import type { StockLocation } from "@modules/inventory/types";
 
-/**
- * Which chair the stock screens are seen from.
- *
- * The same screens serve the store ("Inventory") and the pharmacy ("Medicine
- * stock"). The differences are real — the pharmacy sees and receives into its
- * own shelf only, and does not issue to departments — but small, and three
- * copies of each screen would be three places for a stock rule to be fixed in
- * one and missed in another.
- */
+/** which chair the stock screens are seen from: pharmacy sees its own shelf only and cannot issue. */
 export type StockMode = "store" | "pharmacy";
 
 interface StockModeValue {

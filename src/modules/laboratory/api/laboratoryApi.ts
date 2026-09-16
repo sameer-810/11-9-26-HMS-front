@@ -16,11 +16,8 @@ export interface OrderTestsBody {
   clinicalIndication: string;
   urgency: LabUrgency;
   acknowledgeDuplicates?: boolean;
-  /**
-   * Deliberately no patient name, age or sex here. LB-01: identity comes from
-   * the record the doctor is in, and the server refuses a request carrying a
-   * typed name rather than quietly ignoring it.
-   */
+/** deliberately no patient name, age or sex: identity comes from the record, and a typed
+ *  name is refused by the server rather than ignored. */
 }
 
 export interface SaveResultsResponse {
@@ -82,10 +79,7 @@ export const laboratoryApi = {
     return res.data.data;
   },
 
-  /**
-   * Values go as typed strings. "<0.01" is a result, and the server is the one
-   * place that parses — an unreadable value is refused there, not coerced here.
-   */
+  /** values go as typed strings: "<0.01" is a result, and only the server parses or refuses one. */
   saveResults: async (id: string, values: Record<string, string>, labComment?: string) => {
     const res = await apiClient.put<{ data: SaveResultsResponse }>(`/laboratory/orders/${id}/results`, {
       values,

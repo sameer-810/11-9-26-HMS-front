@@ -6,23 +6,11 @@ import { Text, HStack, VStack, Card, Button, Banner, TextField, Select } from "@
 import { useDrugRound, useAdminister } from "@modules/inpatient/hooks/useInpatient";
 import type { DrugRoundSlot } from "@modules/inpatient/types";
 
-/**
- * NU-04: the drug round.
- *
- * ---------------------------------------------------------------------------
- * The two things a paper chart cannot do
- * ---------------------------------------------------------------------------
- *
- * 1. A blank on paper means either "not due" or "missed" and the reader cannot
- *    tell which. Here a slot that has passed with nothing recorded says OVERDUE
- *    and how late it is, so the ambiguity that hides missed doses is gone.
- *
- * 2. A dose given but not yet signed looks identical to a dose not given. That
- *    is the shift-change double dose. The server refuses the second signature
- *    outright, and this panel shows the refusal with the name of whoever gave
- *    it — which is what the second nurse actually needs to know.
- */
 
+/**
+ * NU-04 drug round: unsigned past slots show as overdue; a second signature is refused
+ * by the server (409) and shown with who already gave the dose.
+ */
 const OMISSION_REASONS = [
   { value: "refused", label: "Patient refused" },
   { value: "withheld", label: "Withheld on clinical grounds" },
@@ -160,11 +148,7 @@ export function DrugRoundPanel({ admissionId, date }: Props) {
         </VStack>
       </Card>
 
-      {/**
-       * An omission needs a reason before it can be saved. "Nothing written"
-       * and "the patient refused" are wildly different facts, and only one of
-       * them is visible on a chart where omissions are simply absent.
-       */}
+      { /* An omission cannot be saved without a reason. */ }
       {omitting ? (
         <Card testID="omission-form">
           <VStack gap={12}>

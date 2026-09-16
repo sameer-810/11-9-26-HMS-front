@@ -13,13 +13,7 @@ function uuid() {
   });
 }
 
-/**
- * A stable identifier for this installation.
- *
- * Used for the concurrent-device cap and, later, to key the offline outbox and
- * any per-device number series. Deliberately random rather than derived from
- * hardware: it identifies an install, not a person or a machine.
- */
+/** stable random id for this installation (used for the device cap); not tied to hardware. */
 export async function getDeviceId(): Promise<string> {
   if (cached) return cached;
   try {
@@ -30,7 +24,7 @@ export async function getDeviceId(): Promise<string> {
       return existing;
     }
   } catch {
-    // Fall through and mint a fresh one for this session.
+  // fall through and mint a fresh one for this session.
   }
 
   const fresh = uuid();
@@ -39,7 +33,7 @@ export async function getDeviceId(): Promise<string> {
     if (Platform.OS === "web") localStorage.setItem(KEY, fresh);
     else await SecureStore.setItemAsync(KEY, fresh);
   } catch {
-    // Not persistable here — the cap will see this as a new device next launch.
+  // not persistable here; the cap will see this as a new device next launch.
   }
   return fresh;
 }

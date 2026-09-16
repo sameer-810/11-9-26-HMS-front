@@ -5,21 +5,11 @@ import { palette, radius, signal, valueFlag, type ValueFlag } from "../designSys
 import { Text } from "./Text";
 import { HStack, VStack } from "./Stack";
 
-/**
- * One measured value against its reference range.
- *
- * Three things carry the abnormality, not one:
- *   - the colour of the value;
- *   - an H/L/HH/LL glyph, which is what a clinician reads off a paper report
- *     and survives greyscale printing;
- *   - the range itself, stated underneath, so the reader can judge how far out
- *     it is rather than trusting our threshold.
- *
- * The third matters more than it looks. A potassium of 5.2 flagged "high"
- * against a range of 3.5–5.1 is a different clinical situation from 6.8, and a
- * tile that only says "High" hides that difference.
- */
 
+/**
+ * A measured value against its reference range. Abnormality shows as colour, an H/L glyph
+ * (survives greyscale) and the range itself, so readers can judge how far out it is.
+ */
 interface Props {
   label: string;
   value: string | number | null | undefined;
@@ -76,8 +66,7 @@ export function VitalTile({
 
         <HStack gap={4} align="baseline">
           {missing ? (
-            // An em-dash, never a blank. A blank cell reads as "normal" and
-            // this is missing data, which is a different clinical statement.
+            // Em-dash, never blank: a blank reads as normal, not as missing data.
             <Text variant={compact ? "metric-sm" : "metric"} tone="disabled">
               —
             </Text>

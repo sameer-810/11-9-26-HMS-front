@@ -1,30 +1,19 @@
 import { QueryClient } from "@tanstack/react-query";
 
-/**
- * The one query client.
- *
- * A module rather than a value created inside App, because the offline outbox
- * and the record mirror work outside the component tree and need to invalidate
- * and hydrate the same cache the screens read.
- */
+/** the single query client; a module so the outbox and mirror share the screens' cache. */
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // A clinical record is not a social feed. Refetching on every window
-      // focus means a doctor comparing two values watches them flicker and
-      // re-sort under the cursor.
+      // refetching on focus makes clinical values flicker and re-sort while being compared.
       refetchOnWindowFocus: false,
       retry: 1,
       staleTime: 30_000,
-      // A query that fails while the device is offline pauses and keeps what
-      // it already has — the record saved on this device stays on screen
-      // instead of turning into an error. "Offline" is decided by
-      // shared/offline/network.ts, not by navigator.onLine alone.
+      // offline queries pause and keep cached data instead of erroring.
+      // "offline" is decided by shared/offline/network.ts, not navigator.onLine alone.
       networkMode: "offlineFirst",
     },
-    // Mutations are never paused by React Query. The few that may be saved for
-    // later go through the outbox explicitly; everything else must fail
-    // visibly so nobody believes a prescription was saved when it was not.
+    // mutations never pause: they must fail visibly so nobody thinks unsaved work was saved.
+    // the few that may wait go through the outbox explicitly.
     mutations: { networkMode: "always" },
   },
 });

@@ -18,27 +18,11 @@ import { apiErrorMessage } from "@api/apiClient";
 import { useLabTests, useOrderTests } from "@modules/laboratory/hooks/useLaboratory";
 import type { DuplicateOrder, LabTest, LabUrgency } from "@modules/laboratory/types";
 
-/**
- * LB-01: order tests from where the doctor already is.
- *
- * ---------------------------------------------------------------------------
- * What is deliberately missing
- * ---------------------------------------------------------------------------
- * There is no patient field. The patient is the one whose record or
- * consultation this panel sits inside, passed as an id. "No free-typing of
- * patient identity" is kept by there being nothing to type into.
- *
- * There is no price. The doctor chooses a test for what it answers.
- *
- * ---------------------------------------------------------------------------
- * The duplicate pause
- * ---------------------------------------------------------------------------
- * If the same test was ordered recently the server answers with the earlier
- * order. The panel shows it — who ordered it, when, and where it has got to —
- * and the doctor either stops or presses "Order again anyway". Repeats are
- * sometimes exactly right; the point is that they are chosen.
- */
 
+/**
+ * order tests from inside a patient's record or consultation.
+ * no patient field (identity is never typed) and no price, both by design.
+ */
 const URGENCIES: { key: LabUrgency; label: string; hint: string }[] = [
   { key: "routine", label: "Routine", hint: "Today" },
   { key: "urgent", label: "Urgent", hint: "Within hours" },

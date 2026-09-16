@@ -35,10 +35,7 @@ const STATUS_CHIPS = [
   { key: "admitted", label: "Admitted" },
 ];
 
-/**
- * RG-04: one search box, because reception has a queue in front of them and
- * does not want to choose a field first. Name, phone and patient ID all work.
- */
+/** RG-04 patient list: one search box matches name, phone or patient ID. */
 export default function PatientsScreen() {
   const navigation = useNavigation<any>();
   const hasPermission = useAuthStore((s) => s.hasPermission);
@@ -52,8 +49,7 @@ export default function PatientsScreen() {
 
   const debouncedSearch = useDebouncedValue(search, 300);
 
-  // Reset to page 1 when the filters change, adjusted during render rather
-  // than in an effect so there is no frame showing page 7 of 2 results.
+  // Reset to page 1 on filter change during render, not in an effect, to avoid a stale-page frame.
   const filterKey = `${debouncedSearch}|${status}|${limit}`;
   const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
   if (filterKey !== prevFilterKey) {
@@ -98,7 +94,7 @@ export default function PatientsScreen() {
           <Text variant="label" tone="primary" numberOfLines={1}>
             {p.fullName}
           </Text>
-          {/* The allergy marker rides with the name everywhere it appears. */}
+          { /* The allergy marker rides with the name everywhere it appears. */ }
           <AllergyMark patient={p} seesClinical={seesClinical} />
         </HStack>
       ),
@@ -238,14 +234,7 @@ function hasSevereAllergy(p: Patient) {
   );
 }
 
-/**
- * A small marker beside the name.
- *
- * Three states, matching the banner: a red triangle for a known allergy, an
- * amber shield for "nobody has asked", and nothing at all when the answer is a
- * recorded none. The middle one exists because a blank space reads as a
- * negative finding, and missing data is not a negative finding.
- */
+/** Allergy marker by the name: red triangle = known allergy, amber shield = not recorded, none = recorded none. */
 function AllergyMark({ patient, seesClinical }: { patient: Patient; seesClinical: boolean }) {
   if (!seesClinical) return null;
   if (patient.allergiesRecorded === undefined) return null;

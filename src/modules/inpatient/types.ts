@@ -4,11 +4,8 @@ import type { DoctorSummary, DepartmentSummary } from "@modules/appointment/type
 export type AlertTier = "critical" | "urgent" | "caution" | "normal";
 
 /**
- * US-17: a doctor's recommendation to admit, waiting at the admission desk.
- *
- * For a restricted record `reason` and `diagnosis` are empty — they are
- * clinical — while the name and allergies, which are not restricted, still
- * travel so a bed can be found.
+ * US-17: a doctor's recommendation to admit. for a restricted record `reason` and `diagnosis`
+ * are empty; name and allergies still travel so a bed can be found.
  */
 export interface AdmissionRequest {
   consultationId: string;
@@ -33,13 +30,7 @@ export const REQUEST_CLOSURE_LABELS: Record<RequestClosureOutcome, string> = {
 
 export type News2BandKey = "none" | "low" | "lowMedium" | "medium" | "high";
 
-/**
- * The escalation policy travels WITH the score.
- *
- * A row reading "7" asks the reader to remember a chart on a wall. A row
- * carrying `response` does not — which matters at 4am more than at any other
- * time, and 4am is when this screen is read.
- */
+/** the escalation policy (`response`) travels with the score. */
 export interface News2Band {
   key: News2BandKey;
   label: string;
@@ -148,11 +139,7 @@ export interface News2Parameter {
 }
 
 export interface News2Result {
-  /**
-   * When false, `total` is null. A partial score is never shown as a NEWS2
-   * score — a nurse reading "NEWS 2" cannot tell it was computed without a
-   * respiratory rate, and would act on it as though it were complete.
-   */
+  /** When false, `total` is null: a partial score must never be shown as a NEWS2 score. */
   complete: boolean;
   total: number | null;
   scale: 1 | 2;

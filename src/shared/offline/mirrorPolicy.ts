@@ -1,19 +1,10 @@
 import type { QueryKey } from "@tanstack/react-query";
 
-/**
- * Which patients the record mirror must not keep, decided from what is in the
- * cache. Pure, so the rule can be tested without a device.
- *
- * Only the record and the clinical context say how they were read
- * (`access.viaBreakGlass`). The bedside chart, observations, notes and drug
- * round of the same patient carry no such marker, so "skip entries flagged as
- * break-the-glass" alone would still write that patient's chart to the tablet
- * the moment the clinician moved from the emergency record to the bedside. The
- * emergency read therefore taints the PATIENT: their id, and the admissions the
- * cache shows belong to them, and every mirrored entry naming either is dropped
- * — including copies saved to disk before the emergency access began.
- */
 
+/**
+ * Pure rule for which patients the mirror must not keep. A break-the-glass read taints the
+ * patient and their admissions, since bedside/notes payloads carry no break-glass marker.
+ */
 export interface MirrorCandidate {
   key: QueryKey;
   data: unknown;
@@ -44,10 +35,8 @@ export function readViaBreakGlass(data: unknown): boolean {
 }
 
 /**
- * Adds to `tainted` every patient read under break-the-glass in `candidates`,
- * and the admission ids the cache ties to them. Accumulates across calls, so a
- * patient stays excluded for the rest of the session after the emergency read
- * has left the cache.
+ * Adds break-the-glass patients and their admission ids to `tainted`. Accumulates across
+ * calls, so a patient stays excluded after the emergency read leaves the cache.
  */
 export function collectBreakGlassIds(candidates: MirrorCandidate[], tainted: Set<string>): Set<string> {
   for (const { key, data } of candidates) {
@@ -59,8 +48,8 @@ export function collectBreakGlassIds(candidates: MirrorCandidate[], tainted: Set
   }
   if (tainted.size === 0) return tainted;
 
-  // Bedside and admission payloads name their patient; their key is the
-  // admission, which is what observations, notes and the drug round are keyed by.
+  // Bedside/admission payloads name the patient and are keyed by admission id,
+  // which observations, notes and the drug round share.
   for (const { key, data } of candidates) {
     const patient = patientOf(data);
     if (!patient || !tainted.has(patient)) continue;

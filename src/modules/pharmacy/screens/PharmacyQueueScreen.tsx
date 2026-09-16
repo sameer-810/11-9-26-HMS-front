@@ -26,14 +26,7 @@ import { StockStatusBadge } from "@modules/inventory/components/StockBadges";
 import { UrgencyBadge } from "@modules/laboratory/screens/LabQueueScreen";
 import type { PharmacyQueueRow } from "@modules/pharmacy/types";
 
-/**
- * PH-01: prescriptions waiting to be filled.
- *
- * Each row answers the two questions a pharmacist asks before opening one:
- * is the stock there (PH-02), and has anything changed about this patient's
- * allergies since the doctor wrote it. The second is flagged at the critical
- * tier — it is the case the whole counter check exists for.
- */
+/** PH-01 pharmacy queue: each row shows stock status (PH-02) and flags allergies changed since prescribing. */
 export default function PharmacyQueueScreen() {
   const navigation = useNavigation<any>();
   const [urgency, setUrgency] = useState("all");

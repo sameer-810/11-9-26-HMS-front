@@ -45,30 +45,13 @@ function describe(change: RoleChange) {
 }
 
 /**
- * US-04: permissions configured at role level.
- *
- * ---------------------------------------------------------------------------
- * Two decisions, never one
- * ---------------------------------------------------------------------------
- * Changing what a role opens and changing what the people already in it hold
- * are separate choices, and the second is never made by leaving a box as it
- * was. Unticked, a saved set applies to whoever is given the role next. Ticked,
- * the CHANGE is applied to existing staff — what was added and removed — so an
- * individual adjustment made on purpose on someone's account survives.
- *
- * ---------------------------------------------------------------------------
- * What cannot be added, said beside the box
- * ---------------------------------------------------------------------------
- * A role may carry what the administrator holds, plus its own standard set.
- * Clinical access a role never had is locked with the reason, not hidden: an
- * administrator looking for "open the medical record" on the reception role
- * should find out why it is not there, not wonder whether it exists.
+ * Role permissions (US-04). "Apply to staff" pushes only the diff, keeping per-person grants;
+ * permissions the admin cannot grant are shown locked with a reason, not hidden.
  */
 export default function RolesScreen() {
   const roles = useRoles();
   const [active, setActive] = useState<Role>(ROLES.RECEPTIONIST);
-  // Held here, not in the editor: the editor remounts when the saved set
-  // changes, and the confirmation of what was saved must survive that.
+  // Held here because the editor remounts when the saved set changes.
   const [result, setResult] = useState<RoleChange | null>(null);
   const list = roles.data ?? [];
   const current = list.find((r) => r.role === active);
@@ -98,8 +81,7 @@ export default function RolesScreen() {
             testIDPrefix="role-tab"
           />
           {current ? (
-            // Keyed by the saved set as well as the role: a save or reset brings
-            // back a new set, and the boxes start again from it.
+            // Keyed by the saved set too, so a save or reset re-seeds the draft.
             <RoleEditor
               key={`${current.role}:${current.permissions.join(",")}`}
               role={current}

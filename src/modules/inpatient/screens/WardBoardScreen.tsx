@@ -32,27 +32,11 @@ import { AdmissionRequests } from "@modules/inpatient/components/AdmissionReques
 import type { AdmissionRow, EscalationRow } from "@modules/inpatient/types";
 import type { PatientBanner } from "@modules/patient/types";
 
-/**
- * The ward board — IP-02, IP-04 and NU-01 in one screen.
- *
- * ---------------------------------------------------------------------------
- * Why the sickest patient is at the top
- * ---------------------------------------------------------------------------
- * A ward list ordered by admission date, or by bed number, buries the patient
- * who is deteriorating behind four who are comfortable. The server sorts by
- * NEWS2 descending, and the escalation strip sits above everything so a
- * deteriorating patient is the first thing on the screen rather than something
- * to be found by scrolling.
- *
- * The same screen serves three roles by changing one query:
- *   - the doctor's ward round (all admitted),
- *   - the intensivist's board (`acuity=critical`),
- *   - the nurse's own patients for the shift (`my-patients`).
- *
- * One screen rather than three, because they are the same information seen from
- * different chairs — and three copies is three places for a fix to be missed.
- */
 
+/**
+ * Ward board (IP-02, IP-04, NU-01): ward, ICU or "my patients" mode, sickest first
+ * (server sorts by NEWS2), with the escalation strip on top.
+ */
 export type BoardMode = "ward" | "icu" | "mine";
 
 export default function WardBoardScreen() {
@@ -68,8 +52,7 @@ export default function WardBoardScreen() {
     hasPermission(PERMISSIONS.PRESCRIPTION_CREATE) ||
     hasPermission(PERMISSIONS.ADMISSION_MANAGE);
 
-  // Only the query this mode actually needs is fired. See useInpatient.ts —
-  // firing both sends a doctor at an endpoint nurses own and no one else does.
+  // Fire only this mode's query; the other endpoint may 403 for this role.
   const wardQuery = useAdmissions(
     mode === "icu"
       ? { status: "admitted", acuity: "critical" }
@@ -110,11 +93,7 @@ export default function WardBoardScreen() {
       }
     >
       <VStack gap={16}>
-        {/**
-         * NU-03. Above everything, always — the point of an early warning
-         * system is that the warning is not something you have to go looking
-         * for.
-         */}
+        { /* NU-03: escalations always sit above everything. */ }
         {(escalations.data?.length ?? 0) > 0 ? (
           <EscalationStrip
             rows={escalations.data ?? []}
@@ -123,7 +102,7 @@ export default function WardBoardScreen() {
           />
         ) : null}
 
-        {/* US-17: below the escalations — a deteriorating inpatient still comes first. */}
+        { /* US-17: below the escalations — a deteriorating inpatient still comes first. */ }
         {canAdmit && mode === "ward" ? (
           <AdmissionRequests
             onAdmit={(request) =>
@@ -209,12 +188,7 @@ function AdmissionCard({ row, onPress }: { row: AdmissionRow; onPress: () => voi
             ) : null}
           </HStack>
 
-          {/**
-           * Allergies on the ward board, not only on the chart. The drug round
-           * starts from this list, and a nurse should not have to open a record
-           * to find out that the patient they are about to give amoxicillin to
-           * has an anaphylaxis history.
-           */}
+          { /* Allergies shown here too: the drug round starts from this list. */ }
           {named ? <AllergyLine patient={patient} /> : null}
 
           <Text variant="caption" tone="secondary" numberOfLines={1}>
@@ -244,13 +218,7 @@ function AdmissionCard({ row, onPress }: { row: AdmissionRow; onPress: () => voi
   );
 }
 
-/**
- * Tri-state, exactly as the patient banner does it.
- *
- * "No allergies recorded" and "no known allergies" are different facts, and
- * collapsing them is how a patient with an unasked-about allergy is treated as
- * though they were asked.
- */
+/** Tri-state like the patient banner: "not recorded" must never read as "no known allergies". */
 function AllergyLine({ patient }: { patient: PatientBanner }) {
   if (!patient.allergiesRecorded) {
     return (
@@ -345,12 +313,7 @@ function EscalationStrip({
                   ) : null}
                 </HStack>
 
-                {/**
-                 * Acknowledging requires a sentence. "Reviewed" with nothing
-                 * after it is the entry that turns up in every serious incident
-                 * report — asking for one line is the smallest possible version
-                 * of making someone actually look.
-                 */}
+                { /* Acknowledging requires a short note, not a bare "reviewed". */ }
                 {acking?.id === row.id ? (
                   <VStack gap={8} testID="acknowledge-form">
                     <TextField

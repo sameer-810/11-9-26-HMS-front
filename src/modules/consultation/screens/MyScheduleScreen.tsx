@@ -36,12 +36,7 @@ import {
 import type { Appointment } from "@modules/appointment/types";
 import type { PatientBanner } from "@modules/patient/types";
 
-/**
- * AP-04: the doctor's own day.
- *
- * Scoped by their token server-side, not by a filter this screen chooses — a
- * doctor cannot see another doctor's list even by asking for it.
- */
+/** AP-04: the doctor's own day, scoped server-side by their token. */
 export default function MyScheduleScreen() {
   const navigation = useNavigation<any>();
   const today = todayCalendarDate();
@@ -93,10 +88,7 @@ export default function MyScheduleScreen() {
       <VStack gap={14}>
         {error ? <Banner tone="danger" message={error} onDismiss={() => setError(null)} /> : null}
 
-        {/*
-          An unsigned note is a patient whose record does not yet say what
-          happened to them. Nobody should go home with one open.
-        */}
+        { /* Unsigned consultations are not yet in the record, so surface them. */ }
         {(drafts ?? []).length > 0 ? (
           <Card accentColor={palette.warning.text}>
             <SectionHeader
@@ -222,11 +214,7 @@ function ScheduleRow({
             <Text variant="label-lg" tone="primary" numberOfLines={1}>
               {patient?.fullName ?? "—"}
             </Text>
-            {/*
-              The allergy marker rides with the name everywhere the name
-              appears — including a list the doctor scans before opening
-              anything.
-            */}
+            { /* Allergy marker always travels with the patient name. */ }
             {severe ? (
               <TriangleAlert
                 size={14}

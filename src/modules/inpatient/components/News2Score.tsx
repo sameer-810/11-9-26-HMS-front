@@ -5,32 +5,16 @@ import { palette, radius, signal, numeric, type SignalLevel } from "@shared/desi
 import { Text, HStack, VStack, SignalBadge } from "@shared/ui";
 import type { News2Band, News2Result, EarlyWarning } from "@modules/inpatient/types";
 
-/**
- * The NEWS2 score, shown the way a ward can act on.
- *
- * ---------------------------------------------------------------------------
- * Three rules this component exists to keep
- * ---------------------------------------------------------------------------
- *
- * 1. AN INCOMPLETE SCORE IS NEVER SHOWN AS A SCORE. When the server says
- *    `complete: false` there is no number here at all — there is a prompt for
- *    the missing parameters. A "2" the reader cannot tell was computed without
- *    a respiratory rate is worse than no number, because it will be acted on.
- *
- * 2. THE BAND TRAVELS WITH THE NUMBER. "7" asks the reader to remember a chart
- *    on a wall at 4am. "High — continuous monitoring" does not.
- *
- * 3. COLOUR IS NEVER THE ONLY CARRIER. The band label is written out and the
- *    SignalBadge carries a distinct icon shape per tier, so the score survives
- *    greyscale and colour vision deficiency.
- */
 
+/**
+ * NEWS2 score display. an incomplete score is never shown as a number; the band label
+ * always accompanies the score, and colour is never the only carrier (icon per tier).
+ */
 interface Props {
   result?: News2Result | null;
-  /** The ward-board form: a denormalised score with no parameter breakdown. */
+  /** ward-board form: a denormalised score with no parameter breakdown. */
   summary?: EarlyWarning | null;
   size?: "sm" | "md" | "lg";
-  /** Show the monitoring frequency and response text underneath. */
   showResponse?: boolean;
 }
 
@@ -39,7 +23,7 @@ function tierOf(band: News2Band | null | undefined): SignalLevel {
 }
 
 export function News2Score({ result, summary, size = "md", showResponse = false }: Props) {
-  // ---- The incomplete case, first, because it is the one that goes wrong ----
+  // ---- incomplete score ----
   if (result && !result.complete) {
     return (
       <View style={[styles.wrap, styles.incomplete]} accessibilityRole="text">
@@ -140,12 +124,7 @@ export function News2Score({ result, summary, size = "md", showResponse = false 
             ) : null}
           </HStack>
 
-          {/**
-           * A rise of 2 is its own warning, separate from the band. A patient
-           * moving from 1 to 3 sits in no alarming band at all, but they are
-           * going the wrong way — and that is exactly the signal a shift change
-           * loses.
-           */}
+          { /* a rise of 2 is its own warning, even when the band itself is not alarming */ }
           {result?.significantRise ? (
             <Text variant="caption" style={{ color: signal.urgent.text }}>
               Rising. Review before the number itself is alarming.
@@ -176,7 +155,7 @@ export function News2Score({ result, summary, size = "md", showResponse = false 
   );
 }
 
-/** The compact form, for a ward-board row. */
+/** compact form for a ward-board row. */
 export function News2Pill({ summary }: { summary: EarlyWarning }) {
   if (summary.score === null) {
     return <SignalBadge level="caution" label="No obs" size="sm" />;
@@ -185,11 +164,7 @@ export function News2Pill({ summary }: { summary: EarlyWarning }) {
   return (
     <HStack gap={6} align="center">
       <SignalBadge level={tier} label={`NEWS ${summary.score}`} size="sm" />
-      {/**
-       * Overdue is measured against the band's OWN frequency. Four hours
-       * without an observation on a high-risk patient is a different fact from
-       * four hours on a routine one, and a fixed interval flattens that.
-       */}
+      { /* overdue is measured against the band's own monitoring frequency, not a fixed interval */ }
       {summary.overdue ? (
         <Text variant="caption" style={{ color: signal.urgent.text }}>
           obs overdue

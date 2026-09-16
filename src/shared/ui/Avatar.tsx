@@ -9,11 +9,7 @@ interface Props {
   size?: number;
 }
 
-/**
- * Initials fall back deterministically from the name, so the same person gets
- * the same tint on every screen. Hashing rather than random: a colour that
- * changes between screens is a colour that carries no recognition value.
- */
+/** Initials tints, picked by hashing the name so a person keeps the same colour on every screen. */
 const TINTS = [
   palette.clinical[100],
   palette.teal[100],

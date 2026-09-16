@@ -21,10 +21,7 @@ export const printingApi = {
 
   /**
    * The open admission, for ward and bed on the band.
-   *
-   * Called directly rather than through the inpatient module's API so this
-   * module does not depend on code that changes with the nursing work; the
-   * endpoint and its row shape are the contract.
+   * Calls the endpoint directly so printing does not depend on the inpatient module.
    */
   currentAdmission: async (patientId: string) => {
     const res = await apiClient.get<{ data: CurrentAdmission[] }>("/admissions", {

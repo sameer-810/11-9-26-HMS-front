@@ -11,22 +11,8 @@ import { idleState, lastActivityAt, recordActivity } from "./activity";
 const WEB_ACTIVITY_EVENTS = ["pointerdown", "keydown", "wheel", "touchstart"] as const;
 
 /**
- * US-01 session timeout, on the screen.
- *
- * A computer at a nursing station is left signed in all the time; the next
- * person to sit down reads whatever the last one had open. After the
- * hospital's configured minutes without a tap, click or keypress, the app
- * warns for one minute and then signs out.
- *
- * - Nothing queued is lost: signing out keeps observations and notes waiting
- *   in the outbox for the nurse who charted them (see useAuthStore.logout).
- * - Timers do not run while a phone app is in the background, so the check
- *   also runs when the app comes back to the foreground.
- * - The API holds the same line when a session that sat unused asks for a new
- *   token, so closing the laptop does not defeat it.
- *
- * The warning cannot be dismissed by tapping outside it: an accidental tap
- * must not sign anyone out, and it must not silently keep them in either.
+ * US-01 idle timeout: warns for a minute, then signs out (outbox ops are kept).
+ * Rechecks on foreground since background timers pause; the API enforces it too.
  */
 export function IdleTimeout() {
   const minutes = useAuthStore((s) => s.hospital?.sessionIdleMinutes ?? 30);
@@ -76,8 +62,8 @@ export function IdleTimeout() {
       appState.remove();
       detach();
     };
-    // signOut reads `minutes` through the closure recreated with this effect.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // signOut reads `minutes` through the closure recreated with this effect.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [minutes]);
 
   const seconds = remaining === null ? 0 : Math.max(1, Math.ceil(remaining / 1000));

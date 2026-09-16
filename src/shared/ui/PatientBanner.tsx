@@ -5,30 +5,11 @@ import { palette, layout, radius, signal, numeric } from "../designSystem";
 import { Text } from "./Text";
 import { HStack, VStack } from "./Stack";
 
-/**
- * The patient identity band.
- *
- * This exists for exactly one reason: wrong-patient error is the most common
- * serious failure mode in electronic record systems. Someone opens a second
- * chart, gets interrupted, comes back, and writes into the wrong one. Every
- * screen that displays patient data shows this band, it never scrolls away, and
- * it is never collapsible — an identity check the user can dismiss is one they
- * will dismiss.
- *
- * The ordering is the safety argument:
- *   1. NAME first and largest. It is what the clinician verifies aloud.
- *   2. Identifiers next — patient ID, age, sex — the discriminators between two
- *      patients with the same or similar name.
- *   3. ALLERGIES in critical styling. Not buried in a tab. The single piece of
- *      clinical data whose absence most reliably kills people.
- *   4. Location and status last.
- *
- * "No known allergies" is rendered explicitly and differently from "allergies
- * not recorded". Those are clinically opposite statements, and an empty space
- * that could mean either is worse than nothing at all — it looks like a
- * negative finding when it is actually missing data.
- */
 
+/**
+ * Patient identity band against wrong-patient errors: never scrolls or collapses.
+ * Order: name, identifiers, allergies (tri-state), then location and status.
+ */
 export interface PatientBannerAllergy {
   substance: string;
   severity: "mild" | "moderate" | "severe" | "anaphylaxis";
@@ -77,16 +58,14 @@ export function PatientBanner({ patient, onPress, right }: Props) {
           minHeight: isPhone ? layout.patientBannerHeightPhone : layout.patientBannerHeight,
           paddingHorizontal: isPhone ? layout.screenPaddingPhone : layout.screenPadding,
         },
-        // A severe allergy tints the whole band. It is the one condition
-        // allowed to change the banner's appearance, because it is the one the
-        // clinician must not miss while reading the name.
+        // A severe allergy is the only condition allowed to restyle the band.
         severe.length > 0 && styles.wrapSevere,
       ]}
       accessibilityRole="header"
       accessibilityLabel={buildA11yLabel(patient)}
     >
       <HStack gap={isPhone ? 10 : 16} align="center" wrap={isPhone}>
-        {/* 1. Identity */}
+        { /* 1. Identity */ }
         <VStack gap={2} style={{ minWidth: isPhone ? "100%" : 200, flexShrink: 0 }}>
           <Text variant={isPhone ? "h3" : "h2"} tone="primary" numberOfLines={1}>
             {patient.fullName}
@@ -114,7 +93,7 @@ export function PatientBanner({ patient, onPress, right }: Props) {
           </HStack>
         </VStack>
 
-        {/* 2. Allergies */}
+        { /* 2. Allergies */ }
         <View style={{ flexShrink: 1, flexGrow: 1, minWidth: isPhone ? "100%" : 180 }}>
           <AllergyStrip
             allergies={patient.allergies || []}
@@ -123,7 +102,7 @@ export function PatientBanner({ patient, onPress, right }: Props) {
           />
         </View>
 
-        {/* 3. Location, status, flags */}
+        { /* 3. Location, status, flags */ }
         <HStack gap={8} align="center" style={{ flexShrink: 0 }} wrap>
           {patient.isMlc ? (
             <View style={[styles.flag, { backgroundColor: palette.warning.bg, borderColor: palette.warning.border }]}>
@@ -173,8 +152,7 @@ function AllergyStrip({
   recorded: boolean;
   hasAny: boolean;
 }) {
-  // Never asked. Said out loud, because silence here reads as "no allergies"
-  // and that is a clinically dangerous misreading of missing data.
+  // Never asked: say so explicitly, as silence would read as "no allergies".
   if (!recorded) {
     return (
       <HStack gap={6} align="center">
@@ -236,10 +214,7 @@ function Dot() {
   return <View style={styles.dot} />;
 }
 
-/**
- * One spoken sentence carrying the same safety information a sighted user gets
- * from the band, in the same priority order.
- */
+/** Screen-reader label with the band's safety information in the same order. */
 function buildA11yLabel(p: PatientBannerData) {
   const parts = [p.fullName, `patient ${p.patientId}`, p.age, p.gender];
   if (p.bloodGroup && p.bloodGroup !== "unknown") parts.push(`blood group ${p.bloodGroup}`);
@@ -264,8 +239,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   wrapSevere: {
-    // A left rule rather than a full wash: enough to catch the eye without
-    // reducing the contrast of the name it sits beside.
     borderLeftWidth: 4,
     borderLeftColor: signal.critical.color,
     backgroundColor: signal.critical.bg,

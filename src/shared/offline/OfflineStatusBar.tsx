@@ -13,14 +13,8 @@ const entries = (n: number) => `${n} ${n === 1 ? "entry" : "entries"}`;
 const clock = (t: number) => new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
 /**
- * The strip above every screen that says what state the device is in.
- *
- * Silent when there is nothing to say. Otherwise, one of:
- *   - offline: what is on screen is a saved copy, as of when, and what can and
- *     cannot be saved right now;
- *   - back online with entries still sending;
- *   - entries the server refused, with a way to see their values and re-enter
- *     them. Those are never discarded without the nurse choosing to.
+ * Device-state strip above every screen: offline, entries still sending, or refused entries.
+ * Renders nothing otherwise. Refused entries are only discarded when the nurse chooses to.
  */
 export function OfflineStatusBar() {
   const online = useNetworkStore((s) => s.online);

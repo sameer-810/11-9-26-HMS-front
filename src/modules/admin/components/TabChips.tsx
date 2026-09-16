@@ -12,13 +12,8 @@ interface Props {
 }
 
 /**
- * The shared ChipsRow, with a test handle on every chip.
- *
- * ChipsRow takes no per-chip testID, and this module is not allowed to change
- * shared UI. So each chip is drawn as its own one-chip ChipsRow inside a
- * wrapper that carries the ID. The look, the tab role and the selected state
- * all still come from the shared component, so the tabs cannot drift from
- * every other chip row in the app.
+ * Shared ChipsRow with a testID per chip. ChipsRow has no per-chip testID, so each chip is a
+ * one-chip ChipsRow inside a wrapper that carries the ID.
  */
 export function TabChips({ chips, active, onChange, testIDPrefix }: Props) {
   return (

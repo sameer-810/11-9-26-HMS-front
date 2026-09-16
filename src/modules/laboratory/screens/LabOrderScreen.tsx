@@ -41,19 +41,11 @@ import { PrintTubeLabelButton, PrintLabReportButton } from "@modules/printing/co
 import type { LabOrder, LabStatus } from "@modules/laboratory/types";
 import type { PatientBanner } from "@modules/patient/types";
 
-/**
- * One laboratory order — the bench workspace for the lab, the result view for
- * the doctor.
- *
- * Flow 3 in order, top to bottom: who and why (identity pinned, indication
- * first), how to collect it, where it is, the results, and — once reported —
- * what happened about a critical value.
- *
- * A doctor opening an order that is not yet reported sees no values. The same
- * rule as the record: a number typed on the bench and not yet reported has
- * been checked by nobody, and the doctor would act on it.
- */
 
+/**
+ * one laboratory order: the bench workspace for the lab, the result view for the doctor.
+ * a doctor sees no values until the order is reported — bench values are unchecked.
+ */
 const NEXT_ACTION: Partial<Record<LabStatus, { to: LabStatus; label: string }>> = {
   requested: { to: "sample_collected", label: "Sample collected" },
   sample_collected: { to: "in_progress", label: "Start test" },
@@ -92,8 +84,7 @@ export default function LabOrderScreen() {
   const next = NEXT_ACTION[order.status];
   const showResults =
     order.results.length > 0 && (order.status === "reported" || (canWork && order.status === "completed"));
-  // The tube label exists only once a sample number does (at collection); the
-  // report only once the result is reported.
+  // tube label needs a sample number (set at collection); the report needs a reported result.
   const canPrintTubeLabel = canWork && Boolean(order.sampleId) && order.status !== "cancelled";
   const canPrintReport = order.status === "reported";
 
@@ -243,7 +234,7 @@ function RequestCard({ order }: { order: LabOrder }) {
           title="The request"
           subtitle={`Ordered by ${order.doctor.fullName}, ${formatDateTime(order.requestedAt)}`}
         />
-        {/* The indication first: it is the question the result answers. */}
+        
         <View style={styles.indication}>
           <Text variant="caption" tone="tertiary">
             Clinical indication
@@ -318,12 +309,8 @@ function RejectSample({ order }: { order: LabOrder }) {
 }
 
 /**
- * LB-05 after the report.
- *
- * The laboratory records who it told and whether they read the value back —
- * read-back is what catches "6.5" heard as "5.6". A doctor acknowledges with a
- * sentence about what they are doing. Telling someone and someone taking
- * responsibility are different events, and only the second stops escalation.
+ * critical result follow-up: the lab records calls and read-back; a doctor acknowledges.
+ * only the acknowledgement stops escalation, not the call.
  */
 function CriticalPanel({ order, canCall, canAcknowledge }: { order: LabOrder; canCall: boolean; canAcknowledge: boolean }) {
   const c = order.critical;
@@ -504,7 +491,6 @@ function CancelOrder({ order }: { order: LabOrder }) {
   );
 }
 
-/** MR-03: prior results for the same test. */
 function PriorResults({ order }: { order: LabOrder }) {
   return (
     <Card testID="prior-results">

@@ -3,15 +3,8 @@ import { View, StyleSheet, ViewStyle, StyleProp } from "react-native";
 import { palette, radius, bedState } from "../designSystem";
 import { Text } from "./Text";
 
-/**
- * Workflow state — the state machines from the spec, not clinical severity.
- *
- * Kept apart from SignalBadge on purpose. "In consultation" and "critically
- * high potassium" must not look like the same kind of thing, so state chips are
- * quiet and neutral by default and only the genuinely attention-worthy states
- * borrow a warm colour.
- */
 
+/** Workflow state chip, not clinical severity (see SignalBadge); neutral unless attention is needed. */
 type Palette = { bg: string; text: string; border: string };
 
 const NEUTRAL: Palette = {
@@ -36,13 +29,7 @@ const RED: Palette = {
   border: palette.danger.border,
 };
 
-/**
- * Every state in the spec's state tables, mapped once.
- *
- * A screen that invents its own colour for "Dispensed" is how two screens end
- * up disagreeing about what green means, so screens pass the state string and
- * this table decides.
- */
+/** Every spec state mapped once; screens pass the state string rather than choosing colours. */
 const STATE_COLORS: Record<string, Palette> = {
   // Patient
   registered: NEUTRAL,

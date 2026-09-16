@@ -18,13 +18,8 @@ interface Props {
 }
 
 /**
- * Set a new password.
- *
- * Doubles as the forced first-login screen. When `forced`, there is no way past
- * it except completing it or signing out — matching the server, which refuses
- * every other route with PASSWORD_CHANGE_REQUIRED. A screen the user could
- * navigate away from would make the client and the server disagree about
- * whether the app is usable.
+ * Change password; also the forced first-login screen. When `forced` the only exits are
+ * completing it or signing out, matching the server's PASSWORD_CHANGE_REQUIRED gate.
  */
 export default function ChangePasswordScreen({ forced }: Props) {
   const user = useAuthStore((s) => s.user);
@@ -127,8 +122,7 @@ export default function ChangePasswordScreen({ forced }: Props) {
         </Card>
 
         {forced ? (
-          // The only other way out. Someone handed the wrong credential needs a
-          // route back to the login screen that is not "force-quit the app".
+          // The only other exit from the forced screen.
           <Button
             label="Sign out instead"
             variant="ghost"

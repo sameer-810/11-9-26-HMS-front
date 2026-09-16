@@ -19,12 +19,8 @@ type Gender = "male" | "female" | "other";
 const MODES = Object.keys(ARRIVAL_MODE_LABELS) as ArrivalMode[];
 
 /**
- * An emergency arrival. Four things matter at the door — who, how they came,
- * why, and whether police will ask about it — and nothing else is asked for.
- *
- * An unconscious stranger cannot wait for a registration form, so "Unidentified"
- * needs only a sex and a guess at age; the server gives them a placeholder
- * record carrying the visit number, to be corrected when someone knows who they are.
+ * Emergency arrival: who, how, why and MLC only. "Unidentified" needs just sex and an age guess;
+ * the server creates a placeholder patient to correct later.
  */
 export default function RegisterArrivalScreen() {
   const navigation = useNavigation<any>();
@@ -94,8 +90,7 @@ export default function RegisterArrivalScreen() {
       ...(mode === "referral" && referredFrom.trim() ? { referredFrom: referredFrom.trim() } : {}),
       ...(isMlc ? { isMlc: true } : {}),
     };
-    // Replace, so Back from the attendance returns to the board rather than
-    // to a filled-in form that would register the patient twice.
+    // Replace so Back cannot return to the filled form and register twice.
     register.mutate(body, { onSuccess: (visit) => navigation.replace("EmergencyVisit", { visitId: visit.id }) });
   };
 

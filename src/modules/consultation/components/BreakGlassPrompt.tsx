@@ -8,20 +8,12 @@ import { apiErrorMessage } from "@api/apiClient";
 import { useBreakGlass } from "@modules/consultation/hooks/useConsultation";
 import type { RestrictedDetails } from "@modules/consultation/types";
 
-/** Mirrors the server's minimum. A reviewer cannot judge "urgent". */
+/** Mirrors the server's minimum reason length. */
 const MIN_REASON = 20;
 
 /**
- * Break-the-glass.
- *
- * The record is restricted to the treating team, and this clinician is not on
- * it. In an emergency that must not stop them — a restriction that holds while
- * the patient is unconscious in resus is a safety failure, not a privacy win.
- * So the door opens, but only in the open: a stated reason, a fixed time limit,
- * a flagged entry on every view, and a review afterwards.
- *
- * The prompt says all of that before the button, because the deterrent is
- * knowing it will be read.
+ * Break-the-glass prompt for a restricted record: reason, time limit, logging and review
+ * are all stated before the button, as a deterrent.
  */
 export function BreakGlassPrompt({
   patientId,
@@ -57,8 +49,7 @@ export function BreakGlassPrompt({
         </HStack>
 
         {!details.canBreakGlass ? (
-          // Administration, billing and the front desk never read clinical
-          // records, restricted or not — so there is no glass for them to break.
+          // Non-clinical roles never read clinical records, so break-glass is unavailable.
           <Text variant="body-sm" tone="secondary" testID="breakglass-unavailable">
             Your role does not include clinical records, so emergency access is not available to you.
           </Text>
@@ -118,10 +109,7 @@ export function BreakGlassPrompt({
   );
 }
 
-/**
- * Shown on every screen read under a grant, with the minutes left. When it
- * runs out the record is refetched, and the server closes it again.
- */
+/** Banner with minutes left on a break-glass grant; calls onExpired at zero so the record refetches. */
 export function EmergencyAccessBanner({ expiresAt, onExpired }: { expiresAt: string; onExpired?: () => void }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
