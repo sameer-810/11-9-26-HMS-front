@@ -17,8 +17,8 @@
       "android": { "buildType": "apk" },
       "channel": "preview",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://hms-api.onrender.com/api/v1",
-        "EXPO_PUBLIC_SOCKET_URL": "https://hms-api.onrender.com"
+        "EXPO_PUBLIC_API_URL": "https://one1-9-26-hms-back.onrender.com/api/v1",
+        "EXPO_PUBLIC_SOCKET_URL": "https://one1-9-26-hms-back.onrender.com"
       }
     },
     "production": {
@@ -26,8 +26,8 @@
       "android": { "buildType": "app-bundle" },
       "channel": "production",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://hms-api.onrender.com/api/v1",
-        "EXPO_PUBLIC_SOCKET_URL": "https://hms-api.onrender.com"
+        "EXPO_PUBLIC_API_URL": "https://one1-9-26-hms-back.onrender.com/api/v1",
+        "EXPO_PUBLIC_SOCKET_URL": "https://one1-9-26-hms-back.onrender.com"
       }
     }
   },
