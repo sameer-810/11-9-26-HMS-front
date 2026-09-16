@@ -3,6 +3,34 @@ import type { DoctorSummary, DepartmentSummary } from "@modules/appointment/type
 
 export type AlertTier = "critical" | "urgent" | "caution" | "normal";
 
+/**
+ * US-17: a doctor's recommendation to admit, waiting at the admission desk.
+ *
+ * For a restricted record `reason` and `diagnosis` are empty — they are
+ * clinical — while the name and allergies, which are not restricted, still
+ * travel so a bed can be found.
+ */
+export interface AdmissionRequest {
+  consultationId: string;
+  consultationNumber: string;
+  recommendedAt: string;
+  patient: PatientBanner;
+  restricted: boolean;
+  reason: string;
+  diagnosis: string;
+  doctor: DoctorSummary | null;
+  department: { id: string; name: string } | null;
+}
+
+export type RequestClosureOutcome = "patient_declined" | "referred_elsewhere" | "no_longer_needed" | "duplicate";
+
+export const REQUEST_CLOSURE_LABELS: Record<RequestClosureOutcome, string> = {
+  patient_declined: "Patient declined admission",
+  referred_elsewhere: "Referred to another hospital",
+  no_longer_needed: "Admission no longer needed",
+  duplicate: "Duplicate recommendation",
+};
+
 export type News2BandKey = "none" | "low" | "lowMedium" | "medium" | "high";
 
 /**

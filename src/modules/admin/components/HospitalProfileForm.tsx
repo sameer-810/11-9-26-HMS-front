@@ -106,22 +106,41 @@ export function HospitalProfileForm() {
   return <Form key={data.id} hospital={data} />;
 }
 
+const IDLE_MIN = 5;
+const IDLE_MAX = 480;
+
 function Form({ hospital }: { hospital: HospitalProfile }) {
   const update = useUpdateHospital();
   const [original, setOriginal] = useState<Flat>(() => toFlat(hospital));
   const [form, setForm] = useState<Flat>(original);
+  // A number, kept apart from the text fields the patch builder trims.
+  const [idleOriginal, setIdleOriginal] = useState(String(hospital.sessionIdleMinutes ?? 30));
+  const [idle, setIdle] = useState(idleOriginal);
   const [attempted, setAttempted] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const errors = validate(form);
-  const patch = buildPatch(form, original);
-  const changed = Object.keys(patch).length > 0;
+  const idleValue = Number(idle);
+  const idleError =
+    !/^\d+$/.test(idle.trim()) || idleValue < IDLE_MIN || idleValue > IDLE_MAX
+      ? `Between ${IDLE_MIN} and ${IDLE_MAX} minutes`
+      : undefined;
+  const errors: Partial<Record<keyof Flat | "sessionIdleMinutes", string>> = {
+    ...validate(form),
+    ...(idleError ? { sessionIdleMinutes: idleError } : {}),
+  };
+  const patch: HospitalPatch = {
+    ...buildPatch(form, original),
+    ...(!idleError && idle.trim() !== idleOriginal ? { sessionIdleMinutes: idleValue } : {}),
+  };
+  // An invalid timeout is still a change: saving must be pressable so the
+  // error can be shown, rather than a disabled button with no reason given.
+  const changed = Object.keys(patch).length > 0 || idle.trim() !== idleOriginal;
 
   const set = (k: keyof Flat) => (v: string) => {
     setSaved(false);
     setForm((f) => ({ ...f, [k]: v }));
   };
-  const err = (k: keyof Flat) => (attempted ? errors[k] : undefined);
+  const err = (k: keyof Flat | "sessionIdleMinutes") => (attempted ? errors[k] : undefined);
 
   const field = (k: keyof Flat, label: string, extra: Partial<React.ComponentProps<typeof TextField>> = {}) => (
     <View style={{ flex: 1, minWidth: 220 }}>
@@ -137,6 +156,8 @@ function Form({ hospital }: { hospital: HospitalProfile }) {
         const fresh = toFlat(h);
         setOriginal(fresh);
         setForm(fresh);
+        setIdleOriginal(String(h.sessionIdleMinutes));
+        setIdle(String(h.sessionIdleMinutes));
         setAttempted(false);
         setSaved(true);
       },
@@ -218,6 +239,28 @@ function Form({ hospital }: { hospital: HospitalProfile }) {
           {field("timezone", "Timezone", { autoCapitalize: "none", hint: "IANA name, such as Asia/Kolkata." })}
           {field("currency", "Currency", { autoCapitalize: "characters", maxLength: 3 })}
         </HStack>
+      </Card>
+
+      <Card>
+        <SectionHeader
+          title="Sign-in"
+          subtitle="A screen left open at a nursing station shows the next person whatever the last one was reading."
+        />
+        <View style={{ maxWidth: 360 }}>
+          <TextField
+            label="Sign out after inactivity"
+            value={idle}
+            onChangeText={(v) => {
+              setSaved(false);
+              setIdle(v);
+            }}
+            numericField
+            suffix="minutes"
+            error={err("sessionIdleMinutes")}
+            hint={`Between ${IDLE_MIN} and ${IDLE_MAX}. After this long without a tap or keypress the screen warns for a minute, then signs out. Nothing waiting to send is lost.`}
+            testID="hospital-sessionIdleMinutes"
+          />
+        </View>
       </Card>
 
       <HStack gap={8} wrap align="center">

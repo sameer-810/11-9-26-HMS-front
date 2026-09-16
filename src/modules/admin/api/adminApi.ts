@@ -14,6 +14,8 @@ import type {
   IssuedCredential,
   Paged,
   PermissionCatalogue,
+  RoleChange,
+  RoleSet,
   Room,
   RoomType,
   UpdateUserBody,
@@ -45,6 +47,16 @@ export const adminApi = {
       (await apiClient.post<{ data: IssuedCredential }>(`/users/${id}/reset-credential`)).data.data,
     permissions: async () =>
       (await apiClient.get<{ data: PermissionCatalogue }>("/users/permissions")).data.data,
+  },
+
+  // ---- Roles (roles.manage) — US-04 ----------------------------------------
+  roles: {
+    list: async () => (await apiClient.get<{ data: RoleSet[] }>("/roles")).data.data,
+    /** `applyToStaff` also applies the change to people already in the role. */
+    update: async (role: string, body: { permissions: string[]; applyToStaff: boolean }) =>
+      (await apiClient.put<{ data: RoleChange }>(`/roles/${role}`, body)).data.data,
+    reset: async (role: string, applyToStaff: boolean) =>
+      (await apiClient.post<{ data: RoleChange }>(`/roles/${role}/reset`, { applyToStaff })).data.data,
   },
 
   // ---- Hospital (read: dashboard.view, write: hospital.config) -------------

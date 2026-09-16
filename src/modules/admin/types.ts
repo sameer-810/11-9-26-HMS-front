@@ -63,10 +63,44 @@ export interface AdminUser {
   specialization: string;
   qualifications: string;
   icuAuthorized: boolean;
+  /** US-23: wards a nurse is allocated to. Always empty for other roles. */
+  wardIds: string[];
   isActive: boolean;
   mustChangePassword: boolean;
   lastLoginAt: string | null;
   createdAt: string;
+}
+
+// ---- Roles (US-04) ----------------------------------------------------------
+
+/** GET /roles — one role's set at this hospital. */
+export interface RoleSet {
+  role: Role;
+  label: string;
+  /** False for the administrator role, which is fixed. */
+  editable: boolean;
+  /** This hospital's set differs from the standard one. */
+  customised: boolean;
+  permissions: string[];
+  /** The standard set from the specification's permission matrix. */
+  defaults: string[];
+  /** What the signed-in administrator may put in this role: what they hold, plus the standard set. */
+  grantable: string[];
+  staff: { total: number; active: number };
+  updatedAt: string | null;
+  updatedByName: string;
+}
+
+/** What saving or resetting a role changed. */
+export interface RoleChange {
+  role: Role;
+  label: string;
+  permissions: string[];
+  added: string[];
+  removed: string[];
+  applyToStaff: boolean;
+  staffUpdated: number;
+  customised: boolean;
 }
 
 /**
@@ -129,6 +163,7 @@ export interface UpdateUserBody extends ClinicalIdentity {
   designation?: string;
   departmentId?: string | null;
   permissions?: string[];
+  wardIds?: string[];
 }
 
 // ---- Hospital ---------------------------------------------------------------
@@ -157,6 +192,8 @@ export interface HospitalProfile {
   gstin: string;
   timezone: string;
   currency: string;
+  /** US-01: minutes without activity before a screen signs itself out (5–480). */
+  sessionIdleMinutes: number;
   approvalStatus: "pending" | "approved" | "rejected";
   subscription: {
     planCode: string;
@@ -182,6 +219,7 @@ export type HospitalPatch = Partial<
     | "gstin"
     | "timezone"
     | "currency"
+    | "sessionIdleMinutes"
   > & { address: Partial<HospitalAddress> }
 >;
 

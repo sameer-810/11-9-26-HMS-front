@@ -1,7 +1,11 @@
 import { z } from "zod";
 
+/**
+ * US-01: an email address or the employee ID on the staff badge. Which one it
+ * is decides nothing here — the server looks for an "@".
+ */
 export const loginSchema = z.object({
-  email: z.string().trim().min(1, "Enter your email").email("Enter a valid email address"),
+  identifier: z.string().trim().min(1, "Enter your email or employee ID").max(254, "That is too long"),
   password: z.string().min(1, "Enter your password"),
 });
 

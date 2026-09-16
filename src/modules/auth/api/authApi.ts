@@ -34,7 +34,7 @@ export const authApi = {
    * The password is required by the server: an email alone used to be enough,
    * which let anyone look up where a named member of staff works.
    */
-  hospitalsForEmail: async (params: { email: string; password: string }) => {
+  hospitalsForEmail: async (params: { identifier: string; password: string }) => {
     const res = await apiClient.post<{ data: { hospitals: HospitalChoice[] } }>(
       "/auth/hospitals",
       params,
@@ -42,7 +42,8 @@ export const authApi = {
     return res.data.data.hospitals;
   },
 
-  login: async (params: { email: string; password: string; hospitalId?: string }) => {
+  /** `identifier` is an email address or an employee ID. */
+  login: async (params: { identifier: string; password: string; hospitalId?: string }) => {
     const res = await apiClient.post<{ data: LoginResult }>("/auth/login", {
       ...params,
       deviceId: await getDeviceId(),

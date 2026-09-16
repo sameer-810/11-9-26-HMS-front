@@ -112,9 +112,11 @@ type AppParamList = {
   MedicineStock: NavigatorScreenParams<StockParamList> | undefined;
   Inventory: NavigatorScreenParams<StockParamList> | undefined;
   Bills: NavigatorScreenParams<BillingParamList> | undefined;
-  Reports: undefined;
+  /** `report` opens a particular report — the dashboard's tiles pass it. */
+  Reports: { report?: string } | undefined;
   AuditTrail: undefined;
   UserManagement: undefined;
+  RolePermissions: undefined;
   HospitalConfig: undefined;
   Profile: undefined;
   Scan: undefined;
@@ -231,6 +233,8 @@ const linking: LinkingOptions<RootParamList> = {
           Reports: "reports",
           AuditTrail: "admin/audit",
           UserManagement: "admin/users",
+          // Section 5.5's route for Roles & Permissions.
+          RolePermissions: "admin/roles",
           HospitalConfig: "admin/config",
           Profile: "profile",
           // A USB scanner types into whatever has focus; this is where it should.

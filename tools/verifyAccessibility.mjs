@@ -247,7 +247,8 @@ if (rxDispensed) {
 
 // Kiran: a signed consultation nobody has billed yet, so "Generate bill" has a charge to act on.
 const kiranConsult = await must("consultation (Kiran)", req("POST", "/consultations", { patientId: kiran.id, type: "opd" }, doctor.token));
-await must("consultation notes (Kiran)", req("PATCH", `/consultations/${kiranConsult.id}`, { chiefComplaint: "Chest pain, resolved" }, doctor.token));
+// Also recommended for admission, so the admission requests panel (US-17) is on the doctor's ward board.
+await must("consultation notes (Kiran)", req("PATCH", `/consultations/${kiranConsult.id}`, { chiefComplaint: "Chest pain, resolved", admissionRecommended: true, admissionReason: "Observe on telemetry overnight" }, doctor.token));
 await must("sign consultation (Kiran)", req("POST", `/consultations/${kiranConsult.id}/sign`, null, doctor.token));
 
 await must("lab catalogue", req("POST", "/laboratory/tests/load-standard", null, adminToken));
@@ -586,6 +587,8 @@ const DETAIL = {
   ],
   admin: [
     { screen: "User detail", open: async (p) => { await go(p, "/admin/users"); await p.getByTestId("user-row-DOC001").click(); await settle(p); } },
+    // A nurse's account carries the ward allocation section (US-23).
+    { screen: "User detail (nurse)", open: async (p) => { await go(p, "/admin/users"); await p.getByTestId("user-row-NUR001").click(); await settle(p); } },
     { screen: "Create user", open: async (p) => { await go(p, "/admin/users"); await p.getByTestId("user-create-button").click(); await settle(p); } },
     { screen: "Bill detail (paid)", path: `/billing/bills/${finalBill?.id}` },
   ],

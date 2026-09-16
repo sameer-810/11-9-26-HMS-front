@@ -17,6 +17,9 @@ interface Props {
   onPress?: () => void;
   /** Draws attention without shouting — "3 tests overdue". */
   attention?: boolean;
+  /** What pressing the tile does, read after its figure: "Opens the OPD queue". */
+  hint?: string;
+  testID?: string;
 }
 
 /**
@@ -34,6 +37,8 @@ export function StatTile({
   accent = "neutral",
   onPress,
   attention,
+  hint,
+  testID,
 }: Props) {
   const a = accents[accent];
   const Icon = icon;
@@ -44,7 +49,10 @@ export function StatTile({
       compact
       accentColor={attention ? a.color : undefined}
       style={styles.wrap}
-      accessibilityLabel={`${label}: ${value}${sublabel ? `, ${sublabel}` : ""}`}
+      // Card carries a label, not a hint, so where the tile leads is said at the
+      // end of the label — the part a screen-reader user hears before pressing.
+      accessibilityLabel={`${label}: ${value}${sublabel ? `, ${sublabel}` : ""}${onPress && hint ? `. ${hint}` : ""}`}
+      testID={testID}
     >
       <VStack gap={8}>
         <HStack gap={8} align="center" justify="space-between">

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Platform, View } from "react-native";
-import { BarChart3, Download } from "lucide-react-native";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { BarChart3, Download, FileSpreadsheet, FileText } from "lucide-react-native";
 
 import {
   Screen,
@@ -23,7 +24,8 @@ import {
 import { apiErrorMessage } from "@api/apiClient";
 import { addCalendarDays, formatNumber, formatRupees, shortDate, todayCalendarDate } from "@shared/format";
 import { useDepartments } from "@modules/appointment/hooks/useDirectory";
-import { useExportReportCsv, useReport, useReportCatalogue } from "@modules/reports/hooks/useReports";
+import { useExportReport, useReport, useReportCatalogue } from "@modules/reports/hooks/useReports";
+import { EXPORT_TYPES, type ExportFormat } from "@modules/reports/api/reportsApi";
 import { FilterChip } from "@modules/reports/components/FilterChip";
 import { SeriesChart, firstNumericField } from "@modules/reports/components/SeriesChart";
 import type { ReportCell, ReportResult, ReportRow, ReportSummaryItem } from "@modules/reports/types";
@@ -52,10 +54,17 @@ const SERIES_TITLES: Record<string, string> = {
   billing: "Collected per day",
   inventory: "Stock movements per day",
   emergency: "Arrivals per day",
+  doctor_activity: "Consultations signed per day",
 };
 
 /** The only series the server sends in rupees. */
 const MONEY_SERIES_FIELDS = new Set(["collected"]);
+
+const EXPORT_BUTTONS: { format: ExportFormat; label: string; icon: typeof Download }[] = [
+  { format: "csv", label: "Export CSV", icon: Download },
+  { format: "xlsx", label: "Excel", icon: FileSpreadsheet },
+  { format: "pdf", label: "PDF", icon: FileText },
+];
 
 function formatSummaryValue({ value, unit }: ReportSummaryItem): string {
   // Null is "nothing to measure", and a dash keeps it from reading as zero.
@@ -141,28 +150,20 @@ function ReportTable({ table }: { table: ReportResult["table"] }) {
   );
 }
 
-/** Web only: hand the browser the file through a throwaway link. */
-function saveBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  // Revoked on the next tick: some browsers start the download asynchronously
-  // and a URL revoked in the same tick downloads nothing.
-  setTimeout(() => URL.revokeObjectURL(url), 0);
-}
-
 /**
- * AD-03: hospital activity by date range and department.
+ * AD-03 / US-39–41: hospital activity by date range and department, exported
+ * as CSV, Excel or PDF.
  *
  * The list of reports comes from the server, which offers each user only what
- * their role runs — administration all nine, billing its own, the store its
+ * their role runs — administration all ten, billing its own, the store its
  * own — so there is no client-side guess about who sees which.
+ *
+ * Another screen can open a particular report (the dashboard's "Total
+ * patients" tile opens registrations) by passing `report` in the route params.
  */
 export default function ReportsScreen() {
+  const navigation = useNavigation<any>();
+  const route = useRoute<any>();
   const today = useMemo(() => todayCalendarDate(), []);
   const catalogue = useReportCatalogue();
   const { data: departments } = useDepartments();
@@ -173,14 +174,22 @@ export default function ReportsScreen() {
   const [departmentId, setDepartmentId] = useState("");
   const [notice, setNotice] = useState<{ tone: "info" | "success"; message: string } | null>(null);
 
+  // A report asked for by another screen wins until a chip is pressed here,
+  // which clears the request — so arriving again with a different one works.
+  const requested: string | undefined = route.params?.report;
+  const choose = (key: string) => {
+    setSelectedKey(key);
+    if (requested) navigation.setParams({ report: undefined });
+  };
+
   const reports = catalogue.data ?? [];
-  const active = reports.find((r) => r.key === selectedKey) ?? reports[0];
+  const active = reports.find((r) => r.key === (requested ?? selectedKey)) ?? reports[0];
   const fromValid = DATE_RE.test(from);
   const toValid = DATE_RE.test(to);
   const filters = useMemo(() => ({ from, to, departmentId: departmentId || undefined }), [from, to, departmentId]);
 
   const report = useReport(active?.key, filters, fromValid && toValid);
-  const exportCsv = useExportReportCsv();
+  const exportReport = useExportReport();
   const data = report.isError ? undefined : report.data;
 
   const activePreset = PRESETS.find((p) => {
@@ -188,26 +197,24 @@ export default function ReportsScreen() {
     return r.from === from && r.to === to;
   })?.key;
 
-  const onExport = () => {
+  const onExport = (format: ExportFormat) => {
     if (!active) return;
     setNotice(null);
-    exportCsv.reset();
-    if (Platform.OS !== "web") {
-      setNotice({ tone: "info", message: "CSV export is available on the web and desktop app." });
-      return;
-    }
-    exportCsv.mutate(
-      { key: active.key, filters },
+    exportReport.reset();
+    exportReport.mutate(
+      { key: active.key, filters, format },
       {
-        onSuccess: ({ blob, filename }) => {
-          saveBlob(blob, filename);
-          setNotice({ tone: "success", message: `Downloaded ${filename}` });
-        },
+        onSuccess: ({ filename }) =>
+          setNotice({
+            tone: "success",
+            message: Platform.OS === "web" ? `Downloaded ${filename}` : `${filename} is ready to save or send`,
+          }),
       },
     );
   };
 
   const seriesField = data?.series?.length ? firstNumericField(data.series) : null;
+  const failedFormat = exportReport.variables?.format;
 
   return (
     <Screen
@@ -221,16 +228,22 @@ export default function ReportsScreen() {
       }}
       testID="reports-screen"
       right={
-        <Button
-          label="Export CSV"
-          size="sm"
-          variant="secondary"
-          icon={<Download size={15} />}
-          disabled={!active || !fromValid || !toValid}
-          loading={exportCsv.isPending}
-          onPress={onExport}
-          testID="report-export-csv"
-        />
+        <HStack gap={6} wrap role="group" accessibilityLabel="Export this report">
+          {EXPORT_BUTTONS.map(({ format, label, icon: Icon }) => (
+            <Button
+              key={format}
+              label={label}
+              size="sm"
+              variant="secondary"
+              fullWidth={false}
+              icon={<Icon size={15} />}
+              disabled={!active || !fromValid || !toValid || exportReport.isPending}
+              loading={exportReport.isPending && exportReport.variables?.format === format}
+              onPress={() => onExport(format)}
+              testID={`report-export-${format}`}
+            />
+          ))}
+        </HStack>
       }
     >
       {catalogue.isLoading ? (
@@ -253,7 +266,7 @@ export default function ReportsScreen() {
                 key={r.key}
                 label={r.title}
                 active={r.key === active.key}
-                onPress={() => setSelectedKey(r.key)}
+                onPress={() => choose(r.key)}
                 testID={`report-chip-${r.key}`}
               />
             ))}
@@ -321,17 +334,25 @@ export default function ReportsScreen() {
             </VStack>
           </Card>
 
-          {report.isError || exportCsv.isError ? (
+          {report.isError || exportReport.isError ? (
             <VStack gap={8} testID="report-error">
               {report.isError ? (
                 <Banner tone="danger" title="Couldn't run this report" message={apiErrorMessage(report.error)} />
               ) : null}
-              {exportCsv.isError ? (
-                <Banner tone="danger" title="Couldn't export the CSV" message={apiErrorMessage(exportCsv.error)} />
+              {exportReport.isError ? (
+                <Banner
+                  tone="danger"
+                  title={`Couldn't export the ${failedFormat ? EXPORT_TYPES[failedFormat].label : "report"}`}
+                  message={apiErrorMessage(exportReport.error)}
+                />
               ) : null}
             </VStack>
           ) : null}
-          {notice ? <Banner tone={notice.tone} message={notice.message} onDismiss={() => setNotice(null)} /> : null}
+          {notice ? (
+            <View testID="report-export-notice">
+              <Banner tone={notice.tone} message={notice.message} onDismiss={() => setNotice(null)} />
+            </View>
+          ) : null}
 
           {!fromValid || !toValid ? null : report.isLoading ? (
             <VStack gap={10}>

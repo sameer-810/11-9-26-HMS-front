@@ -148,7 +148,8 @@ const SECTION_5: Screen[] = [
   { screen: "Low Stock Alerts", route: "/inventory/low-stock", access: [INV, ADM], item: "Inventory" },
   { screen: "User Management", route: "/admin/users", access: [ADM], item: "UserManagement" },
   { screen: "Create / Edit User", route: "/admin/users/new, /admin/users/:id", access: [ADM], within: "UserManagement" },
-  { screen: "Roles & Permissions", route: "/admin/roles", access: [ADM], item: "UserManagement" },
+  // Its own drawer item since Phase 11 (US-04 role-level permissions).
+  { screen: "Roles & Permissions", route: "/admin/roles", access: [ADM], item: "RolePermissions" },
   { screen: "Hospital Configuration", route: "/admin/config", access: [ADM], item: "HospitalConfig" },
   { screen: "Reports & Analytics", route: "/reports", access: [ADM, BIL, INV], item: "Reports" },
   { screen: "Audit Trail", route: "/admin/audit", access: [ADM], item: "AuditTrail" },

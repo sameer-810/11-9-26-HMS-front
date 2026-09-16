@@ -3,7 +3,7 @@ import { View, StyleSheet, ScrollView, useWindowDimensions } from "react-native"
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LinearGradient } from "expo-linear-gradient";
-import { Hospital, Mail, Lock } from "lucide-react-native";
+import { Hospital, UserRound, Lock } from "lucide-react-native";
 
 import { palette, radius, layout, gradients } from "@shared/designSystem";
 import { Text, VStack, HStack, Button, Banner, Card, Select } from "@shared/ui";
@@ -12,6 +12,7 @@ import { apiErrorCode, apiErrorMessage } from "@api/apiClient";
 import { useLogin, useHospitalsForEmail } from "@modules/auth/hooks/useAuth";
 import { loginSchema, type LoginForm } from "@modules/auth/auth.validation";
 import type { HospitalChoice } from "@modules/auth/api/authApi";
+import { useSessionNotice } from "@shared/session/sessionNotice";
 
 export default function LoginScreen({ navigation }: { navigation?: any }) {
   const { width } = useWindowDimensions();
@@ -29,21 +30,24 @@ export default function LoginScreen({ navigation }: { navigation?: any }) {
   const [hospitals, setHospitals] = useState<HospitalChoice[] | null>(null);
   const [hospitalId, setHospitalId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const notice = useSessionNotice((s) => s.notice);
+  const clearNotice = useSessionNotice((s) => s.setNotice);
 
   const { control, handleSubmit, getValues } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
     mode: "onTouched",
-    defaultValues: { email: "", password: "" },
+    defaultValues: { identifier: "", password: "" },
   });
 
   const submit = handleSubmit(async (values) => {
     setError(null);
+    clearNotice(null);
     try {
       await login.mutateAsync({ ...values, hospitalId: hospitalId ?? undefined });
     } catch (err) {
       if (apiErrorCode(err) === "HOSPITAL_SELECTION_REQUIRED") {
         const list = await lookupHospitals
-          .mutateAsync({ email: getValues("email"), password: getValues("password") })
+          .mutateAsync({ identifier: getValues("identifier"), password: getValues("password") })
           .catch(() => []);
         setHospitals(list);
         setError("You have an account at more than one hospital. Choose which one.");
@@ -100,19 +104,24 @@ export default function LoginScreen({ navigation }: { navigation?: any }) {
             </Text>
           </VStack>
 
+          {notice ? (
+            <View testID="login-session-notice">
+              <Banner tone="info" title="Signed out" message={notice} onDismiss={() => clearNotice(null)} />
+            </View>
+          ) : null}
           {error ? <Banner tone="danger" message={error} onDismiss={() => setError(null)} /> : null}
 
           <VStack gap={14}>
             <ControlledTextField
               control={control}
-              name="email"
-              label="Email"
-              placeholder="you@hospital.in"
+              name="identifier"
+              label="Email or employee ID"
+              placeholder="you@hospital.in or your staff ID"
               autoCapitalize="none"
-              autoComplete="email"
-              keyboardType="email-address"
+              autoCorrect={false}
+              autoComplete="username"
               testID="login-email"
-              leading={<Mail size={16} color={palette.text.tertiary} strokeWidth={1.9} />}
+              leading={<UserRound size={16} color={palette.text.tertiary} strokeWidth={1.9} />}
             />
             <ControlledTextField
               control={control}

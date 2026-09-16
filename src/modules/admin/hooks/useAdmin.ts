@@ -25,6 +25,7 @@ export const adminKeys = {
   users: (params?: UserListParams) => ["admin", "users", params] as const,
   user: (id?: string) => ["admin", "user", id] as const,
   permissionCatalogue: ["admin", "permission-catalogue"] as const,
+  roles: ["admin", "roles"] as const,
   hospital: ["admin", "hospital"] as const,
   departments: (params?: object) => ["admin", "departments", params] as const,
   wards: ["admin", "wards"] as const,
@@ -105,6 +106,35 @@ export const useResetCredential = (id: string) => {
   });
 };
 
+// ---- Roles (US-04) ----------------------------------------------------------
+
+/** A role change can change every account in the role, so every account view refetches. */
+function afterRoleChange(qc: QueryClient) {
+  for (const key of [adminKeys.roles, ["admin", "users"], ["admin", "user"]]) {
+    qc.invalidateQueries({ queryKey: key });
+  }
+}
+
+export const useRoles = () => useQuery({ queryKey: adminKeys.roles, queryFn: adminApi.roles.list });
+
+export const useSaveRole = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ role, permissions, applyToStaff }: { role: string; permissions: string[]; applyToStaff: boolean }) =>
+      adminApi.roles.update(role, { permissions, applyToStaff }),
+    onSuccess: () => afterRoleChange(qc),
+    onError: () => qc.invalidateQueries({ queryKey: adminKeys.roles }),
+  });
+};
+
+export const useResetRole = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ role, applyToStaff }: { role: string; applyToStaff: boolean }) => adminApi.roles.reset(role, applyToStaff),
+    onSuccess: () => afterRoleChange(qc),
+  });
+};
+
 // ---- Hospital ---------------------------------------------------------------
 
 export const useHospitalProfile = () =>
@@ -118,8 +148,11 @@ export const useUpdateHospital = () => {
       qc.setQueryData(adminKeys.hospital, hospital);
       // The shell prints the hospital name from the auth store on every screen.
       // Without this the old name stays in the header until the next sign-in.
+      // The idle timeout is read from there too, and applies from this moment.
       useAuthStore.setState((s) => ({
-        hospital: s.hospital ? { ...s.hospital, name: hospital.name } : s.hospital,
+        hospital: s.hospital
+          ? { ...s.hospital, name: hospital.name, sessionIdleMinutes: hospital.sessionIdleMinutes }
+          : s.hospital,
       }));
       qc.invalidateQueries({ queryKey: ["me"] });
     },

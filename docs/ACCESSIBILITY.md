@@ -68,9 +68,14 @@ Useful while iterating: `A11Y_ROLES=nurse,lab`, `A11Y_VIEWPORTS=phone`,
 
 ### Coverage
 
-46 distinct screens × 9 roles (eight roles plus signed out) × 2 viewports =
-**178 audited renders**. The full screen × role matrix is printed at the end of
+48 distinct screens × 9 roles (eight roles plus signed out) × 2 viewports =
+**182 audited renders**. The full screen × role matrix is printed at the end of
 every run.
+
+Phase 11 added two screens to the audit — *Roles & permissions* and a nurse's
+user page, which carries the ward allocation — and the admission requests panel
+on the doctor's ward board. All pass with no violations; the idle-timeout
+warning is a dialog and is covered by the dialog checks below.
 
 ### axe, serious and critical, before and after
 

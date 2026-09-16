@@ -41,6 +41,9 @@ import HospitalConfigScreen from "@modules/admin/screens/HospitalConfigScreen";
 import BedsScreen from "@modules/admin/screens/BedsScreen";
 import ProfileScreen from "@modules/admin/screens/ProfileScreen";
 import ScanScreen from "@modules/printing/screens/ScanScreen";
+import RolesScreen from "@modules/admin/screens/RolesScreen";
+import { IdleTimeout } from "@shared/session/IdleTimeout";
+import { recordActivity } from "@shared/session/activity";
 import { PlaceholderScreen } from "./PlaceholderScreen";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { queryClient } from "@api/queryClient";
@@ -96,6 +99,7 @@ const SCREENS: Record<string, React.ComponentType<Record<string, unknown>>> = {
   AuditTrail: AuditTrailScreen,
   Beds: BedsScreen,
   UserManagement: UsersNavigator,
+  RolePermissions: RolesScreen,
   HospitalConfig: HospitalConfigScreen,
   Profile: ProfileScreen,
 
@@ -133,9 +137,19 @@ export default function AppNavigator() {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View
+      style={{ flex: 1 }}
+      // Every touch counts as activity for the idle sign-out, without taking
+      // the touch: returning false lets it through to whatever was pressed.
+      // (On the web, IdleTimeout listens to the window instead.)
+      onStartShouldSetResponderCapture={() => {
+        recordActivity();
+        return false;
+      }}
+    >
       <OfflineStatusBar />
       <RealtimeAlerts />
+      <IdleTimeout />
       <Drawer.Navigator
         initialRouteName="Dashboard"
         drawerContent={drawerContent}

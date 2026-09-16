@@ -28,6 +28,7 @@ import {
   useAcknowledgeEscalation,
 } from "@modules/inpatient/hooks/useInpatient";
 import { News2Pill } from "@modules/inpatient/components/News2Score";
+import { AdmissionRequests } from "@modules/inpatient/components/AdmissionRequests";
 import type { AdmissionRow, EscalationRow } from "@modules/inpatient/types";
 import type { PatientBanner } from "@modules/patient/types";
 
@@ -89,7 +90,7 @@ export default function WardBoardScreen() {
       title={title}
       subtitle={
         mode === "mine"
-          ? "Your allocation for this shift"
+          ? "Allocated to you by name, and everyone on your wards"
           : mode === "icu"
             ? "Every ICU and HDU bed, sickest first"
             : "Sickest first, not by bed number"
@@ -119,6 +120,19 @@ export default function WardBoardScreen() {
             rows={escalations.data ?? []}
             canAcknowledge={canAcknowledge}
             onOpen={(admissionId) => navigation.navigate("Bedside", { admissionId })}
+          />
+        ) : null}
+
+        {/* US-17: below the escalations — a deteriorating inpatient still comes first. */}
+        {canAdmit && mode === "ward" ? (
+          <AdmissionRequests
+            onAdmit={(request) =>
+              navigation.navigate("AdmitPatient", {
+                patient: request.patient,
+                consultationId: request.consultationId,
+                reason: request.reason,
+              })
+            }
           />
         ) : null}
 

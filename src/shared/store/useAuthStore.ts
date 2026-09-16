@@ -8,6 +8,7 @@ import { environment } from "@config/env";
 import type { Role } from "../permissions";
 import { clearMirrors } from "../offline/mirror";
 import { queryClient } from "../api/queryClient";
+import { useSessionNotice } from "../session/sessionNotice";
 
 // Some RN engines lack `atob`, used below to read the JWT expiry.
 const runtimeGlobal = globalThis as unknown as { atob?: typeof decode };
@@ -17,6 +18,8 @@ export interface Hospital {
   id: string;
   name: string;
   code: string;
+  /** US-01: minutes without activity before a screen signs itself out. */
+  sessionIdleMinutes?: number;
 }
 
 export interface AuthUser {
@@ -35,6 +38,8 @@ export interface AuthUser {
   departmentName?: string;
   permissions: string[];
   icuAuthorized: boolean;
+  /** US-23: the wards a nurse is allocated to. */
+  wardIds?: string[];
   mustChangePassword: boolean;
   isActive: boolean;
 }
@@ -208,7 +213,13 @@ export const useAuthStore = create<AuthState>()(
             // Only a genuine rejection clears the session. A network failure
             // must not sign a nurse out mid-shift during a WiFi dropout —
             // that is how a ward loses access to the record it needs.
-            const status = (err as { response?: { status?: number } })?.response?.status;
+            const response = (err as { response?: { status?: number; data?: { error?: { code?: string; message?: string } } } })
+              ?.response;
+            const status = response?.status;
+            // Signed out by the server for inactivity: say so on the sign-in screen.
+            if (response?.data?.error?.code === "SESSION_IDLE") {
+              useSessionNotice.getState().setNotice(response.data.error.message ?? "You were signed out after a period without activity.");
+            }
             if (status === 401 || status === 403) await get().logout();
             return null;
           } finally {

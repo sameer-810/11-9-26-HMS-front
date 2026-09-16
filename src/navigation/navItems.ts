@@ -21,6 +21,7 @@ import {
   CalendarClock,
   UserRound,
   ScanLine,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react-native";
 import { PERMISSIONS } from "@shared/permissions";
@@ -297,6 +298,14 @@ export const NAV_ITEMS: NavItem[] = [
     icon: UserCog,
     section: "Workspace",
     adminOnly: true,
+  },
+  // US-04. MUST mirror the API's grant on /roles (roles.manage, administrator-only).
+  {
+    name: "RolePermissions",
+    label: "Roles & permissions",
+    icon: ShieldCheck,
+    section: "Workspace",
+    permission: PERMISSIONS.MANAGE_ROLES,
   },
   {
     name: "HospitalConfig",

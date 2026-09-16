@@ -50,7 +50,8 @@ export default function AdmitPatientScreen() {
   const [search, setSearch] = useState("");
   const [patient, setPatient] = useState<PatientBanner | null>(route.params?.patient ?? null);
   const [bedId, setBedId] = useState<string | null>(null);
-  const [reason, setReason] = useState("");
+  // US-17: admitting from a recommendation starts from the doctor's reason.
+  const [reason, setReason] = useState<string>(route.params?.reason ?? "");
   const [provisionalDiagnosis, setProvisionalDiagnosis] = useState("");
   const [expectedStay, setExpectedStay] = useState("");
   const [admissionType, setAdmissionType] = useState("planned");

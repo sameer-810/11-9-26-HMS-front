@@ -9,6 +9,7 @@ import {
   type HandoverBody,
 } from "@modules/inpatient/api/inpatientApi";
 import { sendOrQueue } from "@shared/offline/outbox";
+import type { RequestClosureOutcome } from "@modules/inpatient/types";
 
 /**
  * Ward data goes stale in a way that matters.
@@ -76,6 +77,32 @@ export const useAdmit = () => {
       invalidateWard(qc, data.id);
       qc.invalidateQueries({ queryKey: ["patients"] });
       qc.invalidateQueries({ queryKey: ["patient", data.patient?.id] });
+      // An admission can clear a waiting recommendation.
+      qc.invalidateQueries({ queryKey: ["admission-requests"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-summary"] });
+    },
+  });
+};
+
+// ---- US-17: recommendations to admit ---------------------------------------
+
+export const useAdmissionRequests = (enabled = true) =>
+  useQuery({
+    queryKey: ["admission-requests"],
+    queryFn: inpatientApi.admissionRequests,
+    enabled,
+    refetchInterval: WARD_REFRESH_MS,
+    refetchOnWindowFocus: true,
+  });
+
+export const useCloseAdmissionRequest = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ consultationId, ...body }: { consultationId: string; outcome: RequestClosureOutcome; note: string }) =>
+      inpatientApi.closeAdmissionRequest(consultationId, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admission-requests"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-summary"] });
     },
   });
 };

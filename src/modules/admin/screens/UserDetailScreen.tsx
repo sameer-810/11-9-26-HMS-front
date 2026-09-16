@@ -30,6 +30,7 @@ import {
   useUpdateUser,
   useSetUserActive,
   useResetCredential,
+  useAdminWards,
 } from "@modules/admin/hooks/useAdmin";
 import { PermissionEditor } from "@modules/admin/components/PermissionEditor";
 import { CredentialPanel } from "@modules/admin/components/CredentialPanel";
@@ -114,6 +115,7 @@ export default function UserDetailScreen() {
 
         <ProfileSection key={`profile-${user.id}`} user={user} />
         <RoleSection key={`role-${user.id}`} user={user} />
+        {user.role === ROLES.NURSE ? <WardSection key={`wards-${user.id}`} user={user} /> : null}
         <PermissionEditor key={`perms-${user.id}`} user={user} />
         <AccountSection key={`account-${user.id}`} user={user} isSelf={user.id === meId} />
       </VStack>
@@ -344,6 +346,82 @@ function RoleSection({ user }: { user: AdminUser }) {
         onConfirm={save}
         onCancel={() => setConfirm(false)}
       />
+    </Card>
+  );
+}
+
+/**
+ * US-23: the wards a nurse works on.
+ *
+ * Everyone admitted to these wards is on the nurse's list, and counts as their
+ * patient for a restricted record — so this is access, and saved on its own
+ * like the permissions, not folded into the profile.
+ */
+function WardSection({ user }: { user: AdminUser }) {
+  const update = useUpdateUser(user.id);
+  const wards = useAdminWards();
+  const [selected, setSelected] = useState<string[]>(user.wardIds ?? []);
+  const [saved, setSaved] = useState(false);
+
+  const original = [...(user.wardIds ?? [])].sort().join(",");
+  const changed = [...selected].sort().join(",") !== original;
+  // Inactive wards stay listed while this nurse is still on one, so it can be taken off.
+  const options = (wards.data ?? []).filter((w) => w.isActive || selected.includes(w.id));
+
+  return (
+    <Card testID="user-wards">
+      <SectionHeader
+        title="Ward allocation"
+        subtitle="Everyone admitted to these wards is on this nurse's list, as well as patients allocated to them by name."
+      />
+      <VStack gap={12}>
+        {update.isError ? (
+          <View testID="user-wards-error">
+            <Banner tone="danger" message={apiErrorMessage(update.error, "Could not save the ward allocation")} />
+          </View>
+        ) : null}
+        {saved ? (
+          <View testID="user-wards-saved">
+            <Banner tone="success" message="Ward allocation saved. Their list changes straight away." />
+          </View>
+        ) : null}
+
+        {wards.isLoading ? (
+          <Skeleton height={80} />
+        ) : wards.isError ? (
+          <ErrorState error={wards.error} onRetry={wards.refetch} />
+        ) : options.length === 0 ? (
+          <Text variant="body-sm" tone="tertiary">
+            No wards are set up yet. Add them under Hospital setup.
+          </Text>
+        ) : (
+          <HStack gap={4} wrap>
+            {options.map((w) => (
+              <View key={w.id} style={{ flexBasis: 260, flexGrow: 1 }}>
+                <ToggleRow
+                  label={w.name}
+                  description={[w.code, w.department?.name, w.isActive ? "" : "Inactive"].filter(Boolean).join(" · ")}
+                  checked={selected.includes(w.id)}
+                  onChange={(on) => {
+                    setSaved(false);
+                    setSelected((s) => (on ? [...s, w.id] : s.filter((id) => id !== w.id)));
+                  }}
+                  testID={`user-ward-${w.code}`}
+                />
+              </View>
+            ))}
+          </HStack>
+        )}
+
+        <Button
+          label="Save ward allocation"
+          fullWidth={false}
+          disabled={!changed}
+          loading={update.isPending}
+          onPress={() => update.mutate({ wardIds: selected }, { onSuccess: () => setSaved(true) })}
+          testID="user-save-wards"
+        />
+      </VStack>
     </Card>
   );
 }

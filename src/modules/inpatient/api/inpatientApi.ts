@@ -2,6 +2,8 @@ import { apiClient } from "@api/apiClient";
 import type { Paginated } from "@modules/patient/types";
 import type {
   Admission,
+  AdmissionRequest,
+  RequestClosureOutcome,
   AdmissionRow,
   Observation,
   EscalationRow,
@@ -128,7 +130,21 @@ export const inpatientApi = {
     return res.data.data;
   },
 
-  /** NU-01. The nurse's own list for this shift. */
+  /** US-17: recommendations to admit that have not become an admission. */
+  admissionRequests: async () => {
+    const res = await apiClient.get<{ data: AdmissionRequest[] }>("/admissions/requests");
+    return res.data.data;
+  },
+
+  closeAdmissionRequest: async (consultationId: string, body: { outcome: RequestClosureOutcome; note: string }) => {
+    const res = await apiClient.post<{ data: { consultationId: string; outcome: RequestClosureOutcome } }>(
+      `/admissions/requests/${consultationId}/close`,
+      body,
+    );
+    return res.data.data;
+  },
+
+  /** NU-01 / US-23. The nurse's own list: allocated by name, or on their wards. */
   myPatients: async () => {
     const res = await apiClient.get<Paginated<AdmissionRow>>("/admissions/my-patients");
     return res.data;

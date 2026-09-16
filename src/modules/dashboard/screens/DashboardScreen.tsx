@@ -1,5 +1,6 @@
 import React from "react";
 import { View } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import {
   Users,
   BedDouble,
@@ -12,25 +13,27 @@ import {
   Boxes,
   Receipt,
   Ambulance,
+  CalendarDays,
+  ListOrdered,
+  HeartPulse,
+  ClipboardList,
 } from "lucide-react-native";
 import { formatRupees } from "@shared/format";
 
 import { palette } from "@shared/designSystem";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { ROLE_LABELS } from "@shared/permissions";
-import {
-  Screen,
-  StatTile,
-  HStack,
-  VStack,
-  SectionHeader,
-  Card,
-  Text,
-  Skeleton,
-  ErrorState,
-  Banner,
-} from "@shared/ui";
+import { Screen, StatTile, HStack, VStack, SectionHeader, Card, Text, Skeleton, ErrorState } from "@shared/ui";
 import { useDashboardSummary } from "@modules/dashboard/hooks/useDashboard";
+import { useVisibleNavItems } from "@navigation/navItems";
+
+/** Where a tile leads: a drawer route, optionally a screen inside it. */
+interface Target {
+  route: string;
+  params?: Record<string, unknown>;
+  /** Read out by a screen reader before the tile is pressed. */
+  hint: string;
+}
 
 /**
  * AC-02: the dashboard is built from the role.
@@ -38,11 +41,19 @@ import { useDashboardSummary } from "@modules/dashboard/hooks/useDashboard";
  * The tiles rendered here are exactly the tiles the server chose to compute for
  * this user — nothing is fetched and then hidden, so a figure a receptionist
  * must not see never reaches their device at all.
+ *
+ * US-05: every tile opens the list behind its number. A tile only becomes a
+ * button when this user can reach where it leads — a figure administration
+ * may see but whose list it may not open (total patients) leads to the report
+ * instead, and a tile with nowhere to go stays a plain number rather than a
+ * button that goes nowhere.
  */
 export default function DashboardScreen() {
+  const navigation = useNavigation<any>();
   const user = useAuthStore((s) => s.user);
   const hospital = useAuthStore((s) => s.hospital);
   const { data, isLoading, isError, error, refetch, isRefetching } = useDashboardSummary();
+  const reachable = new Set(useVisibleNavItems().map((i) => i.name));
 
   const greeting = (() => {
     const h = new Date().getHours();
@@ -52,6 +63,23 @@ export default function DashboardScreen() {
   })();
 
   const tiles = data?.tiles;
+
+  /** The first target this user can reach, as tile props. */
+  const open = (...targets: (Target | false | null | undefined)[]) => {
+    const target = targets.find((t): t is Target => Boolean(t) && reachable.has((t as Target).route));
+    if (!target) return {};
+    return {
+      onPress: () => navigation.navigate(target.route, target.params),
+      hint: target.hint,
+    };
+  };
+  const report = (key: string, title: string): Target => ({
+    route: "Reports",
+    params: { report: key },
+    hint: `Opens the ${title} report`,
+  });
+
+  const appts = tiles?.appointments;
 
   return (
     <Screen
@@ -67,7 +95,7 @@ export default function DashboardScreen() {
           <ErrorState error={error} title="Couldn't load your dashboard" onRetry={refetch} />
         ) : (
           <View>
-            <SectionHeader title="Today" subtitle="What you can see is decided by your role" />
+            <SectionHeader title="Today" subtitle="Decided by your role. Tap a card to open the list behind it." />
             {isLoading ? (
               <HStack gap={12} wrap>
                 {[0, 1, 2].map((i) => (
@@ -81,6 +109,90 @@ export default function DashboardScreen() {
               </HStack>
             ) : (
               <HStack gap={12} wrap>
+                {tiles?.patients ? (
+                  <StatTile
+                    label="Total patients"
+                    value={tiles.patients.total}
+                    sublabel={`${tiles.patients.registeredToday} registered today`}
+                    icon={Users}
+                    accent="clinical"
+                    testID="tile-patients"
+                    {...open({ route: "Patients", hint: "Opens patient search" }, report("registrations", "patient registrations"))}
+                  />
+                ) : null}
+
+                {appts ? (
+                  <>
+                    <StatTile
+                      label={appts.mine ? "My appointments today" : "Today's appointments"}
+                      value={appts.total}
+                      sublabel={`${appts.scheduled} still to come · ${appts.cancelled + appts.noShow} cancelled or missed`}
+                      icon={CalendarDays}
+                      accent="violet"
+                      testID="tile-appointments"
+                      {...open(
+                        appts.mine && { route: "MyAppointments", hint: "Opens your schedule" },
+                        { route: "Appointments", hint: "Opens the appointment list" },
+                        { route: "OpdQueue", hint: "Opens the OPD queue" },
+                        report("opd", "OPD activity"),
+                      )}
+                    />
+                    <StatTile
+                      label="OPD patients now"
+                      value={appts.waiting + appts.inConsultation}
+                      sublabel={`${appts.waiting} waiting · ${appts.inConsultation} with a doctor · ${appts.completed} seen`}
+                      icon={ListOrdered}
+                      accent="teal"
+                      testID="tile-opd"
+                      {...open(
+                        { route: "OpdQueue", hint: "Opens the OPD queue" },
+                        appts.mine && { route: "MyAppointments", hint: "Opens your schedule" },
+                        report("opd", "OPD activity"),
+                      )}
+                    />
+                  </>
+                ) : null}
+
+                {tiles?.inpatients ? (
+                  <StatTile
+                    label="Admitted patients"
+                    value={tiles.inpatients.admitted}
+                    sublabel={`${tiles.inpatients.admittedToday} admitted · ${tiles.inpatients.dischargedToday} discharged today`}
+                    icon={BedDouble}
+                    accent="clinical"
+                    testID="tile-inpatients"
+                    {...open(
+                      { route: "AdmittedPatients", hint: "Opens the admitted patients list" },
+                      { route: "Beds", hint: "Opens bed management" },
+                    )}
+                  />
+                ) : null}
+
+                {tiles?.myPatients ? (
+                  <StatTile
+                    label="My patients"
+                    value={tiles.myPatients.count}
+                    sublabel="allocated to you or on your wards"
+                    icon={HeartPulse}
+                    accent="teal"
+                    testID="tile-my-patients"
+                    {...open({ route: "NursingPatients", hint: "Opens your ward list" })}
+                  />
+                ) : null}
+
+                {tiles?.admissionRequests ? (
+                  <StatTile
+                    label="Waiting for a bed"
+                    value={tiles.admissionRequests.pending}
+                    sublabel="recommended for admission"
+                    icon={ClipboardList}
+                    accent="violet"
+                    attention={tiles.admissionRequests.pending > 0}
+                    testID="tile-admission-requests"
+                    {...open({ route: "AdmittedPatients", hint: "Opens the admission requests" })}
+                  />
+                ) : null}
+
                 {tiles?.beds ? (
                   <>
                     <StatTile
@@ -92,6 +204,8 @@ export default function DashboardScreen() {
                       // Nearly full is an operational problem the ward needs to
                       // see before the next admission arrives, not after.
                       attention={tiles.beds.occupancyPercent >= 90}
+                      testID="tile-beds"
+                      {...open({ route: "Beds", hint: "Opens bed management" })}
                     />
                     <StatTile
                       label="Occupancy"
@@ -99,6 +213,8 @@ export default function DashboardScreen() {
                       sublabel={`${tiles.beds.occupied} occupied`}
                       icon={Activity}
                       accent="clinical"
+                      testID="tile-occupancy"
+                      {...open({ route: "Beds", hint: "Opens bed management" }, report("bed_occupancy", "bed occupancy"))}
                     />
                   </>
                 ) : null}
@@ -107,11 +223,11 @@ export default function DashboardScreen() {
                   <StatTile
                     label="Active staff"
                     value={tiles.staff.active}
-                    sublabel={
-                      tiles.staff.inactive ? `${tiles.staff.inactive} deactivated` : undefined
-                    }
+                    sublabel={tiles.staff.inactive ? `${tiles.staff.inactive} deactivated` : undefined}
                     icon={Users}
                     accent="violet"
+                    testID="tile-staff"
+                    {...open({ route: "UserManagement", hint: "Opens users and access" })}
                   />
                 ) : null}
 
@@ -123,6 +239,11 @@ export default function DashboardScreen() {
                       sublabel="in the laboratory"
                       icon={FlaskConical}
                       accent="teal"
+                      testID="tile-lab"
+                      {...open(
+                        { route: "LabQueue", hint: "Opens the test queue" },
+                        { route: "LabReports", hint: "Opens lab reports" },
+                      )}
                     />
                     {/*
                       Beside the pending count, never instead of it. "12 pending"
@@ -135,6 +256,11 @@ export default function DashboardScreen() {
                       icon={OctagonAlert}
                       accent="clinical"
                       attention={tiles.lab.criticalOpen > 0}
+                      testID="tile-lab-critical"
+                      {...open(
+                        { route: "LabReports", hint: "Opens lab reports" },
+                        { route: "LabQueue", hint: "Opens the test queue" },
+                      )}
                     />
                   </>
                 ) : null}
@@ -146,6 +272,8 @@ export default function DashboardScreen() {
                     sublabel="to dispense"
                     icon={Pill}
                     accent="violet"
+                    testID="tile-pharmacy"
+                    {...open({ route: "PharmacyQueue", hint: "Opens the prescription queue" })}
                   />
                 ) : null}
 
@@ -158,6 +286,11 @@ export default function DashboardScreen() {
                       icon={Boxes}
                       accent="teal"
                       attention={tiles.inventory.lowStock > 0}
+                      testID="tile-low-stock"
+                      {...open(
+                        { route: "Inventory", params: { screen: "LowStock" }, hint: "Opens low stock" },
+                        { route: "MedicineStock", params: { screen: "LowStock" }, hint: "Opens low stock" },
+                      )}
                     />
                     {/* A separate tile: expired stock is a different problem, and the one that ends with an expired box handed over. */}
                     <StatTile
@@ -167,6 +300,11 @@ export default function DashboardScreen() {
                       icon={OctagonAlert}
                       accent="clinical"
                       attention={tiles.inventory.expiredOnShelf > 0}
+                      testID="tile-expired"
+                      {...open(
+                        { route: "Inventory", hint: "Opens inventory" },
+                        { route: "MedicineStock", hint: "Opens medicine stock" },
+                      )}
                     />
                   </>
                 ) : null}
@@ -180,6 +318,8 @@ export default function DashboardScreen() {
                       icon={Ambulance}
                       accent="clinical"
                       attention={tiles.emergency.waitingTriage > 0}
+                      testID="tile-emergency"
+                      {...open({ route: "Emergency", hint: "Opens the emergency board" })}
                     />
                     <StatTile
                       label="Past triage target"
@@ -188,6 +328,8 @@ export default function DashboardScreen() {
                       icon={OctagonAlert}
                       accent="clinical"
                       attention={tiles.emergency.overTarget > 0}
+                      testID="tile-emergency-target"
+                      {...open({ route: "Emergency", hint: "Opens the emergency board" })}
                     />
                   </>
                 ) : null}
@@ -199,6 +341,8 @@ export default function DashboardScreen() {
                       value={formatRupees(tiles.billing.collectedTodayPaise / 100)}
                       icon={Receipt}
                       accent="green"
+                      testID="tile-collected"
+                      {...open({ route: "Bills", hint: "Opens bills" })}
                     />
                     <StatTile
                       label="Outstanding"
@@ -207,6 +351,8 @@ export default function DashboardScreen() {
                       icon={Receipt}
                       accent="violet"
                       attention={tiles.billing.outstandingBills > 0}
+                      testID="tile-outstanding"
+                      {...open({ route: "Bills", params: { screen: "Outstanding" }, hint: "Opens outstanding bills" })}
                     />
                   </>
                 ) : null}
@@ -217,14 +363,15 @@ export default function DashboardScreen() {
                     value={tiles.departments}
                     icon={Building2}
                     accent="teal"
+                    testID="tile-departments"
+                    {...open({ route: "HospitalConfig", hint: "Opens hospital setup" })}
                   />
                 ) : null}
 
                 {!tiles || Object.keys(tiles).length === 0 ? (
                   <Card style={{ flex: 1 }}>
                     <Text variant="body-sm" tone="tertiary">
-                      Your role does not have any dashboard figures yet. The modules you work in
-                      arrive in later phases.
+                      Your role has no figures on the dashboard. Your work is in the menu.
                     </Text>
                   </Card>
                 ) : null}
@@ -232,14 +379,6 @@ export default function DashboardScreen() {
             )}
           </View>
         )}
-
-        {data?.pending?.length ? (
-          <Banner
-            tone="info"
-            title="Modules still to come"
-            message={`${data.pending.join(", ")} land in later phases. The routes are already registered and permission-guarded.`}
-          />
-        ) : null}
 
         <Card>
           <HStack gap={12} align="flex-start">

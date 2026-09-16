@@ -1,6 +1,15 @@
 import { apiClient } from "@api/apiClient";
 import type { ReportDefinition, ReportFilters, ReportResult } from "@modules/reports/types";
 
+/** US-41: the formats a report downloads as. */
+export type ExportFormat = "csv" | "xlsx" | "pdf";
+
+export const EXPORT_TYPES: Record<ExportFormat, { mime: string; label: string }> = {
+  csv: { mime: "text/csv", label: "CSV" },
+  xlsx: { mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", label: "Excel" },
+  pdf: { mime: "application/pdf", label: "PDF" },
+};
+
 /**
  * With `responseType: "blob"` a refusal arrives as a Blob too, and
  * `apiErrorMessage` would find no `error.message` inside it. Parse it back into
@@ -32,15 +41,16 @@ export const reportsApi = {
   run: async (key: string, filters: ReportFilters) =>
     (await apiClient.get<{ data: ReportResult }>(`/reports/${key}`, { params: filters })).data.data,
 
-  exportCsv: async (key: string, filters: ReportFilters) => {
+  /** The report as a file, for the browser to save. Phones go through deviceExport.ts. */
+  exportFile: async (key: string, filters: ReportFilters, format: ExportFormat) => {
     try {
       const res = await apiClient.get<Blob>(`/reports/${key}`, {
-        params: { ...filters, format: "csv" },
+        params: { ...filters, format },
         responseType: "blob",
       });
       return {
         blob: res.data,
-        filename: filenameFrom(res.headers["content-disposition"], `${key}_${filters.from}_${filters.to}.csv`),
+        filename: filenameFrom(res.headers["content-disposition"], `${key}_${filters.from}_${filters.to}.${format}`),
       };
     } catch (err) {
       await unwrapBlobError(err);
