@@ -1,0 +1,12 @@
+# Prettier reformats html`` tagged templates, and in print documents that whitespace
+# reaches the printed page (tests/print.test.ts pins the exact markup).
+src/modules/printing/documents/
+src/shared/print/
+src/shared/offline/serviceWorker.ts
+tests/print.test.ts
+tests/security.test.ts
+tools/verifyPrinting.mjs
+
+# Build output and generated evidence.
+dist/
+docs/shots/

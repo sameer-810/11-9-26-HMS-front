@@ -1358,6 +1358,37 @@ const DETAIL = {
     },
     { screen: "ED arrival", path: "/emergency/arrival" },
     { screen: "ED visit", path: `/emergency/visits/${edVisit?.id}` },
+    // Phase 12: walk-in, edit details, move an appointment.
+    {
+      screen: "Walk-in",
+      open: async (p) => {
+        await go(p, "/opd/queue");
+        await p.getByTestId("walkin-cta").click();
+        await settle(p);
+      },
+    },
+    {
+      screen: "Edit patient",
+      open: async (p) => {
+        await go(p, "/patients");
+        await p.getByText("Anita Case", { exact: true }).first().click();
+        await settle(p);
+        await p.getByTestId("edit-patient").click();
+        await settle(p);
+      },
+    },
+    {
+      screen: "Move appointment",
+      open: async (p) => {
+        await go(p, "/appointments");
+        for (let i = 0; i < 2; i += 1) {
+          await p.getByRole("button", { name: "Next", exact: true }).click();
+          await settle(p);
+        }
+        await p.locator('[data-testid^="move-"]').first().click();
+        await settle(p);
+      },
+    },
   ],
   doctor: [
     {
@@ -1427,6 +1458,15 @@ const DETAIL = {
       },
     },
     { screen: "Bill detail (paid)", path: `/billing/bills/${finalBill?.id}` },
+    // Phase 12: the Hospital setup tabs that replaced API-only configuration.
+    ...["schedules", "services"].map((tab) => ({
+      screen: `Hospital setup (${tab})`,
+      open: async (p) => {
+        await go(p, "/admin/config");
+        await p.getByTestId(`config-tab-${tab}`).click();
+        await settle(p);
+      },
+    })),
   ],
 };
 

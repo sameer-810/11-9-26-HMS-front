@@ -11,11 +11,18 @@ import type {
   AdminUser,
   BedBoard,
   BedStatus,
+  BillingSettingsPatch,
   BulkBedsBody,
+  ClinicSession,
+  ClinicSessionBody,
+  ClinicSessionPatch,
   CreateUserBody,
   DepartmentBody,
   HospitalPatch,
   RoomType,
+  ScheduleExceptionBody,
+  TariffBody,
+  TariffPatch,
   UpdateUserBody,
   UserListParams,
   WardBody,
@@ -33,6 +40,11 @@ export const adminKeys = {
   rooms: (wardId?: string) => ["admin", "rooms", wardId] as const,
   wardBeds: (wardId?: string) => ["admin", "ward-beds", wardId] as const,
   allBeds: ["admin", "all-beds"] as const,
+  sessions: (doctorId?: string) => ["admin", "sessions", doctorId] as const,
+  exceptions: (doctorId?: string, from?: string) =>
+    ["admin", "exceptions", doctorId, from] as const,
+  tariff: ["admin", "tariff"] as const,
+  billingSettings: ["admin", "billing-settings"] as const,
 };
 
 // ---- Users ------------------------------------------------------------------
@@ -217,6 +229,120 @@ export const useSetDepartmentActive = () => {
       else await adminApi.departments.deactivate(id);
     },
     onSuccess: () => afterDepartmentChange(qc),
+  });
+};
+
+// ---- Doctor schedules -------------------------------------------------------
+
+/** Sessions and leave decide what reception can book, so every availability view refetches. */
+function afterScheduleChange(qc: QueryClient) {
+  for (const key of [
+    ["admin", "sessions"],
+    ["admin", "exceptions"],
+    ["roster"],
+    ["availability"],
+    ["doctors-available"],
+  ]) {
+    qc.invalidateQueries({ queryKey: key });
+  }
+}
+
+export const useClinicSessions = (doctorId?: string) =>
+  useQuery({
+    queryKey: adminKeys.sessions(doctorId),
+    queryFn: () => adminApi.sessions.list(doctorId!),
+    enabled: Boolean(doctorId),
+  });
+
+export const useCreateClinicSessions = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    // One row per weekday, in turn. On a refusal part-way the refetch shows which days were added.
+    mutationFn: async (bodies: ClinicSessionBody[]) => {
+      const created: ClinicSession[] = [];
+      for (const body of bodies)
+        created.push(await adminApi.sessions.create(body));
+      return created;
+    },
+    onSettled: () => afterScheduleChange(qc),
+  });
+};
+
+export const useUpdateClinicSession = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: ClinicSessionPatch }) =>
+      adminApi.sessions.update(id, body),
+    onSuccess: () => afterScheduleChange(qc),
+  });
+};
+
+export const useScheduleExceptions = (doctorId?: string, from?: string) =>
+  useQuery({
+    queryKey: adminKeys.exceptions(doctorId, from),
+    queryFn: () => adminApi.exceptions.list({ doctorId: doctorId!, from }),
+    enabled: Boolean(doctorId),
+  });
+
+export const useCreateScheduleException = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: ScheduleExceptionBody) =>
+      adminApi.exceptions.create(body),
+    onSuccess: () => afterScheduleChange(qc),
+  });
+};
+
+export const useRemoveScheduleException = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminApi.exceptions.remove(id),
+    onSuccess: () => afterScheduleChange(qc),
+  });
+};
+
+// ---- Services and prices ----------------------------------------------------
+
+/** The billing desk's "add a service" picker reads the same list under ["tariff"]. */
+function afterTariffChange(qc: QueryClient) {
+  for (const key of [adminKeys.tariff, ["tariff"]]) {
+    qc.invalidateQueries({ queryKey: key });
+  }
+}
+
+export const useTariffServices = () =>
+  useQuery({ queryKey: adminKeys.tariff, queryFn: adminApi.tariff.list });
+
+export const useCreateTariffService = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: TariffBody) => adminApi.tariff.create(body),
+    onSuccess: () => afterTariffChange(qc),
+  });
+};
+
+export const useUpdateTariffService = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: TariffPatch }) =>
+      adminApi.tariff.update(id, body),
+    onSuccess: () => afterTariffChange(qc),
+  });
+};
+
+export const useBillingSettings = () =>
+  useQuery({
+    queryKey: adminKeys.billingSettings,
+    queryFn: adminApi.billingSettings.get,
+  });
+
+export const useUpdateBillingSettings = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: BillingSettingsPatch) =>
+      adminApi.billingSettings.update(body),
+    onSuccess: (settings) =>
+      qc.setQueryData(adminKeys.billingSettings, settings),
   });
 };
 

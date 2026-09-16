@@ -27,6 +27,7 @@ import {
   changePasswordSchema,
   type ChangePasswordForm,
 } from "@modules/auth/auth.validation";
+import { SessionsCard } from "@modules/auth/components/SessionsCard";
 
 /** The signed-in user's own account. Read-only except the password (role etc. are admin-managed). */
 export default function ProfileScreen() {
@@ -113,6 +114,8 @@ export default function ProfileScreen() {
         </Card>
 
         <ChangePasswordCard email={user.email} />
+
+        <SessionsCard />
 
         <Card>
           <SectionHeader

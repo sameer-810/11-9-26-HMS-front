@@ -4,14 +4,11 @@ import { html } from "@shared/print/escapeHtml";
 import { pageDocument } from "@shared/print/page";
 import type { PrintJob } from "@shared/print/printDocument";
 import type { PrescriptionInput } from "@modules/printing/types";
+import { nameWithStrength } from "@shared/utils/medicineName";
 import { allergyStatement, sexLabel } from "./common";
 
 /** A5 portrait, the prescription pad size in Indian and UK practice. */
-export const PRESCRIPTION_PAGE = {
-  widthMm: 148,
-  heightMm: 210,
-  marginMm: 10,
-} as const;
+export const PRESCRIPTION_PAGE = { widthMm: 148, heightMm: 210, marginMm: 10 } as const;
 
 /**
  * Printed prescription with prescriber registration and allergy status (paper leaves the system).
@@ -54,100 +51,55 @@ td.num { width: 5mm; }
     : "Registration number not on record";
 
   const rows = input.lines.map(
-    (l, i) =>
-      html`<tr data-line>
-        <td class="num">${i + 1}</td>
-        <td>
-          <div class="med">
-            ${l.medicineName}${l.strength ? ` ${l.strength}` : ""}
-          </div>
-          <div class="muted">
-            ${[l.form, l.route].filter(Boolean).join(" · ")}
-          </div>
-        </td>
-        <td>${l.dose || "—"}</td>
-        <td>${l.frequency || "—"}</td>
-        <td>
-          ${l.durationDays ? `${l.durationDays} day${l.durationDays === 1 ? "" : "s"}` : "As directed"}${l.quantity ? html`<div class="muted">Qty ${l.quantity}</div>` : ""}
-        </td>
-        <td>${l.instructions || "—"}</td>
-      </tr>`,
+    (l, i) => html`<tr data-line>
+  <td class="num">${i + 1}</td>
+  <td><div class="med">${nameWithStrength(l.medicineName, l.strength)}</div><div class="muted">${[l.form, l.route].filter(Boolean).join(" · ")}</div></td>
+  <td>${l.dose || "—"}</td>
+  <td>${l.frequency || "—"}</td>
+  <td>${l.durationDays ? `${l.durationDays} day${l.durationDays === 1 ? "" : "s"}` : "As directed"}${l.quantity ? html`<div class="muted">Qty ${l.quantity}</div>` : ""}</td>
+  <td>${l.instructions || "—"}</td>
+</tr>`,
   );
 
   const body = html`
-    <div class="head">
-      <div class="hospital">${input.hospitalName}</div>
-      <div class="doc">
-        <div class="kind">
-          Prescription${input.urgency !== "routine" ? html`<span class="urgency ${input.urgency}">${input.urgency === "stat" ? "STAT" : "Urgent"}</span>` : ""}
-        </div>
-        <div data-field="prescriptionNumber">${input.prescriptionNumber}</div>
-        <div>${formatDateTime(input.createdAt)}</div>
-      </div>
-    </div>
+<div class="head">
+  <div class="hospital">${input.hospitalName}</div>
+  <div class="doc">
+    <div class="kind">Prescription${input.urgency !== "routine" ? html`<span class="urgency ${input.urgency}">${input.urgency === "stat" ? "STAT" : "Urgent"}</span>` : ""}</div>
+    <div data-field="prescriptionNumber">${input.prescriptionNumber}</div>
+    <div>${formatDateTime(input.createdAt)}</div>
+  </div>
+</div>
 
-    <div class="block" data-field="patient">
-      <div class="patient-name">${input.patient.fullName}</div>
-      <div>
-        Hosp no <strong>${input.patient.patientId}</strong> ·
-        ${input.patient.age} · ${sexLabel(input.patient.gender)}
-      </div>
-      <div
-        class="allergy ${allergy.state}"
-        data-allergy-band="${allergy.state}"
-      >
-        ${allergy.text}
-      </div>
-    </div>
+<div class="block" data-field="patient">
+  <div class="patient-name">${input.patient.fullName}</div>
+  <div>Hosp no <strong>${input.patient.patientId}</strong> · ${input.patient.age} · ${sexLabel(input.patient.gender)}</div>
+  <div class="allergy ${allergy.state}" data-allergy-band="${allergy.state}">${allergy.text}</div>
+</div>
 
-    <div class="block" data-field="prescriber">
-      Prescriber:
-      <strong>Dr ${doctor.fullName}</strong
-      >${doctor.designation ? `, ${doctor.designation}` : ""} · ${registration}
-    </div>
+<div class="block" data-field="prescriber">
+  Prescriber: <strong>Dr ${doctor.fullName}</strong>${doctor.designation ? `, ${doctor.designation}` : ""} · ${registration}
+</div>
 
-    <div class="rx">&#8478;</div>
-    <table>
-      <thead>
-        <tr>
-          <th></th>
-          <th>Medicine</th>
-          <th>Dose</th>
-          <th>Frequency</th>
-          <th>Duration</th>
-          <th>Instructions</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${rows}
-      </tbody>
-    </table>
+<div class="rx">&#8478;</div>
+<table>
+  <thead><tr><th></th><th>Medicine</th><th>Dose</th><th>Frequency</th><th>Duration</th><th>Instructions</th></tr></thead>
+  <tbody>${rows}</tbody>
+</table>
 
-    ${input.cancelledLineCount > 0 ? html`<div class="note muted">${input.cancelledLineCount} line${input.cancelledLineCount === 1 ? " was" : "s were"} cancelled by the prescriber and ${input.cancelledLineCount === 1 ? "is" : "are"} not printed.</div>` : ""}
-    ${input.notes ? html`<div class="note"><strong>Notes:</strong> ${input.notes}</div>` : ""}
+${input.cancelledLineCount > 0 ? html`<div class="note muted">${input.cancelledLineCount} line${input.cancelledLineCount === 1 ? " was" : "s were"} cancelled by the prescriber and ${input.cancelledLineCount === 1 ? "is" : "are"} not printed.</div>` : ""}
+${input.notes ? html`<div class="note"><strong>Notes:</strong> ${input.notes}</div>` : ""}
 
-    <div class="sign">
-      <div class="sign-box">Dr ${doctor.fullName}<br />${registration}</div>
-    </div>
+<div class="sign">
+  <div class="sign-box">Dr ${doctor.fullName}<br />${registration}</div>
+</div>
 
-    <div class="foot">
-      Printed ${formatDateTime(input.printedAt.toISOString())} by
-      ${input.printedBy}. ${input.prescriptionNumber}.
-    </div>
-  `.__html;
+<div class="foot">Printed ${formatDateTime(input.printedAt.toISOString())} by ${input.printedBy}. ${input.prescriptionNumber}.</div>
+`.__html;
 
   const title = `Prescription ${input.prescriptionNumber}`;
   return {
-    html: pageDocument({
-      title,
-      widthMm,
-      heightMm,
-      css,
-      body,
-      documentKind: "prescription",
-      layout: "flow",
-      marginMm,
-    }),
+    html: pageDocument({ title, widthMm, heightMm, css, body, documentKind: "prescription", layout: "flow", marginMm }),
     widthMm,
     heightMm,
     title,

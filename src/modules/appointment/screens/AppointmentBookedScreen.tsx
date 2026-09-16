@@ -17,6 +17,7 @@ import {
 import { formatCalendarDate, formatWallTime } from "@shared/format";
 import { useAppointment } from "@modules/appointment/hooks/useAppointments";
 import type { PatientBanner } from "@modules/patient/types";
+import { openScreen } from "@modules/patient/openScreen";
 
 /** Booking confirmation for the desk to read back; the appointment number is shown largest. */
 export default function AppointmentBookedScreen() {
@@ -147,7 +148,17 @@ export default function AppointmentBookedScreen() {
             label="Back to appointments"
             fullWidth={false}
             icon={<ListOrdered size={16} color="#FFFFFF" strokeWidth={2.1} />}
-            onPress={() => navigation.navigate("AppointmentsList")}
+            testID="booked-back"
+            // Booking also runs in the Patients stack, which has no appointments list.
+            onPress={() =>
+              openScreen(
+                navigation,
+                "Appointments",
+                "AppointmentsList",
+                { date: appointment.scheduledDate },
+                { initial: true, pop: true },
+              )
+            }
           />
         </HStack>
       </VStack>

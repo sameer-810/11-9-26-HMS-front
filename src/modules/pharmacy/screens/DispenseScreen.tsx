@@ -43,6 +43,7 @@ import type {
   Dispensing,
 } from "@modules/pharmacy/types";
 import { PrintPrescriptionButton } from "@modules/printing/components/PrintPrescriptionButton";
+import { nameWithStrength } from "@shared/utils/medicineName";
 
 /**
  * Dispense a prescription (Flow 1 step 11): banner, current allergy check, batches, confirm.
@@ -498,7 +499,7 @@ function LineCard({
         <HStack gap={10} align="center" justify="space-between" wrap>
           <VStack gap={2} style={{ flex: 1, minWidth: 220 }}>
             <Text variant="label-lg">
-              {line.medicineName} {line.strength}
+              {nameWithStrength(line.medicineName, line.strength)}
             </Text>
             <Text variant="body-sm" tone="secondary">
               {line.dose} · {line.frequency}

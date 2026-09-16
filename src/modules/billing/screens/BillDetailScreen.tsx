@@ -392,7 +392,7 @@ function DraftActions({ bill }: { bill: Bill }) {
               <TextField
                 label="Amount"
                 numericField
-                suffix="₹"
+                prefix="₹"
                 value={discountAmount}
                 onChangeText={setDiscountAmount}
                 containerStyle={{ width: 140 }}
@@ -582,7 +582,7 @@ function PaymentForm({ bill }: { bill: Bill }) {
           <TextField
             label="Amount"
             numericField
-            suffix="₹"
+            prefix="₹"
             value={amount}
             onChangeText={setAmount}
             error={

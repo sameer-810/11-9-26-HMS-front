@@ -37,5 +37,7 @@ function makeInpatientNavigator(mode: BoardMode) {
 export const AdmittedPatientsNavigator = makeInpatientNavigator("ward");
 export const IcuNavigator = makeInpatientNavigator("icu");
 export const MyWardNavigator = makeInpatientNavigator("mine");
+/** A doctor's "My patients": admitted under their name, opening the same bedside chart. */
+export const MyPatientsNavigator = makeInpatientNavigator("doctor");
 
 export default AdmittedPatientsNavigator;

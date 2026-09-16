@@ -19,6 +19,7 @@ import type {
   Observation,
 } from "@modules/inpatient/types";
 import { calculateNews2, type LocalNews2Result } from "@shared/clinical/news2";
+import { formatDateTime } from "@shared/format";
 
 /**
  * NU-02 observation set. No escalate checkbox or Scale 2 toggle by design: the server
@@ -38,6 +39,8 @@ interface Props {
   patientName?: string;
   useScale2?: boolean;
   onRecorded?: (observation: Observation) => void;
+  /** False when the screen already shows the latest score (the bedside chart pins it). */
+  showScore?: boolean;
 }
 
 type Draft = Record<string, string>;
@@ -54,6 +57,7 @@ export function ObservationForm({
   patientName,
   useScale2,
   onRecorded,
+  showScore = true,
 }: Props) {
   const [draft, setDraft] = useState<Draft>({});
   const [consciousness, setConsciousness] = useState<Consciousness | "">("");
@@ -140,21 +144,25 @@ export function ObservationForm({
             title="Saved on this device — not yet sent"
             message="There is no connection to the hospital server. These observations will be sent automatically, in the order they were charted, when it returns."
           />
-          <News2Score
-            result={
-              {
-                ...queued.local,
-                delta: null,
-                significantRise: false,
-              } as News2Result
-            }
-            size="lg"
-            showResponse
-          />
-          <Text variant="caption" tone="tertiary">
-            Score worked out on this device. The server scores the set again
-            when it arrives, and that is the score filed.
-          </Text>
+          {showScore ? (
+            <>
+              <News2Score
+                result={
+                  {
+                    ...queued.local,
+                    delta: null,
+                    significantRise: false,
+                  } as News2Result
+                }
+                size="lg"
+                showResponse
+              />
+              <Text variant="caption" tone="tertiary">
+                Score worked out on this device. The server scores the set again
+                when it arrives, and that is the score filed.
+              </Text>
+            </>
+          ) : null}
           {queuedWorrying ? (
             <View testID="observation-queued-escalate">
               <Banner
@@ -176,7 +184,15 @@ export function ObservationForm({
 
       {result ? (
         <VStack gap={8} testID="observation-result">
-          <News2Score result={result.news2} size="lg" showResponse />
+          {showScore ? (
+            <News2Score result={result.news2} size="lg" showResponse />
+          ) : (
+            <Banner
+              tone="success"
+              title="Observations recorded"
+              message={`Filed at ${formatDateTime(result.recordedAt)}. The score is shown at the top of the chart.`}
+            />
+          )}
           {result.escalation.required ? (
             <View testID="escalation-banner">
               <Banner

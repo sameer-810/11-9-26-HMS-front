@@ -538,7 +538,7 @@ try {
 
   const board = await nursePage.innerText("body");
   check(
-    board.includes("need review"),
+    /needs? review/.test(board),
     "the escalation strip is above everything",
   );
   check(board.includes("Sunita Sharma"), "naming her");
@@ -560,7 +560,7 @@ try {
   await page.waitForTimeout(2800);
 
   const docBoard = await page.innerText("body");
-  check(docBoard.includes("need review"), "the doctor sees the escalation");
+  check(/needs? review/.test(docBoard), "the doctor sees the escalation");
   check(
     docBoard.includes("I have reviewed this patient"),
     "and IS offered the button, because they can act on it",
@@ -584,7 +584,7 @@ try {
   await page.waitForTimeout(2800);
 
   check(
-    !(await page.innerText("body")).includes("need review"),
+    !/needs? review/.test(await page.innerText("body")),
     "once reviewed, she leaves the escalation strip",
   );
   await page.screenshot({ path: path.join(SHOTS, "ipd-6-acknowledged.png") });

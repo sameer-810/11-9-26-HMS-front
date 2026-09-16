@@ -63,6 +63,20 @@ export const useUpdatePatient = (id: string) => {
   });
 };
 
+export const useSetRecordRestriction = (id: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { restricted: boolean; reason?: string }) =>
+      patientApi.setRestriction(id, body),
+    onSuccess: () => {
+      // The patient and both chart reads carry the restriction, so they must re-ask the server.
+      qc.invalidateQueries({ queryKey: ["patient", id] });
+      qc.invalidateQueries({ queryKey: ["medical-record", id] });
+      qc.invalidateQueries({ queryKey: ["clinical-context", id] });
+    },
+  });
+};
+
 export const useSetAllergies = (id: string) => {
   const qc = useQueryClient();
   return useMutation({

@@ -266,12 +266,12 @@ function ExpectedRow({
 }
 
 const COL = {
-  esi: 140,
-  visit: 120,
-  patient: 200,
+  esi: 120,
+  visit: 104,
+  patient: 190,
   arrival: 120,
-  wait: 170,
-  doctor: 150,
+  wait: 160,
+  doctor: 140,
 } as const;
 
 function HeaderRow() {
@@ -279,7 +279,7 @@ function HeaderRow() {
     <Text
       variant="label-sm"
       tone="tertiary"
-      style={width ? { width } : { flex: 1, minWidth: 160 }}
+      style={width ? { width, flexShrink: 0 } : { flex: 1, minWidth: 160 }}
     >
       {label}
     </Text>
@@ -407,18 +407,18 @@ function ActiveRow({
         testID={`ed-row-${v.visitNumber}`}
       >
         <HStack gap={12} align="center">
-          <View style={{ width: COL.esi }}>{badge}</View>
+          <View style={{ width: COL.esi, flexShrink: 0 }}>{badge}</View>
           {/* One line: a visit number broken at its hyphen reads as two numbers. */}
           <Text
             variant="label-sm"
             tone="secondary"
             tabular
             numberOfLines={1}
-            style={{ width: COL.visit }}
+            style={{ width: COL.visit, flexShrink: 0 }}
           >
             {v.visitNumber}
           </Text>
-          <VStack gap={1} style={{ width: COL.patient }}>
+          <VStack gap={1} style={{ width: COL.patient, flexShrink: 0 }}>
             {patient}
             <Text variant="caption" tone="tertiary" numberOfLines={1}>
               {ageSex(v)}
@@ -432,9 +432,9 @@ function ActiveRow({
           >
             {v.chiefComplaint}
           </Text>
-          <View style={{ width: COL.arrival }}>{arrival}</View>
-          <View style={{ width: COL.wait }}>{waitCell}</View>
-          <View style={{ width: COL.doctor }}>{doctor}</View>
+          <View style={{ width: COL.arrival, flexShrink: 0 }}>{arrival}</View>
+          <View style={{ width: COL.wait, flexShrink: 0 }}>{waitCell}</View>
+          <View style={{ width: COL.doctor, flexShrink: 0 }}>{doctor}</View>
         </HStack>
       </Card>
     );

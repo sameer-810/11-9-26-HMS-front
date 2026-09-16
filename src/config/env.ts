@@ -9,8 +9,7 @@ const LIVE_API_ORIGIN = "https://one1-9-26-hms-back.onrender.com";
 
 const DEV_API =
   process.env.EXPO_PUBLIC_API_URL_DEV || "http://localhost:5003/api/v1";
-const PROD_API =
-  process.env.EXPO_PUBLIC_API_URL || `${LIVE_API_ORIGIN}/api/v1`;
+const PROD_API = process.env.EXPO_PUBLIC_API_URL || `${LIVE_API_ORIGIN}/api/v1`;
 
 const DEV_SOCKET =
   process.env.EXPO_PUBLIC_SOCKET_URL_DEV || "http://localhost:5003";

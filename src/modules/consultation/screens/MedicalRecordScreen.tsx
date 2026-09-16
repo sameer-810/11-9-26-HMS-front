@@ -32,6 +32,7 @@ import {
   formatCalendarDate,
   formatWallTime,
 } from "@shared/format";
+import { nameWithStrength } from "@shared/utils/medicineName";
 import { usePatientBanner } from "@modules/patient/hooks/usePatients";
 import { useMedicalRecord } from "@modules/consultation/hooks/useConsultation";
 import type {
@@ -496,8 +497,7 @@ function MedicationTab({ prescriptions }: { prescriptions: Prescription[] }) {
                 <View key={l.id} style={styles.medLine}>
                   <HStack gap={8} align="center" wrap>
                     <Text variant="label" tone="primary">
-                      {l.medicineName}
-                      {l.strength ? ` ${l.strength}` : ""}
+                      {nameWithStrength(l.medicineName, l.strength)}
                     </Text>
                     <Text variant="body-sm" tone="secondary" tabular>
                       {l.dose} · {l.frequency}

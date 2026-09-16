@@ -26,6 +26,8 @@ interface Props extends Omit<TextInputProps, "style"> {
   numericField?: boolean;
   /** Unit shown inside the field: "mg", "mmHg", "°C". */
   suffix?: string;
+  /** Unit shown before the value, inside the field: "₹". */
+  prefix?: string;
   containerStyle?: StyleProp<ViewStyle>;
   multiline?: boolean;
 }
@@ -39,6 +41,7 @@ export function TextField({
   trailing,
   numericField,
   suffix,
+  prefix,
   containerStyle,
   multiline,
   secureTextEntry,
@@ -90,7 +93,13 @@ export function TextField({
           },
         ]}
       >
-        {leading ? <View style={{ marginRight: 8 }}>{leading}</View> : null}
+        {leading ? <View style={styles.leading}>{leading}</View> : null}
+
+        {prefix ? (
+          <Text variant="label-sm" tone="tertiary" style={styles.prefix}>
+            {prefix}
+          </Text>
+        ) : null}
 
         <TextInput
           {...rest}
@@ -125,7 +134,12 @@ export function TextField({
         />
 
         {suffix ? (
-          <Text variant="label-sm" tone="tertiary" style={{ marginLeft: 6 }}>
+          <Text
+            variant="label-sm"
+            tone="tertiary"
+            numberOfLines={1}
+            style={styles.suffix}
+          >
             {suffix}
           </Text>
         ) : null}
@@ -181,8 +195,14 @@ const styles = StyleSheet.create({
     backgroundColor: palette.surface.primary,
     paddingHorizontal: 10,
   },
+  leading: { marginRight: 8, flexShrink: 0 },
+  prefix: { marginRight: 6, flexShrink: 0 },
+  suffix: { marginLeft: 6, flexShrink: 0 },
   input: {
     flex: 1,
+    // Web inputs have an intrinsic width (~20 characters); without this a narrow
+    // field pushes its unit outside the border and over the next field.
+    minWidth: 0,
     fontSize: 14,
     color: palette.text.primary,
     paddingVertical: 0,

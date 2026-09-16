@@ -350,3 +350,121 @@ export interface BedBoard {
   })[];
   totals: BedCounts;
 }
+
+// ---- Doctor schedules (mounted at /appointments) ----------------------------
+
+/** One weekly clinic session. Times are "HH:mm" on the hospital's wall clock. */
+export interface ClinicSession {
+  id: string;
+  doctor: { id: string; fullName?: string };
+  department: DepartmentRef | null;
+  /** 0 = Sunday. */
+  dayOfWeek: number;
+  dayName: string;
+  startTime: string;
+  endTime: string;
+  slotMinutes: number;
+  slotCapacity: number;
+  location: string;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  isActive: boolean;
+}
+
+export interface ClinicSessionBody {
+  doctorId: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  slotMinutes?: number;
+  slotCapacity?: number;
+  location?: string;
+  /** An instant. The API defaults to "now", which hides the rest of today. */
+  effectiveFrom?: string;
+}
+
+export interface ClinicSessionPatch {
+  startTime?: string;
+  endTime?: string;
+  slotMinutes?: number;
+  slotCapacity?: number;
+  location?: string;
+  effectiveTo?: string | null;
+  isActive?: boolean;
+}
+
+export type ScheduleExceptionType = "leave" | "blocked" | "extra";
+
+export interface ScheduleException {
+  id: string;
+  doctor: { id: string; fullName?: string };
+  /** Calendar date "YYYY-MM-DD" in the hospital's timezone. */
+  date: string;
+  type: ScheduleExceptionType;
+  startTime: string;
+  endTime: string;
+  reason: string;
+  isWholeDay: boolean;
+}
+
+export interface ScheduleExceptionBody {
+  doctorId: string;
+  date: string;
+  type: ScheduleExceptionType;
+  startTime?: string;
+  endTime?: string;
+  slotMinutes?: number;
+  slotCapacity?: number;
+  reason?: string;
+}
+
+/** Bookings on that day are not cancelled; the count is for a person to act on. */
+export interface CreatedScheduleException extends ScheduleException {
+  affectedAppointments: number;
+}
+
+// ---- Services and prices (mounted at /billing) ------------------------------
+export type TariffCategory = "procedure" | "service" | "registration" | "other";
+
+export const TARIFF_CATEGORY_LABELS: Record<TariffCategory, string> = {
+  procedure: "Procedures",
+  service: "Services",
+  registration: "Registration",
+  other: "Other",
+};
+
+/** `price` is rupees on the wire; the API stores paise. */
+export interface TariffService {
+  id: string;
+  code: string;
+  name: string;
+  category: TariffCategory;
+  price: number;
+  taxRate: number;
+  isActive: boolean;
+}
+
+export interface TariffBody {
+  code: string;
+  name: string;
+  category: TariffCategory;
+  price: number;
+  taxRate?: number;
+}
+
+export type TariffPatch = Partial<
+  Pick<TariffService, "name" | "price" | "taxRate" | "isActive">
+>;
+
+export type TaxHead =
+  "consultation" | "room" | "laboratory" | "pharmacy" | "procedure";
+
+export interface BillingSettings {
+  taxRates: Record<TaxHead, number>;
+  receiptFooter: string;
+}
+
+export interface BillingSettingsPatch {
+  taxRates?: Partial<Record<TaxHead, number>>;
+  receiptFooter?: string;
+}

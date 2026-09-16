@@ -22,6 +22,12 @@ import {
   useDischarge,
 } from "@modules/inpatient/hooks/useInpatient";
 import type { PatientBanner } from "@modules/patient/types";
+import type { Admission } from "@modules/inpatient/types";
+import { useAuthStore } from "@shared/store/useAuthStore";
+import { formatDateTime } from "@shared/format";
+import { statusLabel } from "@shared/utils/statusLabels";
+import { PrintButton } from "@modules/printing/components/PrintButton";
+import { buildDischargeSummary } from "@modules/printing/documents/dischargeSummary";
 
 /**
  * Discharge (IP-05). Summary, medication and follow-up are required (also server-enforced);
@@ -78,24 +84,14 @@ export default function DischargeScreen() {
 
   if (admission.status !== "admitted") {
     return (
-      <Screen title="Discharge">
-        <Card>
-          <VStack gap={8}>
-            <HStack gap={8} align="center">
-              <CircleCheck size={18} color={signal.normal.text} />
-              <Text variant="h4">Already discharged</Text>
-            </HStack>
-            <Text variant="body-sm" tone="secondary">
-              {patient?.fullName ?? admission.admissionNumber} was discharged
-              {admission.dischargedBy ? ` by ${admission.dischargedBy}` : ""}.
-            </Text>
-            <Button
-              label="Back to the ward"
-              onPress={() => navigation.goBack()}
-            />
-          </VStack>
-        </Card>
-      </Screen>
+      <DischargedSummary
+        admission={admission}
+        onBack={() =>
+          navigation.canGoBack()
+            ? navigation.goBack()
+            : navigation.navigate("WardBoard")
+        }
+      />
     );
   }
 
@@ -195,6 +191,148 @@ export default function DischargeScreen() {
         />
       </VStack>
     </Screen>
+  );
+}
+
+/** A finished discharge, read-only: what was recorded, by whom and when. */
+function DischargedSummary({
+  admission,
+  onBack,
+}: {
+  admission: Admission;
+  onBack: () => void;
+}) {
+  const hospitalName = useAuthStore((s) => s.hospital?.name ?? "");
+  const printedBy = useAuthStore((s) => s.user?.fullName ?? "");
+  const patient = admission.patient as PatientBanner;
+  const name = patient?.fullName ?? admission.admissionNumber;
+  const typeLabel = admission.dischargeType
+    ? statusLabel(admission.dischargeType)
+    : statusLabel(admission.status);
+
+  return (
+    <Screen
+      title="Discharge summary"
+      subtitle={`${name} · ${admission.admissionNumber}`}
+      patient={patient?.fullName ? patient : undefined}
+      scroll
+      testID="discharge-summary-view"
+      right={
+        patient?.fullName ? (
+          <PrintButton
+            label="Print summary"
+            printerClass="page"
+            testID="print-discharge-summary"
+            build={() =>
+              buildDischargeSummary({
+                hospitalName,
+                admissionNumber: admission.admissionNumber,
+                patient: {
+                  patientId: patient.patientId,
+                  fullName: patient.fullName,
+                  age: patient.age,
+                  gender: patient.gender,
+                  recorded: patient.allergiesRecorded,
+                  allergies: patient.allergies ?? [],
+                },
+                admittedAt: admission.admittedAt,
+                dischargedAt: admission.dischargedAt,
+                dischargedBy: admission.dischargedBy,
+                doctorName: admission.doctor?.fullName ?? "",
+                wardName: admission.ward?.name ?? "",
+                bedNumber: admission.bed?.number ?? "",
+                reason: admission.reason,
+                dischargeType: typeLabel,
+                dischargeDiagnosis: admission.dischargeDiagnosis,
+                dischargeSummary: admission.dischargeSummary,
+                dischargeMedication: admission.dischargeMedication,
+                followUpInstructions: admission.followUpInstructions,
+                printedBy,
+                printedAt: new Date(),
+              })
+            }
+          />
+        ) : null
+      }
+    >
+      <VStack gap={16}>
+        <Card>
+          <VStack gap={8}>
+            <HStack gap={8} align="center">
+              <CircleCheck size={18} color={signal.normal.text} />
+              <Text variant="h4">Discharged</Text>
+            </HStack>
+            <Text variant="body-sm" tone="secondary">
+              {name} was discharged
+              {admission.dischargedAt
+                ? ` on ${formatDateTime(admission.dischargedAt)}`
+                : ""}
+              {admission.dischargedBy ? ` by ${admission.dischargedBy}` : ""}.
+              This summary is part of the record and cannot be changed here.
+            </Text>
+          </VStack>
+        </Card>
+
+        <Card>
+          <VStack gap={14}>
+            <SummaryField label="Type of discharge" value={typeLabel} />
+            <SummaryField
+              label="Diagnosis"
+              value={admission.dischargeDiagnosis}
+              testID="discharged-diagnosis"
+            />
+            <SummaryField
+              label="Summary"
+              value={admission.dischargeSummary}
+              testID="discharged-summary"
+            />
+            <SummaryField
+              label="Medication to take home"
+              value={admission.dischargeMedication}
+              testID="discharged-medication"
+            />
+            <SummaryField
+              label="Follow-up"
+              value={admission.followUpInstructions}
+              testID="discharged-followup"
+            />
+            <SummaryField
+              label="Admitted"
+              value={`${formatDateTime(admission.admittedAt)}${admission.ward?.name ? ` · ${admission.ward.name}` : ""}${admission.bed?.number ? `, bed ${admission.bed.number}` : ""}`}
+            />
+            {admission.doctor?.fullName ? (
+              <SummaryField
+                label="Consultant"
+                value={`Dr ${admission.doctor.fullName}`}
+              />
+            ) : null}
+          </VStack>
+        </Card>
+
+        <Button label="Back" variant="secondary" onPress={onBack} />
+      </VStack>
+    </Screen>
+  );
+}
+
+function SummaryField({
+  label,
+  value,
+  testID,
+}: {
+  label: string;
+  value: string;
+  testID?: string;
+}) {
+  return (
+    <VStack gap={3} testID={testID}>
+      <Text variant="label-sm" tone="tertiary">
+        {label}
+      </Text>
+      <Text variant="body" tone={value ? "primary" : "tertiary"}>
+        {value || "Not recorded"}
+      </Text>
+    </VStack>
   );
 }
 

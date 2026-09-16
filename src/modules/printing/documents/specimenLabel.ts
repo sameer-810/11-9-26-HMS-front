@@ -23,34 +23,18 @@ export function buildSpecimenLabel(input: SpecimenLabelInput): PrintJob {
 
   const identifier = bareIdentifier(input.sampleId);
   // DataMatrix up to 4 dots/module so phone cameras read it; Code 128 stays at 3 to fit the width.
-  const matrix = dataMatrix(specimenPayload(input.sampleId), {
-    availableMm: topMm,
-    maxDots: 4,
-  });
+  const matrix = dataMatrix(specimenPayload(input.sampleId), { availableMm: topMm, maxDots: 4 });
   const barsHeightMm = heightMm - 2 * pad - topMm - 0.6 - 2.5;
-  const linear = code128(identifier, {
-    heightMm: barsHeightMm,
-    availableMm: usableWidth,
-    maxDots: 3,
-  });
+  const linear = code128(identifier, { heightMm: barsHeightMm, availableMm: usableWidth, maxDots: 3 });
   if (!linear.fits || !matrix.fits) {
-    throw new Error(
-      "This sample number does not fit on the label at a scannable size",
-    );
+    throw new Error("This sample number does not fit on the label at a scannable size");
   }
 
   const name = printedName(input.patient.firstName, input.patient.lastName);
   const dob = formatDob(input.patient.dateOfBirth);
-  const nameText = name.unidentified
-    ? `UNIDENTIFIED ${name.visitNumber}`
-    : name.given
-      ? `${name.surname}, ${name.given}`
-      : name.surname;
+  const nameText = name.unidentified ? `UNIDENTIFIED ${name.visitNumber}` : name.given ? `${name.surname}, ${name.given}` : name.surname;
   const textWidth = usableWidth - matrix.widthMm - 1;
-  const nameMm = Math.max(
-    2.1,
-    Math.min(2.9, textWidth / (0.6 * nameText.length)),
-  );
+  const nameMm = Math.max(2.1, Math.min(2.9, textWidth / (0.6 * nameText.length)));
 
   const css = `
 .label { position: absolute; inset: ${mm(pad)}; display: flex; flex-direction: column; }
@@ -77,45 +61,26 @@ export function buildSpecimenLabel(input: SpecimenLabelInput): PrintJob {
         ? html`<span class="urgency urgent" data-urgency="urgent">URGENT</span>`
         : "";
 
-  const body = html` <div class="label">
-    <div class="top">
-      <div class="text">
-        <div class="name" data-field="name">${nameText}</div>
-        <div class="ids" data-field="patientId">
-          ${input.patient.patientId} · ${dob ? `DOB ${dob}` : input.patient.age}
-        </div>
-        <div class="test" data-field="test">
-          ${urgency}${input.testName}${input.container ? ` · ${input.container}` : ""}
-        </div>
-        <div class="collected">
-          Collected ${formatDateTime(input.collectedAt)}
-        </div>
-      </div>
-      <div
-        class="code2d"
-        data-scan-payload="${specimenPayload(input.sampleId)}"
-      >
-        ${raw(matrix.svg)}
-      </div>
+  const body = html`
+<div class="label">
+  <div class="top">
+    <div class="text">
+      <div class="name" data-field="name">${nameText}</div>
+      <div class="ids" data-field="patientId">${input.patient.patientId} · ${dob ? `DOB ${dob}` : input.patient.age}</div>
+      <div class="test" data-field="test">${urgency}${input.testName}${input.container ? ` · ${input.container}` : ""}</div>
+      <div class="collected">Collected ${formatDateTime(input.collectedAt)}</div>
     </div>
-    <div class="bottom">
-      <div id="specimen-code128" data-barcode="${identifier}">
-        ${raw(linear.svg)}
-      </div>
-      <div class="hr">${identifier}</div>
-    </div>
-  </div>`.__html;
+    <div class="code2d" data-scan-payload="${specimenPayload(input.sampleId)}">${raw(matrix.svg)}</div>
+  </div>
+  <div class="bottom">
+    <div id="specimen-code128" data-barcode="${identifier}">${raw(linear.svg)}</div>
+    <div class="hr">${identifier}</div>
+  </div>
+</div>`.__html;
 
   const title = `Specimen ${identifier}`;
   return {
-    html: pageDocument({
-      title,
-      widthMm,
-      heightMm,
-      css,
-      body,
-      documentKind: "specimen-label",
-    }),
+    html: pageDocument({ title, widthMm, heightMm, css, body, documentKind: "specimen-label" }),
     widthMm,
     heightMm,
     title,

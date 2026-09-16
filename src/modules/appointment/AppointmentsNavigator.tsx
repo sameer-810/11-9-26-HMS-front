@@ -4,8 +4,10 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import AppointmentsScreen from "./screens/AppointmentsScreen";
 import BookAppointmentScreen from "./screens/BookAppointmentScreen";
 import AppointmentBookedScreen from "./screens/AppointmentBookedScreen";
+import RescheduleAppointmentScreen from "./screens/RescheduleAppointmentScreen";
 import PatientDetailScreen from "@modules/patient/screens/PatientDetailScreen";
 import RegisterPatientScreen from "@modules/patient/screens/RegisterPatientScreen";
+import EditPatientScreen from "@modules/patient/screens/EditPatientScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -18,6 +20,10 @@ export default function AppointmentsNavigator() {
         name="AppointmentBooked"
         component={AppointmentBookedScreen}
       />
+      <Stack.Screen
+        name="RescheduleAppointment"
+        component={RescheduleAppointmentScreen}
+      />
       {/*
         Reachable from a booking: the desk often needs the patient's record
         immediately after booking them, and "register first" is a dead end
@@ -25,6 +31,7 @@ export default function AppointmentsNavigator() {
       */}
       <Stack.Screen name="PatientDetail" component={PatientDetailScreen} />
       <Stack.Screen name="RegisterPatient" component={RegisterPatientScreen} />
+      <Stack.Screen name="EditPatient" component={EditPatientScreen} />
     </Stack.Navigator>
   );
 }

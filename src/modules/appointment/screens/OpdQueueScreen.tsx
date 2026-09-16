@@ -9,6 +9,7 @@ import {
   ListOrdered,
   TriangleAlert,
   ShieldAlert,
+  Footprints,
 } from "lucide-react-native";
 
 import { palette, radius, signal } from "@shared/designSystem";
@@ -45,8 +46,10 @@ import {
   useMarkArrived,
   useMarkNoShow,
 } from "@modules/appointment/hooks/useAppointments";
+import { WalkInSheet } from "@modules/appointment/components/WalkInSheet";
 import type { Appointment } from "@modules/appointment/types";
 import type { PatientBanner } from "@modules/patient/types";
+import { openScreen } from "@modules/patient/openScreen";
 
 /**
  * OPD queue board (Flow 1 step 4, AP-03), in server order: with the doctor, waiting by token,
@@ -57,7 +60,10 @@ export default function OpdQueueScreen() {
   const hasPermission = useAuthStore((s) => s.hasPermission);
   const canManageQueue = hasPermission(PERMISSIONS.OPD_QUEUE_MANAGE);
   const seesClinical = hasPermission(PERMISSIONS.RECORD_VIEW);
+  // Mirrors the API's grant on POST /appointments/walk-in.
+  const canAddWalkIn = hasPermission(PERMISSIONS.APPOINTMENTS_MANAGE);
 
+  const [walkInOpen, setWalkInOpen] = useState(false);
   const [filter, setFilter] = useState("waiting");
   const [departmentId, setDepartmentId] = useState<string | null>(null);
   const [noShowTarget, setNoShowTarget] = useState<Appointment | null>(null);
@@ -122,6 +128,17 @@ export default function OpdQueueScreen() {
       refreshing={isRefetching}
       onRefresh={refetch}
       testID="opd-queue"
+      right={
+        canAddWalkIn ? (
+          <Button
+            label="Add walk-in"
+            fullWidth={false}
+            testID="walkin-cta"
+            icon={<Footprints size={16} color="#FFFFFF" strokeWidth={2.2} />}
+            onPress={() => setWalkInOpen(true)}
+          />
+        ) : undefined
+      }
     >
       <VStack gap={14}>
         {error ? (
@@ -245,7 +262,11 @@ export default function OpdQueueScreen() {
                 onNoShow={() => setNoShowTarget(a)}
                 onOpen={() => {
                   const p = a.patient as PatientBanner;
-                  if (p?.id) navigation.navigate("PatientDetail", { id: p.id });
+                  // The queue is a bare drawer route; the patient's page lives in the Patients stack.
+                  if (p?.id)
+                    openScreen(navigation, "Patients", "PatientDetail", {
+                      id: p.id,
+                    });
                 }}
               />
             ))}
@@ -269,6 +290,18 @@ export default function OpdQueueScreen() {
         loading={markNoShow.isPending}
         onConfirm={confirmNoShow}
         onCancel={() => setNoShowTarget(null)}
+      />
+
+      <WalkInSheet
+        visible={walkInOpen}
+        onClose={() => {
+          setWalkInOpen(false);
+          setFilter("waiting");
+        }}
+        onRegister={() => {
+          setWalkInOpen(false);
+          openScreen(navigation, "Patients", "RegisterPatient");
+        }}
       />
     </Screen>
   );
@@ -304,6 +337,7 @@ function QueueRow({
   return (
     <Card
       onPress={onOpen}
+      accessibilityLabel={`Open ${patient?.fullName ?? "the patient"}'s page`}
       compact
       accentColor={severe ? signal.critical.color : undefined}
       testID={`queue-row-${a.appointmentNumber}`}

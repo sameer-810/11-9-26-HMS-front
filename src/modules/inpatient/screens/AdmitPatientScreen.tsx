@@ -77,7 +77,12 @@ export default function AdmitPatientScreen() {
   };
 
   return (
-    <Screen title="Admit a patient" subtitle="IP-01" scroll>
+    <Screen
+      title="Admit a patient"
+      subtitle="Choose the patient, a free bed and the reason for admission"
+      scroll
+      testID="admit-patient-screen"
+    >
       <VStack gap={16}>
         {admit.isError ? (
           <View testID="admit-error">

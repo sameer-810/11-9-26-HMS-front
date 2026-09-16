@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { View, StyleSheet } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { View, StyleSheet, Pressable } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import {
   Lock,
@@ -8,9 +8,11 @@ import {
   ShieldAlert,
   History,
   Plus,
+  Check,
 } from "lucide-react-native";
 
-import { palette, radius, signal } from "@shared/designSystem";
+import { palette, radius, signal, layout } from "@shared/designSystem";
+import { checkable } from "@shared/ui/a11y";
 import {
   Screen,
   Text,
@@ -86,10 +88,17 @@ export default function ConsultationScreen() {
   const [lastPrescription, setLastPrescription] = useState<string | null>(null);
   const [lastLabOrder, setLastLabOrder] = useState<string | null>(null);
   const sign = useSignConsultation(id ?? "");
+  const flushRef = useRef<(() => Promise<string | null>) | null>(null);
 
   const doSign = async () => {
     setSaveError(null);
     try {
+      const blocked = await flushRef.current?.();
+      if (blocked) {
+        setSignOpen(false);
+        setSaveError(blocked);
+        return;
+      }
       await sign.mutateAsync();
       setSignOpen(false);
     } catch (err) {
@@ -200,6 +209,7 @@ export default function ConsultationScreen() {
           consultation={consultation}
           disabled={signed}
           onError={setSaveError}
+          flushRef={flushRef}
         />
 
         {patientId ? (
@@ -462,10 +472,13 @@ function ConsultationForm({
   consultation,
   disabled,
   onError,
+  flushRef,
 }: {
   consultation: NonNullable<ReturnType<typeof useConsultation>["data"]>;
   disabled: boolean;
   onError: (msg: string | null) => void;
+  /** Set by the form: saves pending edits, or returns why the note cannot be signed yet. */
+  flushRef?: React.MutableRefObject<(() => Promise<string | null>) | null>;
 }) {
   const update = useUpdateConsultation(consultation.id);
 
@@ -481,6 +494,13 @@ function ConsultationForm({
     consultation.diagnoses,
   );
   const [vitals, setVitals] = useState(consultation.vitals ?? {});
+  const [recommendAdmission, setRecommendAdmission] = useState(
+    consultation.admissionRecommended,
+  );
+  const [admissionReason, setAdmissionReason] = useState(
+    consultation.admissionReason,
+  );
+  const [reasonTouched, setReasonTouched] = useState(false);
 
   const draft = JSON.stringify({
     chiefComplaint,
@@ -488,28 +508,48 @@ function ConsultationForm({
     examination,
     plan,
     advice,
+    recommendAdmission,
+    admissionReason,
   });
   const debounced = useDebouncedValue(draft, 900);
-  const [lastSaved, setLastSaved] = useState(draft);
+  const lastSaved = useRef(draft);
+
+  const save = async (snapshot: string) => {
+    const parsed = JSON.parse(snapshot);
+    const reason = String(parsed.admissionReason ?? "").trim();
+    await update.mutateAsync({
+      chiefComplaint: parsed.chiefComplaint,
+      historyOfPresentIllness: parsed.history,
+      examination: parsed.examination,
+      treatmentPlan: parsed.plan,
+      advice: parsed.advice,
+      // A recommendation only reaches the admission desk with a reason attached.
+      admissionRecommended: Boolean(parsed.recommendAdmission) && reason !== "",
+      admissionReason: parsed.recommendAdmission ? reason : "",
+    });
+    lastSaved.current = snapshot;
+  };
 
   useEffect(() => {
-    if (disabled || debounced === lastSaved) return;
-    const parsed = JSON.parse(debounced);
-    update
-      .mutateAsync({
-        chiefComplaint: parsed.chiefComplaint,
-        historyOfPresentIllness: parsed.history,
-        examination: parsed.examination,
-        treatmentPlan: parsed.plan,
-        advice: parsed.advice,
-      })
-      .then(() => {
-        setLastSaved(debounced);
-        onError(null);
-      })
+    if (disabled || debounced === lastSaved.current) return;
+    save(debounced)
+      .then(() => onError(null))
       .catch((err) => onError(apiErrorMessage(err, "Could not save the note")));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debounced, disabled]);
+
+  // Signing must not race the autosave, or the last few words (or the admission reason) are lost.
+  useEffect(() => {
+    if (!flushRef) return;
+    flushRef.current = async () => {
+      if (recommendAdmission && !admissionReason.trim()) {
+        setReasonTouched(true);
+        return "Say why this patient should be admitted, or untick Recommend admission.";
+      }
+      if (draft !== lastSaved.current) await save(draft);
+      return null;
+    };
+  });
 
   const addDiagnosis = async () => {
     const text = diagnosisText.trim();
@@ -710,15 +750,71 @@ function ConsultationForm({
             multiline
             placeholder="Rest, fluids, return if worse"
           />
-          {consultation.admissionRecommended ? (
-            <Banner
-              tone="warning"
-              title="Admission recommended"
-              message={
-                consultation.admissionReason ||
-                "This patient should be admitted."
-              }
-            />
+          {disabled ? null : (
+            <VStack gap={10} testID="recommend-admission-section">
+              <Pressable
+                onPress={() => setRecommendAdmission((v) => !v)}
+                accessibilityRole="checkbox"
+                accessibilityLabel="Recommend admission"
+                accessibilityHint="Adds this patient to the admission desk's list of patients waiting for a bed when you sign"
+                accessibilityState={{ checked: recommendAdmission }}
+                {...checkable(recommendAdmission, () =>
+                  setRecommendAdmission((v) => !v),
+                )}
+                testID="recommend-admission"
+                style={styles.checkRow}
+              >
+                <View
+                  style={[
+                    styles.checkBox,
+                    recommendAdmission ? styles.checkBoxOn : null,
+                  ]}
+                >
+                  {recommendAdmission ? (
+                    <Check size={14} color="#FFFFFF" strokeWidth={3} />
+                  ) : null}
+                </View>
+                <VStack gap={1} flex={1}>
+                  <Text variant="label" tone="primary">
+                    Recommend admission
+                  </Text>
+                  <Text variant="caption" tone="tertiary">
+                    Once you sign, the patient appears on the ward&apos;s
+                    &quot;waiting for a bed&quot; list.
+                  </Text>
+                </VStack>
+              </Pressable>
+              {recommendAdmission ? (
+                <TextField
+                  label="Why should they be admitted?"
+                  required
+                  value={admissionReason}
+                  onChangeText={setAdmissionReason}
+                  onBlur={() => setReasonTouched(true)}
+                  multiline
+                  placeholder="Needs IV antibiotics and oxygen; not safe to go home"
+                  hint="The admitting team reads this when they find a bed."
+                  error={
+                    reasonTouched && !admissionReason.trim()
+                      ? "Say why, so the ward knows what the bed is for."
+                      : undefined
+                  }
+                  testID="admission-reason"
+                />
+              ) : null}
+            </VStack>
+          )}
+          {disabled && consultation.admissionRecommended ? (
+            <View testID="admission-recommended-banner">
+              <Banner
+                tone="warning"
+                title="Admission recommended"
+                message={
+                  consultation.admissionReason ||
+                  "This patient should be admitted."
+                }
+              />
+            </View>
           ) : null}
         </VStack>
       </Card>
@@ -841,6 +937,27 @@ function AddendaPanel({
 }
 
 const styles = StyleSheet.create({
+  checkRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    minHeight: layout.minTouchTarget,
+    paddingVertical: 4,
+  },
+  checkBox: {
+    width: 20,
+    height: 20,
+    borderRadius: radius.sm,
+    borderWidth: 1.5,
+    borderColor: palette.border.strong,
+    backgroundColor: palette.surface.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  checkBoxOn: {
+    backgroundColor: palette.clinical[600],
+    borderColor: palette.clinical[600],
+  },
   dxDot: {
     width: 5,
     height: 5,

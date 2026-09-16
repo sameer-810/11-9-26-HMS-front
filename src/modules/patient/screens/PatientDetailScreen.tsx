@@ -9,6 +9,8 @@ import {
   Plus,
   Check,
   TriangleAlert,
+  Footprints,
+  Pencil,
 } from "lucide-react-native";
 
 import { palette, signal } from "@shared/designSystem";
@@ -39,6 +41,9 @@ import {
 } from "@modules/patient/hooks/usePatients";
 import type { Allergy, AllergySeverity } from "@modules/patient/types";
 import { PrintWristbandButton } from "@modules/printing/components/PrintWristbandButton";
+import { WalkInSheet } from "@modules/appointment/components/WalkInSheet";
+import { RecordAccessCard } from "@modules/patient/components/RecordAccessCard";
+import { openScreen } from "@modules/patient/openScreen";
 
 const SEVERITIES = [
   { value: "mild", label: "Mild", sublabel: "Rash, mild discomfort" },
@@ -60,14 +65,24 @@ const SEVERITY_SIGNAL: Record<
 export default function PatientDetailScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { id, justRegistered } = (route.params ?? {}) as {
-    id: string;
+  const params = (route.params ?? {}) as {
+    id?: string;
+    // Ward and laboratory stacks name it patientId.
+    patientId?: string;
     justRegistered?: boolean;
+    justUpdated?: boolean;
   };
+  const id = (params.id ?? params.patientId) as string;
+  const { justRegistered, justUpdated } = params;
 
   const hasPermission = useAuthStore((s) => s.hasPermission);
   const seesClinical = hasPermission(PERMISSIONS.RECORD_VIEW);
+  // Booking and walk-ins share the API's appointments.manage grant.
   const canBook = hasPermission(PERMISSIONS.APPOINTMENTS_MANAGE);
+  const canEdit = hasPermission(PERMISSIONS.PATIENTS_MANAGE);
+  // Mirrors the restriction route's grant for clinicians; configuration staff never open this page.
+  const canRestrict = hasPermission(PERMISSIONS.CONSULTATION_MANAGE);
+  const [walkInOpen, setWalkInOpen] = useState(false);
   const canRecordAllergies =
     hasPermission(PERMISSIONS.CONSULTATION_MANAGE) ||
     hasPermission(PERMISSIONS.NURSING_NOTES_MANAGE) ||
@@ -138,6 +153,23 @@ export default function PatientDetailScreen() {
             ) : null}
             {canBook ? (
               <Button
+                label="Walk-in to OPD"
+                variant="secondary"
+                fullWidth={false}
+                testID="walkin-from-patient"
+                accessibilityHint="Adds them to today's OPD queue with a token"
+                icon={
+                  <Footprints
+                    size={16}
+                    color={palette.text.primary}
+                    strokeWidth={2.2}
+                  />
+                }
+                onPress={() => setWalkInOpen(true)}
+              />
+            ) : null}
+            {canBook ? (
+              <Button
                 label="Book appointment"
                 fullWidth={false}
                 testID="book-from-patient"
@@ -145,7 +177,7 @@ export default function PatientDetailScreen() {
                   <CalendarPlus size={16} color="#FFFFFF" strokeWidth={2.2} />
                 }
                 onPress={() =>
-                  navigation.navigate("BookAppointment", {
+                  openScreen(navigation, "Patients", "BookAppointment", {
                     patientId: patient.id,
                   })
                 }
@@ -163,6 +195,14 @@ export default function PatientDetailScreen() {
             message={`${patient.fullName} has been given patient ID ${patient.patientId}. That ID stays with them and cannot be changed.`}
           />
         ) : null}
+        {justUpdated ? (
+          <View testID="patient-updated">
+            <Banner
+              tone="success"
+              message={`${patient.fullName}'s details have been saved.`}
+            />
+          </View>
+        ) : null}
 
         {seesClinical ? (
           <AllergySection
@@ -173,8 +213,35 @@ export default function PatientDetailScreen() {
           />
         ) : null}
 
+        {canRestrict ? <RecordAccessCard patient={patient} /> : null}
+
         <Card>
-          <SectionHeader title="Details" />
+          <SectionHeader
+            title="Details"
+            right={
+              canEdit ? (
+                <Button
+                  label="Edit details"
+                  variant="secondary"
+                  size="sm"
+                  fullWidth={false}
+                  testID="edit-patient"
+                  icon={
+                    <Pencil
+                      size={14}
+                      color={palette.text.primary}
+                      strokeWidth={2.2}
+                    />
+                  }
+                  onPress={() =>
+                    openScreen(navigation, "Patients", "EditPatient", {
+                      id: patient.id,
+                    })
+                  }
+                />
+              ) : undefined
+            }
+          />
           <VStack gap={0}>
             <Detail label="Patient ID" value={patient.patientId} tabular />
             <Detail
@@ -210,6 +277,7 @@ export default function PatientDetailScreen() {
             <Detail
               label="Mobile"
               value={patient.mobile}
+              testID="patient-mobile"
               tabular
               icon={
                 <Phone
@@ -278,6 +346,20 @@ export default function PatientDetailScreen() {
           )}
         </Card>
       </VStack>
+
+      {canBook ? (
+        <WalkInSheet
+          visible={walkInOpen}
+          onClose={() => setWalkInOpen(false)}
+          patient={{
+            id: patient.id,
+            fullName: patient.fullName,
+            patientId: patient.patientId,
+            age: patient.age,
+            gender: patient.gender,
+          }}
+        />
+      ) : null}
     </Screen>
   );
 }
@@ -546,11 +628,13 @@ function Detail({
   value,
   tabular,
   icon,
+  testID,
 }: {
   label: string;
   value: React.ReactNode;
   tabular?: boolean;
   icon?: React.ReactNode;
+  testID?: string;
 }) {
   return (
     <HStack
@@ -576,6 +660,7 @@ function Detail({
           tone="primary"
           tabular={tabular}
           style={{ flex: 1 }}
+          testID={testID}
         >
           {value}
         </Text>

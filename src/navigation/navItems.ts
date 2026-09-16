@@ -22,6 +22,7 @@ import {
   UserRound,
   ScanLine,
   ShieldCheck,
+  BookOpen,
   type LucideIcon,
 } from "lucide-react-native";
 import { PERMISSIONS } from "@shared/permissions";
@@ -239,6 +240,17 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Pill,
     section: "Supply",
     permission: PERMISSIONS.PHARMACY_STOCK_VIEW,
+  },
+  // must mirror the API's FORMULARY_WRITE on /prescriptions/medicines.
+  {
+    name: "Formulary",
+    label: "Formulary",
+    icon: BookOpen,
+    section: "Supply",
+    permissionAny: [
+      PERMISSIONS.PHARMACY_STOCK_VIEW,
+      PERMISSIONS.HOSPITAL_CONFIG,
+    ],
   },
   {
     name: "Inventory",

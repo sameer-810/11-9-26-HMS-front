@@ -6,6 +6,7 @@ import type {
   RegisterPatientPayload,
   DuplicateCheckResult,
   Allergy,
+  RecordRestriction,
 } from "@modules/patient/types";
 
 export interface PatientListParams {
@@ -82,6 +83,18 @@ export const patientApi = {
         allergies,
         recorded,
       },
+    );
+    return res.data.data;
+  },
+
+  /** Restrict the record to the treating team, or lift that. The server wants a reason to restrict. */
+  setRestriction: async (
+    patientId: string,
+    body: { restricted: boolean; reason?: string },
+  ) => {
+    const res = await apiClient.post<{ data: RecordRestriction }>(
+      `/access/patients/${patientId}/restriction`,
+      body,
     );
     return res.data.data;
   },

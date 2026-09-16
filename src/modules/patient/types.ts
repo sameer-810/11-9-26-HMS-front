@@ -72,6 +72,11 @@ export interface PatientClinical extends PatientDemographic {
   allergiesRecordedAt: string | null;
   chronicConditions: string[];
   mlcNumber: string;
+  accessRestricted: boolean;
+  /** Sent only to those who can lift the restriction. */
+  restrictionReason?: string;
+  restrictedAt?: string | null;
+  restrictedByName?: string;
 }
 
 export type Patient = PatientDemographic & Partial<PatientClinical>;
@@ -131,6 +136,13 @@ export interface RegisterPatientPayload {
   allergies?: Allergy[];
   allergiesRecorded?: boolean;
   confirmedNotDuplicate?: boolean;
+}
+
+/** What the restriction endpoint answers with. */
+export interface RecordRestriction {
+  accessRestricted: boolean;
+  restrictionReason: string;
+  restrictedByName: string;
 }
 
 export interface Paginated<T> {

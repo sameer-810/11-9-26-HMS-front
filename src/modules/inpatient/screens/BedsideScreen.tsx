@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import { View, StyleSheet } from "react-native";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { View, StyleSheet, Platform } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { palette, signal } from "@shared/designSystem";
 import { useAuthStore } from "@shared/store/useAuthStore";
@@ -20,6 +20,7 @@ import {
   EmptyState,
 } from "@shared/ui";
 import { formatDateTime } from "@shared/format";
+import { statusLabel } from "@shared/utils/statusLabels";
 import { useMyOps, type OutboxOp } from "@shared/offline/outbox";
 import {
   useBedside,
@@ -68,6 +69,9 @@ export default function BedsideScreen() {
   const canManageAdmission = hasPermission(PERMISSIONS.ADMISSION_MANAGE);
 
   const [tab, setTab] = useState<Tab>("chart");
+  const [transferOpen, setTransferOpen] = useState(false);
+  // Bumped by the header button so the form scrolls into view even when already open.
+  const [transferFocus, setTransferFocus] = useState(0);
   const {
     data,
     isLoading,
@@ -185,7 +189,11 @@ export default function BedsideScreen() {
               label="Transfer"
               size="sm"
               variant="secondary"
-              onPress={() => setTab("chart")}
+              onPress={() => {
+                setTab("chart");
+                setTransferOpen(true);
+                setTransferFocus((n) => n + 1);
+              }}
               testID="open-transfer"
             />
             <Button
@@ -245,6 +253,9 @@ export default function BedsideScreen() {
             data={data!}
             admissionId={admissionId}
             canTransfer={canManageAdmission}
+            transferOpen={transferOpen}
+            onTransferOpenChange={setTransferOpen}
+            transferFocus={transferFocus}
           />
         ) : null}
 
@@ -254,6 +265,8 @@ export default function BedsideScreen() {
             patientName={patient?.fullName}
             useScale2={admission.news2Scale === 2}
             onRecorded={() => refetch()}
+            // The score is already pinned above the tabs; showing it here too repeats it.
+            showScore={false}
           />
         ) : null}
 
@@ -268,7 +281,10 @@ export default function BedsideScreen() {
               />
             ) : null}
             <NotesList notes={data?.notes ?? []} admissionId={admissionId} />
-            <SbarPanel admissionId={admissionId} />
+            <SbarPanel
+              admissionId={admissionId}
+              canManage={hasPermission(PERMISSIONS.HANDOVER_MANAGE)}
+            />
           </VStack>
         ) : null}
       </VStack>
@@ -280,10 +296,16 @@ function ChartTab({
   data,
   admissionId,
   canTransfer,
+  transferOpen,
+  onTransferOpenChange,
+  transferFocus,
 }: {
   data: NonNullable<ReturnType<typeof useBedside>["data"]>;
   admissionId: string;
   canTransfer: boolean;
+  transferOpen: boolean;
+  onTransferOpenChange: (open: boolean) => void;
+  transferFocus: number;
 }) {
   const myOps = useMyOps();
   const pending = useMemo(
@@ -324,7 +346,14 @@ function ChartTab({
         </VStack>
       </Card>
 
-      {canTransfer ? <TransferPanel admissionId={admissionId} /> : null}
+      {canTransfer ? (
+        <TransferPanel
+          admissionId={admissionId}
+          open={transferOpen}
+          onOpenChange={onTransferOpenChange}
+          focus={transferFocus}
+        />
+      ) : null}
     </VStack>
   );
 }
@@ -357,7 +386,7 @@ function ObservationRow({ observation: o }: { observation: Observation }) {
           <Vital label="SpO₂" value={v.spo2} suffix="%" />
           <Vital
             label="O₂"
-            value={v.onOxygen === null ? null : v.onOxygen ? "yes" : "air"}
+            value={v.onOxygen === null ? null : v.onOxygen ? "Oxygen" : "Air"}
           />
           <Vital
             label="BP"
@@ -365,7 +394,10 @@ function ObservationRow({ observation: o }: { observation: Observation }) {
           />
           <Vital label="HR" value={v.pulse} />
           <Vital label="Temp" value={v.temperatureC} suffix="°C" />
-          <Vital label="ACVPU" value={v.consciousness || null} />
+          <Vital
+            label="ACVPU"
+            value={v.consciousness ? statusLabel(v.consciousness) : null}
+          />
         </HStack>
 
         <VStack gap={2} align="flex-end" style={{ minWidth: 80 }}>
@@ -484,12 +516,32 @@ function Vital({
   );
 }
 
-function TransferPanel({ admissionId }: { admissionId: string }) {
-  const [open, setOpen] = useState(false);
+function TransferPanel({
+  admissionId,
+  open,
+  onOpenChange: setOpen,
+  focus,
+}: {
+  admissionId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  focus: number;
+}) {
   const [bedId, setBedId] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const beds = useSelectableBeds();
   const transfer = useTransfer(admissionId);
+  const formRef = useRef<View>(null);
+
+  useEffect(() => {
+    if (!open || focus === 0 || Platform.OS !== "web") return;
+    // On web a View ref is the DOM node; wait a frame for the form to mount.
+    const id = requestAnimationFrame(() => {
+      const node = formRef.current as unknown as HTMLElement | null;
+      node?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [open, focus]);
 
   if (!open) {
     return (
@@ -503,51 +555,55 @@ function TransferPanel({ admissionId }: { admissionId: string }) {
   }
 
   return (
-    <Card testID="transfer-form">
-      <VStack gap={12}>
-        <Text variant="h4">Transfer</Text>
-        {/* Occupied beds are shown disabled rather than hidden. */}
-        <Select
-          label="New bed"
-          value={bedId}
-          options={beds.data ?? []}
-          onChange={setBedId}
-          placeholder="Choose a free bed"
-        />
-        <TextField
-          label="Why is the patient moving?"
-          value={reason}
-          onChangeText={setReason}
-          multiline
-          testID="transfer-reason"
-        />
-        {transfer.isError ? <ErrorState error={transfer.error} /> : null}
-        <HStack gap={8}>
-          <Button
-            label={transfer.isPending ? "Moving…" : "Transfer"}
-            disabled={!bedId || reason.trim().length < 3 || transfer.isPending}
-            onPress={() =>
-              transfer.mutate(
-                { bedId: bedId!, reason: reason.trim() },
-                {
-                  onSuccess: () => {
-                    setOpen(false);
-                    setReason("");
-                    setBedId(null);
+    <View ref={formRef}>
+      <Card testID="transfer-form">
+        <VStack gap={12}>
+          <Text variant="h4">Move to another bed</Text>
+          {/* Occupied beds are shown disabled rather than hidden. */}
+          <Select
+            label="New bed"
+            value={bedId}
+            options={beds.data ?? []}
+            onChange={setBedId}
+            placeholder="Choose a free bed"
+          />
+          <TextField
+            label="Why is the patient moving?"
+            value={reason}
+            onChangeText={setReason}
+            multiline
+            testID="transfer-reason"
+          />
+          {transfer.isError ? <ErrorState error={transfer.error} /> : null}
+          <HStack gap={8}>
+            <Button
+              label={transfer.isPending ? "Moving…" : "Transfer"}
+              disabled={
+                !bedId || reason.trim().length < 3 || transfer.isPending
+              }
+              onPress={() =>
+                transfer.mutate(
+                  { bedId: bedId!, reason: reason.trim() },
+                  {
+                    onSuccess: () => {
+                      setOpen(false);
+                      setReason("");
+                      setBedId(null);
+                    },
                   },
-                },
-              )
-            }
-            testID="transfer-submit"
-          />
-          <Button
-            label="Cancel"
-            variant="ghost"
-            onPress={() => setOpen(false)}
-          />
-        </HStack>
-      </VStack>
-    </Card>
+                )
+              }
+              testID="transfer-submit"
+            />
+            <Button
+              label="Cancel"
+              variant="ghost"
+              onPress={() => setOpen(false)}
+            />
+          </HStack>
+        </VStack>
+      </Card>
+    </View>
   );
 }
 
@@ -693,7 +749,8 @@ function NotesList({
                 <Text variant="label-sm">{n.recordedBy}</Text>
                 <Text variant="caption" tone="tertiary">
                   {formatDateTime(n.recordedAt)}
-                  {n.shift ? ` · ${n.shift} shift` : ""} · {n.category}
+                  {n.shift ? ` · ${statusLabel(n.shift)} shift` : ""} ·{" "}
+                  {statusLabel(n.category)}
                 </Text>
               </HStack>
               <Text variant="body-sm">{n.note}</Text>

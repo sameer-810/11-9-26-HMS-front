@@ -4,8 +4,14 @@ import type {
   Bed,
   BedBoard,
   BedStatus,
+  BillingSettings,
+  BillingSettingsPatch,
   BulkBedsBody,
   BulkBedsResult,
+  ClinicSession,
+  ClinicSessionBody,
+  ClinicSessionPatch,
+  CreatedScheduleException,
   CreateUserBody,
   Department,
   DepartmentBody,
@@ -18,6 +24,11 @@ import type {
   RoleSet,
   Room,
   RoomType,
+  ScheduleException,
+  ScheduleExceptionBody,
+  TariffBody,
+  TariffPatch,
+  TariffService,
   UpdateUserBody,
   UserListParams,
   Ward,
@@ -114,6 +125,87 @@ export const adminApi = {
       (
         await apiClient.post<{ data: Department }>(
           `/departments/${id}/activate`,
+        )
+      ).data.data,
+  },
+
+  // ---- Doctor schedules (write: hospital.config) ---------------------------
+  sessions: {
+    list: async (doctorId: string) =>
+      (
+        await apiClient.get<{ data: ClinicSession[] }>("/appointments/roster", {
+          params: { doctorId },
+        })
+      ).data.data,
+    create: async (body: ClinicSessionBody) =>
+      (
+        await apiClient.post<{ data: ClinicSession }>(
+          "/appointments/roster",
+          body,
+        )
+      ).data.data,
+    update: async (id: string, body: ClinicSessionPatch) =>
+      (
+        await apiClient.patch<{ data: ClinicSession }>(
+          `/appointments/roster/${id}`,
+          body,
+        )
+      ).data.data,
+  },
+
+  exceptions: {
+    list: async (params: { doctorId: string; from?: string }) =>
+      (
+        await apiClient.get<{ data: ScheduleException[] }>(
+          "/appointments/exceptions",
+          { params },
+        )
+      ).data.data,
+    create: async (body: ScheduleExceptionBody) =>
+      (
+        await apiClient.post<{ data: CreatedScheduleException }>(
+          "/appointments/exceptions",
+          body,
+        )
+      ).data.data,
+    remove: async (id: string) =>
+      (
+        await apiClient.delete<{ data: { message: string } }>(
+          `/appointments/exceptions/${id}`,
+        )
+      ).data.data,
+  },
+
+  // ---- Services and prices (write: hospital.config) ------------------------
+  tariff: {
+    /** Deactivated services included, so they can be reactivated. */
+    list: async () =>
+      (
+        await apiClient.get<{ data: TariffService[] }>(
+          "/billing/tariff?includeInactive=true",
+        )
+      ).data.data,
+    create: async (body: TariffBody) =>
+      (await apiClient.post<{ data: TariffService }>("/billing/tariff", body))
+        .data.data,
+    update: async (id: string, body: TariffPatch) =>
+      (
+        await apiClient.patch<{ data: TariffService }>(
+          `/billing/tariff/${id}`,
+          body,
+        )
+      ).data.data,
+  },
+
+  billingSettings: {
+    get: async () =>
+      (await apiClient.get<{ data: BillingSettings }>("/billing/settings")).data
+        .data,
+    update: async (body: BillingSettingsPatch) =>
+      (
+        await apiClient.put<{ data: BillingSettings }>(
+          "/billing/settings",
+          body,
         )
       ).data.data,
   },

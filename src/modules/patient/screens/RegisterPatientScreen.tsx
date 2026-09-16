@@ -30,6 +30,7 @@ import {
   type RegisterPatientForm,
 } from "@modules/patient/patient.validation";
 import { DuplicateWarning } from "@modules/patient/components/DuplicateWarning";
+import { replaceScreen } from "@modules/patient/openScreen";
 import type {
   DuplicateMatch,
   RegisterPatientPayload,
@@ -71,7 +72,7 @@ export default function RegisterPatientScreen() {
   /** Set by the server refusing a save, which outranks anything checked here. */
   const [serverRefused, setServerRefused] = useState(false);
 
-  const { control, handleSubmit, setValue, formState } =
+  const { control, handleSubmit, setValue, formState, reset } =
     useForm<RegisterPatientForm>({
       resolver: zodResolver(registerPatientSchema),
       mode: "onTouched",
@@ -186,6 +187,25 @@ export default function RegisterPatientScreen() {
     return payload;
   };
 
+  /**
+   * Inside a stack the form is replaced by the record. Opened from the sidebar it is a bare
+   * drawer route with no replace, and it stays mounted, so it is cleared for the next patient.
+   */
+  const openPatient = (id: string, justRegistered = false) => {
+    const inStack = navigation.getState()?.type === "stack";
+    replaceScreen(navigation, "Patients", "PatientDetail", {
+      id,
+      ...(justRegistered ? { justRegistered: true } : {}),
+    });
+    if (!inStack) {
+      reset();
+      setGender(null);
+      setBloodGroup("unknown");
+      setDupResult(null);
+      setServerRefused(false);
+    }
+  };
+
   const save = async (
     v: RegisterPatientForm,
     confirmedNotDuplicate = false,
@@ -195,10 +215,7 @@ export default function RegisterPatientScreen() {
       const patient = await register.mutateAsync(
         toPayload(v, confirmedNotDuplicate),
       );
-      navigation.replace("PatientDetail", {
-        id: patient.id,
-        justRegistered: true,
-      });
+      openPatient(patient.id, true);
     } catch (err) {
       if (apiErrorCode(err) === "POSSIBLE_DUPLICATE") {
         // The server refused. It knows something the client's check did not —
@@ -243,9 +260,7 @@ export default function RegisterPatientScreen() {
         <DuplicateWarning
           matches={matches}
           mustConfirm={mustConfirm}
-          onOpenExisting={(m) =>
-            navigation.replace("PatientDetail", { id: m.id })
-          }
+          onOpenExisting={(m) => openPatient(m.id)}
         />
 
         <Card>

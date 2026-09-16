@@ -22,6 +22,8 @@ import {
   useAdminister,
 } from "@modules/inpatient/hooks/useInpatient";
 import type { DrugRoundSlot } from "@modules/inpatient/types";
+import { nameWithStrength } from "@shared/utils/medicineName";
+import { statusLabel } from "@shared/utils/statusLabels";
 
 /**
  * NU-04 drug round: unsigned past slots show as overdue; a second signature is refused
@@ -250,7 +252,7 @@ function SlotRow({
 
         <VStack gap={2} style={{ flex: 1, minWidth: 160 }}>
           <Text variant="label">
-            {slot.drugName} {slot.strength}
+            {nameWithStrength(slot.drugName, slot.strength)}
           </Text>
           <Text variant="caption" tone="secondary">
             {slot.dose} · {slot.route} · {slot.frequency}
@@ -268,7 +270,8 @@ function SlotRow({
             <HStack gap={4} align="center">
               <CircleX size={13} color={signal.caution.text} />
               <Text variant="caption" style={{ color: signal.caution.text }}>
-                {slot.administration?.status}: {slot.administration?.reason}
+                {statusLabel(slot.administration?.status)}:{" "}
+                {slot.administration?.reason}
               </Text>
             </HStack>
           ) : slot.overdue ? (

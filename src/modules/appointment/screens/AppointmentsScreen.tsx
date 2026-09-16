@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import {
   CalendarPlus,
   CalendarDays,
@@ -55,8 +55,17 @@ export default function AppointmentsScreen() {
   const hasPermission = useAuthStore((s) => s.hasPermission);
   const canManage = hasPermission(PERMISSIONS.APPOINTMENTS_MANAGE);
 
-  const [date, setDate] = useState(todayCalendarDate());
+  const route = useRoute<any>();
+  // A booking or a move lands back here on its day. Synced during render, not in an effect.
+  const routeDate = (route.params as { date?: string } | undefined)?.date;
+  const [date, setDate] = useState(routeDate ?? todayCalendarDate());
   const [status, setStatus] = useState("");
+
+  const [seenRouteDate, setSeenRouteDate] = useState(routeDate);
+  if (routeDate !== seenRouteDate) {
+    setSeenRouteDate(routeDate);
+    if (routeDate) setDate(routeDate);
+  }
   const [cancelTarget, setCancelTarget] = useState<Appointment | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -160,6 +169,8 @@ export default function AppointmentsScreen() {
               variant="secondary"
               size="xs"
               fullWidth={false}
+              accessibilityHint="Choose another date or time"
+              testID={`move-${a.appointmentNumber}`}
               onPress={() =>
                 navigation.navigate("RescheduleAppointment", { id: a.id })
               }
@@ -169,6 +180,7 @@ export default function AppointmentsScreen() {
               variant="secondary"
               size="xs"
               fullWidth={false}
+              testID={`cancel-${a.appointmentNumber}`}
               onPress={() => setCancelTarget(a)}
             />
           </HStack>

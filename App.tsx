@@ -81,7 +81,7 @@ type AppParamList = {
   OpdQueue: undefined;
   Emergency: NavigatorScreenParams<EmergencyParamList> | undefined;
   MyAppointments: undefined;
-  MyPatients: undefined;
+  MyPatients: NavigatorScreenParams<InpatientParamList> | undefined;
   Consultation: { patientId: string };
   MedicalRecord: { patientId: string };
   AdmittedPatients: NavigatorScreenParams<InpatientParamList> | undefined;
@@ -93,6 +93,7 @@ type AppParamList = {
   LabReports: NavigatorScreenParams<LaboratoryParamList> | undefined;
   PharmacyQueue: NavigatorScreenParams<PharmacyParamList> | undefined;
   MedicineStock: NavigatorScreenParams<StockParamList> | undefined;
+  Formulary: undefined;
   Inventory: NavigatorScreenParams<StockParamList> | undefined;
   Bills: NavigatorScreenParams<BillingParamList> | undefined;
   /** `report` opens a particular report — the dashboard's tiles pass it. */
@@ -132,7 +133,14 @@ const linking: LinkingOptions<RootParamList> = {
             },
           },
           MyAppointments: "doctor/appointments",
-          MyPatients: "doctor/patients",
+          MyPatients: {
+            path: "doctor",
+            screens: {
+              WardBoard: "patients",
+              Bedside: "patients/:admissionId",
+              Discharge: "patients/:admissionId/discharge",
+            },
+          },
           Consultation: "opd/consultation/:patientId",
           MedicalRecord: "patients/:patientId/record",
           AdmittedPatients: {
@@ -185,6 +193,7 @@ const linking: LinkingOptions<RootParamList> = {
               StockLedger: "movements",
             },
           },
+          Formulary: "pharmacy/formulary",
           Inventory: {
             path: "inventory",
             screens: {

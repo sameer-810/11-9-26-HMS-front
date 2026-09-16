@@ -347,7 +347,7 @@ export default function CreateUserScreen() {
               />
               <ToggleRow
                 label="ICU staff"
-                description="Needed, together with the ICU permission, to open the ICU workspace."
+                description="Gives access to the ICU workspace."
                 checked={icu}
                 onChange={setIcu}
                 testID="user-icuAuthorized"

@@ -142,6 +142,7 @@ export default function UserDetailScreen() {
 
 function ProfileSection({ user }: { user: AdminUser }) {
   const update = useUpdateUser(user.id);
+  const { refetch: refetchUser } = useUser(user.id);
   const [icu, setIcu] = useState(user.icuAuthorized);
   const [result, setResult] = useState<"saved" | "unchanged" | null>(null);
   const clinical = CLINICAL_ROLES.includes(user.role);
@@ -186,7 +187,13 @@ function ProfileSection({ user }: { user: AdminUser }) {
       setResult("unchanged");
       return;
     }
-    update.mutate(patch, { onSuccess: () => setResult("saved") });
+    update.mutate(patch, {
+      onSuccess: () => {
+        setResult("saved");
+        // The server adds or drops icu.access with the switch; reload so the permission list shows it.
+        if (patch.icuAuthorized !== undefined) void refetchUser();
+      },
+    });
   });
 
   return (
@@ -289,7 +296,7 @@ function ProfileSection({ user }: { user: AdminUser }) {
             />
             <ToggleRow
               label="ICU staff"
-              description="Needed, together with the ICU permission, to open the ICU workspace."
+              description="Gives access to the ICU workspace. Takes effect on their next action; the ICU menu item appears at their next sign-in."
               checked={icu}
               onChange={(v) => {
                 setIcu(v);

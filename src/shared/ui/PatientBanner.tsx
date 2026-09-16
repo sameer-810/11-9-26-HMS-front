@@ -10,6 +10,7 @@ import { TriangleAlert, Scale, ShieldAlert } from "lucide-react-native";
 import { palette, layout, radius, signal, numeric } from "../designSystem";
 import { Text } from "./Text";
 import { HStack, VStack } from "./Stack";
+import { statusLabel } from "../utils/statusLabels";
 
 /**
  * Patient identity band against wrong-patient errors: never scrolls or collapses.
@@ -96,7 +97,7 @@ export function PatientBanner({ patient, onPress, right }: Props) {
             </Text>
             <Dot />
             <Text variant="label-sm" tone="secondary">
-              {patient.gender}
+              {statusLabel(patient.gender)}
             </Text>
             {patient.bloodGroup && patient.bloodGroup !== "unknown" ? (
               <>
@@ -157,7 +158,7 @@ export function PatientBanner({ patient, onPress, right }: Props) {
           {patient.status ? (
             <View style={styles.flag}>
               <Text variant="label-sm" tone="secondary">
-                {patient.status}
+                {statusLabel(patient.status)}
               </Text>
             </View>
           ) : null}
@@ -286,7 +287,7 @@ function buildA11yLabel(p: PatientBannerData) {
     );
   if (p.isMlc) parts.push("Medico-legal case");
   if (p.ward) parts.push(`${p.ward}${p.bed ? ` bed ${p.bed}` : ""}`);
-  if (p.status) parts.push(p.status);
+  if (p.status) parts.push(statusLabel(p.status));
   return parts.join(". ");
 }
 

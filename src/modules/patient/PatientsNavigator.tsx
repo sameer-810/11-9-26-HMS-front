@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import PatientsScreen from "./screens/PatientsScreen";
 import PatientDetailScreen from "./screens/PatientDetailScreen";
 import RegisterPatientScreen from "./screens/RegisterPatientScreen";
+import EditPatientScreen from "./screens/EditPatientScreen";
 import BookAppointmentScreen from "@modules/appointment/screens/BookAppointmentScreen";
 import AppointmentBookedScreen from "@modules/appointment/screens/AppointmentBookedScreen";
 import MedicalRecordScreen from "@modules/consultation/screens/MedicalRecordScreen";
@@ -18,6 +19,7 @@ export default function PatientsNavigator() {
       <Stack.Screen name="PatientsList" component={PatientsScreen} />
       <Stack.Screen name="PatientDetail" component={PatientDetailScreen} />
       <Stack.Screen name="RegisterPatient" component={RegisterPatientScreen} />
+      <Stack.Screen name="EditPatient" component={EditPatientScreen} />
       <Stack.Screen name="BookAppointment" component={BookAppointmentScreen} />
       <Stack.Screen
         name="AppointmentBooked"

@@ -116,6 +116,40 @@ function buildPatch(f: Flat, original: Flat): HospitalPatch {
   return patch as HospitalPatch;
 }
 
+const PLAN_STATUS: Record<HospitalProfile["subscription"]["status"], string> = {
+  trial: "Trial",
+  active: "Active",
+  past_due: "Payment overdue",
+  cancelled: "Cancelled",
+};
+
+const titleCase = (code: string) =>
+  code
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+
+/** "Plan: Trial · ends 12 Oct 2026", "Plan: Standard · Payment overdue". */
+function describePlan(sub: HospitalProfile["subscription"]) {
+  const name = titleCase(sub.planCode || sub.status);
+  const status = PLAN_STATUS[sub.status] ?? titleCase(sub.status);
+  const endsAt =
+    sub.status === "trial" ? sub.trialEndsAt : sub.currentPeriodEndsAt;
+  const end = endsAt ? new Date(endsAt) : null;
+  const parts = [`Plan: ${name}`];
+  if (status.toLowerCase() !== name.toLowerCase()) parts.push(status);
+  if (end && !Number.isNaN(end.getTime()) && sub.status !== "cancelled") {
+    const when = end.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+    parts.push(`${sub.status === "trial" ? "ends" : "period ends"} ${when}`);
+  }
+  return parts.join(" · ");
+}
+
 export function HospitalProfileForm() {
   const { data, isLoading, isError, error, refetch } = useHospitalProfile();
   if (isLoading) return <Skeleton height={320} />;
@@ -260,9 +294,8 @@ function Form({ hospital }: { hospital: HospitalProfile }) {
             })}
             {field("logoUrl", "Logo URL", { autoCapitalize: "none" })}
           </HStack>
-          <Text variant="caption" tone="tertiary">
-            Plan: {hospital.subscription.planCode} (
-            {hospital.subscription.status})
+          <Text variant="caption" tone="tertiary" testID="hospital-plan">
+            {describePlan(hospital.subscription)}
           </Text>
         </VStack>
       </Card>

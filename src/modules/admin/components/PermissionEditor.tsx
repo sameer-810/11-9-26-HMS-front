@@ -3,6 +3,7 @@ import { View } from "react-native";
 
 import {
   ADMIN_ONLY_PERMISSIONS,
+  PERMISSIONS,
   PERMISSION_GROUPS,
   PERMISSION_META,
 } from "@shared/permissions";
@@ -26,8 +27,9 @@ import { ToggleRow } from "@modules/admin/components/ToggleRow";
 import type { AdminUser } from "@modules/admin/types";
 
 /**
- * Per-person permissions (Flow 4 step 4). Saves send the whole set, which the server refuses
- * if it holds admin-only or ungranted permissions; the editor warns first but still sends.
+ * Per-person permissions (Flow 4 step 4). Saves send the whole set; the server refuses only
+ * additions — admin-only permissions, or ones the admin does not hold — so anything the person
+ * already has can be kept or removed. The editor warns first but still sends.
  */
 export function PermissionEditor({ user }: { user: AdminUser }) {
   const catalogue = usePermissionCatalogue();
@@ -83,8 +85,12 @@ export function PermissionEditor({ user }: { user: AdminUser }) {
   const held = new Set(draft);
   const changed =
     draft.length !== original.size || draft.some((p) => !original.has(p));
+  // icu.access is re-derived from the ICU staff switch on save, so it is never a grant.
   const refused = draft.filter(
-    (p) => ADMIN_ONLY_PERMISSIONS.includes(p) || grantable.get(p) !== true,
+    (p) =>
+      p !== PERMISSIONS.ICU_ACCESS &&
+      !original.has(p) &&
+      (ADMIN_ONLY_PERMISSIONS.includes(p) || grantable.get(p) !== true),
   );
 
   const toggle = (permission: string, on: boolean) => {
@@ -116,7 +122,7 @@ export function PermissionEditor({ user }: { user: AdminUser }) {
               title="You cannot save this set as it stands"
               message={`${refused.slice(0, 4).map(label).join(", ")}${
                 refused.length > 4 ? ` and ${refused.length - 4} more` : ""
-              } — you can only save permissions you hold yourself, and never the administrator-only ones. Untick them, or change the role instead, which resets access to that role's defaults.`}
+              } — you can only add permissions you hold yourself, and never the administrator-only ones. Untick them, or change the role instead, which resets access to that role's defaults.`}
             />
           </View>
         ) : null}
@@ -149,16 +155,19 @@ export function PermissionEditor({ user }: { user: AdminUser }) {
               {perms.map((p) => {
                 const meta = PERMISSION_META[p];
                 const adminOnly = ADMIN_ONLY_PERMISSIONS.includes(p);
+                const icu = p === PERMISSIONS.ICU_ACCESS;
                 const canGrant = grantable.get(p) === true;
-                const note = adminOnly
-                  ? "Comes with the administrator role. Cannot be granted to one person."
-                  : !canGrant
-                    ? original.has(p)
-                      ? "You do not hold this yourself. Saving with it ticked is refused."
-                      : "You do not hold this yourself, so you cannot grant it."
-                    : meta?.clinical
-                      ? "Clinical access. Every use is logged against this person."
-                      : undefined;
+                const note = icu
+                  ? "Follows the ICU staff switch in the profile above."
+                  : adminOnly
+                    ? "Comes with the administrator role. Cannot be granted to one person."
+                    : !canGrant
+                      ? original.has(p)
+                        ? "You do not hold this yourself. It can stay or be removed, but once saved without it you cannot give it back."
+                        : "You do not hold this yourself, so you cannot grant it."
+                      : meta?.clinical
+                        ? "Clinical access. Every use is logged against this person."
+                        : undefined;
                 return (
                   <View key={p} style={{ flexBasis: 320, flexGrow: 1 }}>
                     <ToggleRow
@@ -166,15 +175,19 @@ export function PermissionEditor({ user }: { user: AdminUser }) {
                       description={meta?.description}
                       note={note}
                       noteTone={
-                        adminOnly || !canGrant
-                          ? "warning"
-                          : meta?.clinical
-                            ? "danger"
-                            : "tertiary"
+                        icu
+                          ? "tertiary"
+                          : adminOnly || !canGrant
+                            ? "warning"
+                            : meta?.clinical
+                              ? "danger"
+                              : "tertiary"
                       }
                       checked={held.has(p)}
-                      // Removing something you do not hold is allowed; adding it is not.
-                      disabled={adminOnly || (!canGrant && !original.has(p))}
+                      // Keeping or removing what the person holds is allowed; adding what you lack is not.
+                      disabled={
+                        icu || adminOnly || (!canGrant && !original.has(p))
+                      }
                       onChange={(on) => toggle(p, on)}
                       testID={`user-permission-${p}`}
                     />

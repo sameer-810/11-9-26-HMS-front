@@ -399,6 +399,12 @@ const HMS_ADDITIONS: { item: string; roles: string[]; reason: string }[] = [
     roles: [NUR],
     reason: "PHASES 4 SBAR shift handover (NU-05)",
   },
+  {
+    item: "Formulary",
+    roles: [PHA, ADM],
+    reason:
+      "PHASES 12 formulary upkeep; mirrors FORMULARY_WRITE on /prescriptions/medicines (pharmacy.stock.view or hospital.config)",
+  },
 ];
 
 // ---------------------------------------------------------------------------

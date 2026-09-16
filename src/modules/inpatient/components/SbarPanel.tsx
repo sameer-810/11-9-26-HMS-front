@@ -18,6 +18,8 @@ import {
   useReceiveHandover,
 } from "@modules/inpatient/hooks/useInpatient";
 import type { Shift, Handover } from "@modules/inpatient/types";
+import { apiErrorMessage } from "@api/apiClient";
+import { statusLabel } from "@shared/utils/statusLabels";
 
 /**
  * NU-05: SBAR shift handover form and history.
@@ -43,12 +45,15 @@ interface Props {
   /** Prefilled when the ward knows the current shift. */
   defaultFrom?: Shift;
   defaultTo?: Shift;
+  /** `handover.manage`: without it the API refuses giving or taking a handover, so no buttons. */
+  canManage?: boolean;
 }
 
 export function SbarPanel({
   admissionId,
   defaultFrom = "morning",
   defaultTo = "evening",
+  canManage = true,
 }: Props) {
   const { data: handovers } = useHandovers(admissionId);
   const submit = useSubmitHandover();
@@ -70,6 +75,14 @@ export function SbarPanel({
     .map(([k]) => k);
 
   const send = async () => {
+    try {
+      await submitHandover();
+    } catch {
+      // Shown from `submit.error` beside the button.
+    }
+  };
+
+  const submitHandover = async () => {
     await submit.mutateAsync({
       admissionId,
       fromShift,
@@ -94,6 +107,20 @@ export function SbarPanel({
 
   return (
     <VStack gap={12} testID="sbar-panel">
+      {receive.isError ? (
+        <View testID="handover-receive-error">
+          <Banner
+            tone="danger"
+            title="Handover not marked as taken"
+            message={apiErrorMessage(
+              receive.error,
+              "Could not record that you took this handover. Try again.",
+            )}
+            onDismiss={() => receive.reset()}
+          />
+        </View>
+      ) : null}
+
       {outstanding.map((h) => (
         <View
           key={h.id}
@@ -108,17 +135,20 @@ export function SbarPanel({
                 size="sm"
               />
               <Text variant="caption" tone="secondary">
-                {h.fromShift} → {h.toShift}, given by {h.givenBy}
+                {statusLabel(h.fromShift)} → {statusLabel(h.toShift)}, given by{" "}
+                {h.givenBy}
               </Text>
             </HStack>
             <Text variant="body-sm">{h.recommendation}</Text>
-            <Button
-              label="I have taken this handover"
-              size="sm"
-              onPress={() => receive.mutate(h.id)}
-              disabled={receive.isPending}
-              testID={`receive-handover-${h.id}`}
-            />
+            {canManage ? (
+              <Button
+                label="I have taken this handover"
+                size="sm"
+                onPress={() => receive.mutate(h.id)}
+                disabled={receive.isPending}
+                testID={`receive-handover-${h.id}`}
+              />
+            ) : null}
           </VStack>
         </View>
       ))}
@@ -205,6 +235,19 @@ export function SbarPanel({
               />
             ) : null}
 
+            {submit.isError ? (
+              <View testID="sbar-error">
+                <Banner
+                  tone="danger"
+                  title="Handover not sent"
+                  message={apiErrorMessage(
+                    submit.error,
+                    "Could not send the handover. Nothing was lost; try again.",
+                  )}
+                />
+              </View>
+            ) : null}
+
             <HStack gap={8}>
               <Button
                 label={submit.isPending ? "Sending…" : "Give handover"}
@@ -220,14 +263,14 @@ export function SbarPanel({
             </HStack>
           </VStack>
         </Card>
-      ) : (
+      ) : canManage ? (
         <Button
           label="Give shift handover"
           variant="secondary"
           onPress={() => setOpen(true)}
           testID="sbar-open"
         />
-      )}
+      ) : null}
 
       {(handovers ?? []).length > 0 ? (
         <Card>
@@ -251,7 +294,7 @@ function HandoverEntry({ handover: h }: { handover: Handover }) {
       <VStack gap={6}>
         <HStack gap={8} align="center" wrap>
           <Text variant="label">
-            {h.fromShift} → {h.toShift}
+            {statusLabel(h.fromShift)} → {statusLabel(h.toShift)}
           </Text>
           {h.bandAtHandover ? (
             <SignalBadge

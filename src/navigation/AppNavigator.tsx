@@ -21,6 +21,7 @@ import MedicalRecordScreen from "@modules/consultation/screens/MedicalRecordScre
 import {
   AdmittedPatientsNavigator,
   IcuNavigator,
+  MyPatientsNavigator,
   MyWardNavigator,
 } from "@modules/inpatient/InpatientNavigator";
 import {
@@ -32,6 +33,7 @@ import {
   StoreInventoryNavigator,
   PharmacyStockNavigator,
 } from "@modules/inventory/InventoryNavigator";
+import FormularyScreen from "@modules/formulary/screens/FormularyScreen";
 import BillingNavigator from "@modules/billing/BillingNavigator";
 import EmergencyNavigator from "@modules/emergency/EmergencyNavigator";
 import ReportsScreen from "@modules/reports/screens/ReportsScreen";
@@ -61,7 +63,7 @@ const SCREENS: Record<string, React.ComponentType<Record<string, unknown>>> = {
   Appointments: AppointmentsNavigator,
   OpdQueue: OpdQueueScreen,
   MyAppointments: ClinicalNavigator,
-  MyPatients: ClinicalNavigator,
+  MyPatients: MyPatientsNavigator,
   Consultation: ClinicalNavigator,
   MedicalRecord: MedicalRecordScreen,
 
@@ -78,6 +80,7 @@ const SCREENS: Record<string, React.ComponentType<Record<string, unknown>>> = {
   // ---- Supply (Phase 6) ----
   PharmacyQueue: PharmacyNavigator,
   MedicineStock: PharmacyStockNavigator,
+  Formulary: FormularyScreen,
   Inventory: StoreInventoryNavigator,
 
   // ---- Finance (Phase 7) ----

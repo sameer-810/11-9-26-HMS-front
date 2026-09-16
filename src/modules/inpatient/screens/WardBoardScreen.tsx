@@ -41,12 +41,13 @@ import type { PatientBanner } from "@modules/patient/types";
  * Ward board (IP-02, IP-04, NU-01): ward, ICU or "my patients" mode, sickest first
  * (server sorts by NEWS2), with the escalation strip on top.
  */
-export type BoardMode = "ward" | "icu" | "mine";
+export type BoardMode = "ward" | "icu" | "mine" | "doctor";
 
 export default function WardBoardScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const hasPermission = useAuthStore((s) => s.hasPermission);
+  const userId = useAuthStore((s) => s.user?.id);
 
   const mode: BoardMode = route.params?.mode ?? "ward";
 
@@ -60,8 +61,10 @@ export default function WardBoardScreen() {
   const wardQuery = useAdmissions(
     mode === "icu"
       ? { status: "admitted", acuity: "critical" }
-      : { status: "admitted", limit: 100 },
-    mode !== "mine",
+      : mode === "doctor"
+        ? { status: "admitted", doctorId: userId, limit: 100 }
+        : { status: "admitted", limit: 100 },
+    mode !== "mine" && (mode !== "doctor" || Boolean(userId)),
   );
   const mineQuery = useMyPatients(mode === "mine");
   const query = mode === "mine" ? mineQuery : wardQuery;
@@ -69,22 +72,33 @@ export default function WardBoardScreen() {
   const escalations = useEscalations();
   const rows: AdmissionRow[] = query.data?.data ?? [];
 
+  // A doctor's own list only raises their own patients.
+  const escalationRows = useMemo(() => {
+    const all = escalations.data ?? [];
+    if (mode !== "doctor") return all;
+    const mine = new Set((query.data?.data ?? []).map((r) => r.id));
+    return all.filter((e) => e.admissionId && mine.has(e.admissionId));
+  }, [escalations.data, query.data, mode]);
+
   const title =
     mode === "icu"
       ? "Intensive care"
-      : mode === "mine"
+      : mode === "mine" || mode === "doctor"
         ? "My patients"
         : "Admitted patients";
 
   return (
     <Screen
       title={title}
+      testID={mode === "doctor" ? "doctor-my-patients" : undefined}
       subtitle={
         mode === "mine"
           ? "Allocated to you by name, and everyone on your wards"
-          : mode === "icu"
-            ? "Every ICU and HDU bed, sickest first"
-            : "Sickest first, not by bed number"
+          : mode === "doctor"
+            ? "Admitted under your care, sickest first"
+            : mode === "icu"
+              ? "Every ICU and HDU bed, sickest first"
+              : "Sickest first, not by bed number"
       }
       scroll
       refreshing={query.isRefetching}
@@ -102,9 +116,9 @@ export default function WardBoardScreen() {
     >
       <VStack gap={16}>
         {/* NU-03: escalations always sit above everything. */}
-        {(escalations.data?.length ?? 0) > 0 ? (
+        {escalationRows.length > 0 ? (
           <EscalationStrip
-            rows={escalations.data ?? []}
+            rows={escalationRows}
             canAcknowledge={canAcknowledge}
             onOpen={(admissionId) =>
               navigation.navigate("Bedside", { admissionId })
@@ -138,21 +152,25 @@ export default function WardBoardScreen() {
             icon={
               mode === "icu"
                 ? Activity
-                : mode === "mine"
+                : mode === "mine" || mode === "doctor"
                   ? HeartPulse
                   : BedDouble
             }
             title={
               mode === "mine"
                 ? "No patients allocated to you yet"
-                : mode === "icu"
-                  ? "No critical care patients"
-                  : "Nobody is admitted"
+                : mode === "doctor"
+                  ? "None of your patients are admitted"
+                  : mode === "icu"
+                    ? "No critical care patients"
+                    : "Nobody is admitted"
             }
             message={
               mode === "mine"
                 ? "The charge nurse allocates patients at the start of the shift."
-                : "Admitted patients appear here as soon as they are given a bed."
+                : mode === "doctor"
+                  ? "Patients admitted under your name appear here, with their bed and latest early warning score. Today's outpatients are under My appointments."
+                  : "Admitted patients appear here as soon as they are given a bed."
             }
           />
         ) : (
@@ -195,10 +213,11 @@ function AdmissionCard({
     >
       <HStack gap={12} align="center" wrap>
         <VStack gap={2} style={styles.bedCell}>
-          <Text variant="label" tabular>
+          {/* One line: "ICU-01-1" broken at a hyphen reads as two beds. */}
+          <Text variant="label" tabular numberOfLines={1}>
             {row.bed?.number ?? "—"}
           </Text>
-          <Text variant="caption" tone="tertiary">
+          <Text variant="caption" tone="tertiary" numberOfLines={2}>
             {row.ward?.name ?? ""}
           </Text>
         </VStack>
@@ -303,7 +322,9 @@ function EscalationStrip({
         <HStack gap={8} align="center">
           <TriangleAlert size={18} color={signal.critical.text} />
           <Text variant="h4" style={{ color: signal.critical.text }}>
-            {rows.length} patient{rows.length === 1 ? "" : "s"} need review
+            {rows.length === 1
+              ? "1 patient needs review"
+              : `${rows.length} patients need review`}
           </Text>
           {worst > 0 ? (
             <Text variant="caption" style={{ color: signal.critical.text }}>
@@ -417,6 +438,8 @@ const styles = StyleSheet.create({
     borderColor: palette.border.subtle,
   },
   bedCell: {
-    minWidth: 56,
+    minWidth: 88,
+    maxWidth: 140,
+    flexShrink: 0,
   },
 });

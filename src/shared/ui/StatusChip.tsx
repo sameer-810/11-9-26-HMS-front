@@ -91,11 +91,13 @@ interface Props {
 }
 
 export function StatusChip({ status, size = "md", style }: Props) {
-  const key = String(status || "")
-    .toLowerCase()
+  // Raw codes ("in_consultation") and spaced labels ("in consultation") both work.
+  const text = String(status || "")
+    .replace(/_/g, " ")
     .trim();
+  const key = text.toLowerCase();
   const c = STATE_COLORS[key] ?? NEUTRAL;
-  const label = status.charAt(0).toUpperCase() + status.slice(1);
+  const label = text.charAt(0).toUpperCase() + text.slice(1);
 
   return (
     <View
