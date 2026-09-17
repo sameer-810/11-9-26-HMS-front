@@ -16,6 +16,7 @@ import {
   ListRow,
   SearchInput,
 } from "@shared/ui";
+import { checkable } from "@shared/ui/a11y";
 import { apiErrorMessage } from "@api/apiClient";
 import { useDebouncedValue } from "@shared/hooks/useDebouncedValue";
 import { todayCalendarDate } from "@shared/format";
@@ -362,6 +363,9 @@ export function WalkInSheet({ visible, onClose, patient, onRegister }: Props) {
                             onPress={() => setDoctorId(doctor.id)}
                             accessibilityRole="radio"
                             accessibilityState={{ checked: selected }}
+                            {...checkable(selected, () =>
+                              setDoctorId(doctor.id),
+                            )}
                             accessibilityLabel={`${doctor.fullName}${hint ? `, ${hint}` : ""}`}
                             testID={`walkin-doctor-${doctor.id}`}
                             style={({ pressed }) => [

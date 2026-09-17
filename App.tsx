@@ -121,7 +121,11 @@ const linking: LinkingOptions<RootParamList> = {
           Dashboard: "dashboard",
           Patients: "patients",
           RegisterPatient: "patients/new",
-          Appointments: "appointments",
+          Appointments: {
+            path: "appointments",
+            // A date in the link (?date=YYYY-MM-DD) opens the list on that day.
+            screens: { AppointmentsList: "", BookAppointment: "book" },
+          },
           OpdQueue: "opd/queue",
           Emergency: {
             path: "emergency",

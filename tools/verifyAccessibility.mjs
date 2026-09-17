@@ -1048,10 +1048,16 @@ async function newPage(options = {}) {
   await p.route("**/socket.io/**", (route) => route.abort());
   await p.route("**/api/v1/**", async (route) => {
     const url = new URL(route.request().url());
-    const response = await route.fetch({
-      url: `${API}${url.pathname}${url.search}`,
-    });
-    await route.fulfill({ response });
+    try {
+      const response = await route.fetch({
+        url: `${API}${url.pathname}${url.search}`,
+      });
+      await route.fulfill({ response });
+    } catch (err) {
+      // A reset socket on one request must not take the whole audit down with it.
+      console.log(`  (proxy: ${url.pathname} — ${err.message.split("\n")[0]})`);
+      await route.abort().catch(() => {});
+    }
   });
   return p;
 }
@@ -1380,11 +1386,7 @@ const DETAIL = {
     {
       screen: "Move appointment",
       open: async (p) => {
-        await go(p, "/appointments");
-        for (let i = 0; i < 2; i += 1) {
-          await p.getByRole("button", { name: "Next", exact: true }).click();
-          await settle(p);
-        }
+        await go(p, `/appointments?date=${clinicDate}`);
         await p.locator('[data-testid^="move-"]').first().click();
         await settle(p);
       },
