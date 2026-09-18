@@ -1,5 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { billingApi, type PaymentBody } from "@modules/billing/api/billingApi";
+import {
+  billingApi,
+  type PaymentBody,
+  type RefundBody,
+} from "@modules/billing/api/billingApi";
 import type { Bill, BillStatus, BillType } from "@modules/billing/types";
 
 /**
@@ -88,6 +92,31 @@ export const useVoidPayment = () =>
     ({ paymentId, reason }: { paymentId: string; reason: string }) =>
       billingApi.voidPayment(paymentId, reason),
   );
+
+export const useRequestCreditNote = (id: string) =>
+  useBillMutation((body: { amount: number; reason: string }) =>
+    billingApi.requestCreditNote(id, body),
+  );
+export const useDecideCreditNote = (id: string) =>
+  useBillMutation(
+    ({
+      creditNoteId,
+      ...body
+    }: {
+      creditNoteId: string;
+      approve: boolean;
+      note?: string;
+    }) => billingApi.decideCreditNote(id, creditNoteId, body),
+  );
+export const useRecordRefund = (id: string) =>
+  useBillMutation((body: RefundBody) => billingApi.refund(id, body));
+
+export const useRefundReceipt = (refundId?: string) =>
+  useQuery({
+    queryKey: ["refund-receipt", refundId],
+    queryFn: () => billingApi.refundReceipt(refundId!),
+    enabled: Boolean(refundId),
+  });
 
 export const useReceipt = (paymentId?: string) =>
   useQuery({

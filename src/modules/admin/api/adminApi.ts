@@ -3,6 +3,7 @@ import type {
   AdminUser,
   Bed,
   BedBoard,
+  BedPatch,
   BedStatus,
   BillingSettings,
   BillingSettingsPatch,
@@ -23,6 +24,7 @@ import type {
   RoleChange,
   RoleSet,
   Room,
+  RoomPatch,
   RoomType,
   ScheduleException,
   ScheduleExceptionBody,
@@ -33,6 +35,7 @@ import type {
   UserListParams,
   Ward,
   WardBody,
+  WardPatch,
 } from "@modules/admin/types";
 
 /** the ward routes cap `limit` at 200 (validationPrimitives.limitSchema). */
@@ -220,10 +223,7 @@ export const adminApi = {
       ).data.data,
     create: async (body: WardBody) =>
       (await apiClient.post<{ data: Ward }>("/beds/wards", body)).data.data,
-    update: async (
-      id: string,
-      body: Partial<WardBody> & { isActive?: boolean },
-    ) =>
+    update: async (id: string, body: WardPatch) =>
       (await apiClient.patch<{ data: Ward }>(`/beds/wards/${id}`, body)).data
         .data,
   },
@@ -241,6 +241,10 @@ export const adminApi = {
       type?: RoomType;
       dailyCharge?: number;
     }) => (await apiClient.post<{ data: Room }>("/beds/rooms", body)).data.data,
+    /** deactivating a room with a patient in one of its beds is refused (BED_OCCUPIED). */
+    update: async (id: string, body: RoomPatch) =>
+      (await apiClient.patch<{ data: Room }>(`/beds/rooms/${id}`, body)).data
+        .data,
   },
 
   beds: {
@@ -261,6 +265,9 @@ export const adminApi = {
     bulk: async (body: BulkBedsBody) =>
       (await apiClient.post<{ data: BulkBedsResult }>("/beds/bulk", body)).data
         .data,
+    /** deactivating an occupied bed is refused (BED_OCCUPIED). */
+    update: async (id: string, body: BedPatch) =>
+      (await apiClient.patch<{ data: Bed }>(`/beds/${id}`, body)).data.data,
     /** `occupied` is not accepted; admission and discharge own that transition. */
     setStatus: async (
       id: string,

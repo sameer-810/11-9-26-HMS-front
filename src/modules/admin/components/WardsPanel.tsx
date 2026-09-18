@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, Pressable, StyleSheet } from "react-native";
 import {
   BedDouble,
   ChevronDown,
   ChevronRight,
+  Pencil,
   Plus,
 } from "lucide-react-native";
 
@@ -38,6 +39,15 @@ import {
 } from "@modules/admin/hooks/useAdmin";
 import { ToggleRow } from "@modules/admin/components/ToggleRow";
 import {
+  BedEditForm,
+  GENDER_OPTIONS,
+  parseCharge,
+  ROOM_TYPE_OPTIONS,
+  RoomEditForm,
+  WARD_TYPE_OPTIONS,
+  WardEditForm,
+} from "@modules/admin/components/EstateEditForms";
+import {
   ROOM_TYPE_LABELS,
   WARD_GENDER_LABELS,
   WARD_TYPE_LABELS,
@@ -51,36 +61,6 @@ import {
 } from "@modules/admin/types";
 
 const CODE = /^[A-Z0-9-]{2,10}$/;
-
-const WARD_TYPE_OPTIONS = (Object.keys(WARD_TYPE_LABELS) as WardType[]).map(
-  (t) => ({
-    value: t,
-    label: WARD_TYPE_LABELS[t],
-    sublabel:
-      t === "icu" || t === "hdu" ? "Appears in the ICU workspace" : undefined,
-  }),
-);
-const GENDER_OPTIONS = (Object.keys(WARD_GENDER_LABELS) as WardGender[]).map(
-  (g) => ({
-    value: g,
-    label: WARD_GENDER_LABELS[g],
-  }),
-);
-const ROOM_TYPE_OPTIONS = (Object.keys(ROOM_TYPE_LABELS) as RoomType[]).map(
-  (t) => ({
-    value: t,
-    label: ROOM_TYPE_LABELS[t],
-  }),
-);
-
-/** "" means "not given", which the API reads as the model default. */
-function parseCharge(v: string): { value?: number; error?: string } {
-  if (v.trim() === "") return {};
-  const n = Number(v);
-  if (!Number.isFinite(n) || n < 0 || n > 1_000_000)
-    return { error: "Between 0 and 10,00,000" };
-  return { value: n };
-}
 
 const natural = (a: string, b: string) =>
   a.localeCompare(b, undefined, { numeric: true });
@@ -100,6 +80,7 @@ export function WardsPanel() {
   const setActive = useSetWardActive();
   const [creating, setCreating] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<Ward | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
@@ -190,6 +171,20 @@ export function WardsPanel() {
         <VStack gap={8}>
           {wards.map((w) => {
             const isOpen = open === w.id;
+            if (editing === w.id)
+              return (
+                <WardEditForm
+                  key={w.id}
+                  ward={w}
+                  onCancel={() => setEditing(null)}
+                  onSaved={(saved) => {
+                    setEditing(null);
+                    setNotice(
+                      `${saved.name} saved. New admissions and bills drawn up from now on use these details.`,
+                    );
+                  }}
+                />
+              );
             return (
               <Card key={w.id} compact testID={`ward-row-${w.code}`}>
                 <VStack gap={10}>
@@ -210,10 +205,30 @@ export function WardsPanel() {
                         {WARD_GENDER_LABELS[w.gender]}
                         {w.floor ? ` · floor ${w.floor}` : ""}
                         {w.department ? ` · ${w.department.name}` : ""} ·{" "}
-                        {formatRupees(w.dailyCharge)} a day
+                        <Text
+                          variant="body-sm"
+                          tone="secondary"
+                          testID={`ward-charge-${w.code}`}
+                        >
+                          {formatRupees(w.dailyCharge)} a day
+                        </Text>
                       </Text>
                     </VStack>
-                    <HStack gap={6}>
+                    <HStack gap={6} wrap>
+                      <Button
+                        label="Edit"
+                        size="xs"
+                        variant="secondary"
+                        fullWidth={false}
+                        accessibilityHint={`Edit ${w.name}`}
+                        icon={<Pencil size={13} color={palette.text.primary} />}
+                        onPress={() => {
+                          setNotice(null);
+                          setFailure(null);
+                          setEditing(w.id);
+                        }}
+                        testID={`ward-edit-open-${w.code}`}
+                      />
                       <Button
                         label={isOpen ? "Close" : "Rooms and beds"}
                         size="xs"
@@ -496,6 +511,11 @@ function RoomBlock({
   adding: boolean;
   onToggleAdding: () => void;
 }) {
+  const [editingRoom, setEditingRoom] = useState(false);
+  const [editingBed, setEditingBed] = useState<string | null>(null);
+  const [saved, setSaved] = useState<string | null>(null);
+  const bed = beds.find((b) => b.id === editingBed);
+
   return (
     <VStack
       gap={8}
@@ -504,8 +524,17 @@ function RoomBlock({
     >
       <HStack gap={8} align="center" wrap>
         <VStack gap={1} style={{ flex: 1, minWidth: 180 }}>
-          <Text variant="label">Room {room.number}</Text>
-          <Text variant="caption" tone="tertiary">
+          <HStack gap={8} align="center" wrap>
+            <Text variant="label">Room {room.number}</Text>
+            {!room.isActive ? (
+              <StatusChip status="inactive" size="sm" />
+            ) : null}
+          </HStack>
+          <Text
+            variant="caption"
+            tone="tertiary"
+            testID={`room-summary-${ward.code}-${room.number}`}
+          >
             {ROOM_TYPE_LABELS[room.type]} · {beds.length} bed
             {beds.length === 1 ? "" : "s"}
             {room.dailyCharge
@@ -513,48 +542,124 @@ function RoomBlock({
               : ""}
           </Text>
         </VStack>
-        <Button
-          label={adding ? "Close" : "Add beds"}
-          size="xs"
-          variant="secondary"
-          fullWidth={false}
-          onPress={onToggleAdding}
-          testID={`room-add-beds-${ward.code}-${room.number}`}
-        />
-      </HStack>
-      {beds.length > 0 ? (
         <HStack gap={6} wrap>
-          {beds.map((b) => {
-            const s = bedState[b.status];
-            const kit = [
-              b.features.oxygen && "O₂",
-              b.features.ventilator && "vent",
-              b.features.monitor && "mon",
-            ]
-              .filter(Boolean)
-              .join(" ");
-            return (
-              <View
-                key={b.id}
-                accessibilityLabel={`Bed ${b.number}, ${s.label}`}
-                style={[
-                  styles.bedChip,
-                  { backgroundColor: s.bg, borderColor: s.border },
-                ]}
-                testID={`config-bed-${ward.code}-${b.number}`}
-              >
-                <Text variant="label-sm" style={{ color: s.color }} tabular>
-                  {b.number}
-                </Text>
-                {kit ? (
-                  <Text variant="caption" tone="tertiary">
-                    {kit}
-                  </Text>
-                ) : null}
-              </View>
-            );
-          })}
+          <Button
+            label={editingRoom ? "Close" : "Edit room"}
+            size="xs"
+            variant="ghost"
+            fullWidth={false}
+            accessibilityHint={`Change room ${room.number}'s type, charge or whether it is in use`}
+            onPress={() => {
+              setSaved(null);
+              setEditingRoom(!editingRoom);
+            }}
+            testID={`room-edit-open-${ward.code}-${room.number}`}
+          />
+          <Button
+            label={adding ? "Close" : "Add beds"}
+            size="xs"
+            variant="secondary"
+            fullWidth={false}
+            onPress={onToggleAdding}
+            testID={`room-add-beds-${ward.code}-${room.number}`}
+          />
         </HStack>
+      </HStack>
+      {saved ? (
+        <View testID={`room-saved-${ward.code}-${room.number}`}>
+          <Banner
+            tone="success"
+            message={saved}
+            onDismiss={() => setSaved(null)}
+          />
+        </View>
+      ) : null}
+      {editingRoom ? (
+        <RoomEditForm
+          room={room}
+          onCancel={() => setEditingRoom(false)}
+          onSaved={(r) => {
+            setEditingRoom(false);
+            setSaved(
+              `Room ${r.number} saved. Bills drawn up from now on use its charge.`,
+            );
+          }}
+        />
+      ) : null}
+      {beds.length > 0 ? (
+        <>
+          <HStack gap={6} wrap>
+            {beds.map((b) => {
+              const s = bedState[b.status];
+              const kit = [
+                b.features.oxygen && "O₂",
+                b.features.ventilator && "vent",
+                b.features.monitor && "mon",
+              ]
+                .filter(Boolean)
+                .join(" ");
+              const selected = editingBed === b.id;
+              return (
+                <Pressable
+                  key={b.id}
+                  onPress={() => {
+                    setSaved(null);
+                    setEditingBed(selected ? null : b.id);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Bed ${b.number}, ${s.label}${b.isActive ? "" : ", out of use"}`}
+                  accessibilityHint="Edit this bed's charge, equipment or whether it is in use"
+                  accessibilityState={{ selected }}
+                  style={({ pressed }) => [
+                    styles.bedChip,
+                    { backgroundColor: s.bg, borderColor: s.border },
+                    selected ? styles.bedChipSelected : null,
+                    !b.isActive ? styles.bedChipInactive : null,
+                    pressed ? { opacity: 0.75 } : null,
+                  ]}
+                  testID={`config-bed-${ward.code}-${b.number}`}
+                >
+                  <Text variant="label-sm" style={{ color: s.color }} tabular>
+                    {b.number}
+                  </Text>
+                  {kit ? (
+                    <Text variant="caption" tone="tertiary">
+                      {kit}
+                    </Text>
+                  ) : null}
+                  {b.dailyCharge > 0 ? (
+                    <Text variant="caption" tone="tertiary" tabular>
+                      {formatRupees(b.dailyCharge)}
+                    </Text>
+                  ) : null}
+                  {!b.isActive ? (
+                    <Text variant="caption" tone="tertiary">
+                      out of use
+                    </Text>
+                  ) : null}
+                </Pressable>
+              );
+            })}
+          </HStack>
+          {bed ? (
+            <BedEditForm
+              key={bed.id}
+              bed={bed}
+              onCancel={() => setEditingBed(null)}
+              onSaved={(b) => {
+                setEditingBed(null);
+                setSaved(
+                  `Bed ${b.number} saved. Bills drawn up from now on use its charge.`,
+                );
+              }}
+            />
+          ) : (
+            <Text variant="caption" tone="tertiary">
+              Choose a bed to change its charge, equipment or whether it is in
+              use.
+            </Text>
+          )}
+        </>
       ) : null}
       {adding ? <BulkBedsForm room={room} /> : null}
     </VStack>
@@ -822,4 +927,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: "center",
   },
+  bedChipSelected: { borderWidth: 2, borderColor: palette.border.focus },
+  bedChipInactive: { opacity: 0.6, borderStyle: "dashed" },
 });

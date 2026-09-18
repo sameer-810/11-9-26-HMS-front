@@ -5,6 +5,7 @@ import WardBoardScreen from "./screens/WardBoardScreen";
 import BedsideScreen from "./screens/BedsideScreen";
 import AdmitPatientScreen from "./screens/AdmitPatientScreen";
 import DischargeScreen from "./screens/DischargeScreen";
+import ShiftHandoverScreen from "./screens/ShiftHandoverScreen";
 import MedicalRecordScreen from "@modules/consultation/screens/MedicalRecordScreen";
 import PatientDetailScreen from "@modules/patient/screens/PatientDetailScreen";
 import type { BoardMode } from "./screens/WardBoardScreen";
@@ -39,5 +40,17 @@ export const IcuNavigator = makeInpatientNavigator("icu");
 export const MyWardNavigator = makeInpatientNavigator("mine");
 /** A doctor's "My patients": admitted under their name, opening the same bedside chart. */
 export const MyPatientsNavigator = makeInpatientNavigator("doctor");
+
+/** Shift handover: the nurse's patients by handover status, each opening its chart's Notes tab. */
+export function HandoverNavigator() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="HandoverList" component={ShiftHandoverScreen} />
+      <Stack.Screen name="Bedside" component={BedsideScreen} />
+      <Stack.Screen name="MedicalRecord" component={MedicalRecordScreen} />
+      <Stack.Screen name="PatientDetail" component={PatientDetailScreen} />
+    </Stack.Navigator>
+  );
+}
 
 export default AdmittedPatientsNavigator;

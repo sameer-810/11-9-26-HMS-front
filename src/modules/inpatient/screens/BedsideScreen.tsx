@@ -32,6 +32,10 @@ import { News2Score } from "@modules/inpatient/components/News2Score";
 import { ObservationForm } from "@modules/inpatient/components/ObservationForm";
 import { DrugRoundPanel } from "@modules/inpatient/components/DrugRoundPanel";
 import { SbarPanel } from "@modules/inpatient/components/SbarPanel";
+import { FluidBalanceCard } from "@modules/inpatient/components/FluidBalanceCard";
+import { CareTeamCard } from "@modules/inpatient/components/CareTeamCard";
+import { BedHistoryCard } from "@modules/inpatient/components/BedHistoryCard";
+import { nextShift, shiftAt } from "@modules/inpatient/shifts";
 import type { PatientBanner } from "@modules/patient/types";
 import type { News2Result, Observation } from "@modules/inpatient/types";
 import { calculateNews2, type News2Input } from "@shared/clinical/news2";
@@ -51,6 +55,8 @@ import type {
  */
 type Tab = "chart" | "observations" | "drugs" | "notes";
 
+const TAB_KEYS: Tab[] = ["chart", "observations", "drugs", "notes"];
+
 const TABS: { key: Tab; label: string }[] = [
   { key: "chart", label: "Chart" },
   { key: "observations", label: "Record obs" },
@@ -68,7 +74,17 @@ export default function BedsideScreen() {
   const canWriteNotes = hasPermission(PERMISSIONS.NURSING_NOTES_MANAGE);
   const canManageAdmission = hasPermission(PERMISSIONS.ADMISSION_MANAGE);
 
-  const [tab, setTab] = useState<Tab>("chart");
+  // A link can open a tab directly, e.g. the shift handover list opens "notes".
+  const requestedTab: Tab | undefined = TAB_KEYS.includes(route.params?.tab)
+    ? route.params.tab
+    : undefined;
+  const [tab, setTab] = useState<Tab>(requestedTab ?? "chart");
+  // A new link to the chart already on screen switches the tab (set during render, not in an effect).
+  const [seenTab, setSeenTab] = useState(requestedTab);
+  if (requestedTab !== seenTab) {
+    setSeenTab(requestedTab);
+    if (requestedTab) setTab(requestedTab);
+  }
   const [transferOpen, setTransferOpen] = useState(false);
   // Bumped by the header button so the form scrolls into view even when already open.
   const [transferFocus, setTransferFocus] = useState(0);
@@ -152,6 +168,8 @@ export default function BedsideScreen() {
     );
   }
 
+  const currentShift = shiftAt(new Date());
+
   const visibleTabs = TABS.filter((t) => {
     if (t.key === "observations") return canRecordVitals;
     if (t.key === "drugs") return canRecordVitals || canWriteNotes;
@@ -162,7 +180,7 @@ export default function BedsideScreen() {
   return (
     <Screen
       title={patient?.fullName ?? admission.admissionNumber}
-      subtitle={`${admission.ward?.name ?? ""}${admission.bed?.number ? ` · bed ${admission.bed.number}` : ""} · day ${admission.lengthOfStayDays ?? 1}`}
+      subtitle={`${admission.ward?.name ?? ""}${admission.bed?.number ? ` · bed ${admission.bed.number}` : ""} · day ${admission.lengthOfStayDays ?? 1}${admission.news2Scale === 2 ? " · NEWS2 Scale 2" : ""}`}
       patient={
         patient
           ? {
@@ -252,6 +270,12 @@ export default function BedsideScreen() {
           <ChartTab
             data={data!}
             admissionId={admissionId}
+            patientGender={patient?.gender}
+            canAssignNurse={
+              canManageAdmission ||
+              hasPermission(PERMISSIONS.NURSING_PATIENTS_VIEW)
+            }
+            canPrescribeScale={hasPermission(PERMISSIONS.PRESCRIPTION_CREATE)}
             canTransfer={canManageAdmission}
             transferOpen={transferOpen}
             onTransferOpenChange={setTransferOpen}
@@ -284,6 +308,8 @@ export default function BedsideScreen() {
             <SbarPanel
               admissionId={admissionId}
               canManage={hasPermission(PERMISSIONS.HANDOVER_MANAGE)}
+              defaultFrom={currentShift}
+              defaultTo={nextShift(currentShift)}
             />
           </VStack>
         ) : null}
@@ -295,6 +321,9 @@ export default function BedsideScreen() {
 function ChartTab({
   data,
   admissionId,
+  patientGender,
+  canAssignNurse,
+  canPrescribeScale,
   canTransfer,
   transferOpen,
   onTransferOpenChange,
@@ -302,6 +331,9 @@ function ChartTab({
 }: {
   data: NonNullable<ReturnType<typeof useBedside>["data"]>;
   admissionId: string;
+  patientGender?: string;
+  canAssignNurse: boolean;
+  canPrescribeScale: boolean;
   canTransfer: boolean;
   transferOpen: boolean;
   onTransferOpenChange: (open: boolean) => void;
@@ -315,9 +347,17 @@ function ChartTab({
       ),
     [myOps, admissionId],
   );
+  const pendingWithFluids = pending.filter((op) =>
+    FLUID_LABELS.some(([key]) => typeof op.body[key] === "number"),
+  ).length;
 
   return (
     <VStack gap={16}>
+      <FluidBalanceCard
+        balance={data.fluidBalance}
+        pendingWithFluids={pendingWithFluids}
+      />
+
       <Card>
         <VStack gap={10}>
           <Text variant="h4">Observation trend</Text>
@@ -346,9 +386,20 @@ function ChartTab({
         </VStack>
       </Card>
 
+      {data.admission ? (
+        <CareTeamCard
+          admission={data.admission}
+          canAssignNurse={canAssignNurse}
+          canPrescribeScale={canPrescribeScale}
+        />
+      ) : null}
+
+      <BedHistoryCard admissionId={admissionId} />
+
       {canTransfer ? (
         <TransferPanel
           admissionId={admissionId}
+          patientGender={patientGender}
           open={transferOpen}
           onOpenChange={onTransferOpenChange}
           focus={transferFocus}
@@ -398,6 +449,12 @@ function ObservationRow({ observation: o }: { observation: Observation }) {
             label="ACVPU"
             value={v.consciousness ? statusLabel(v.consciousness) : null}
           />
+          {/* Fluids only on sets that measured them, or every row gains three dashes. */}
+          {FLUID_LABELS.some(([key]) => v[key] !== null && v[key] !== undefined)
+            ? FLUID_LABELS.map(([key, label]) => (
+                <Vital key={key} label={label} value={v[key]} suffix=" mL" />
+              ))
+            : null}
         </HStack>
 
         <VStack gap={2} align="flex-end" style={{ minWidth: 80 }}>
@@ -437,6 +494,15 @@ const VITAL_LABELS: [key: string, label: string, suffix?: string][] = [
   ["consciousness", "ACVPU"],
 ];
 
+const FLUID_LABELS: [
+  key: "oralIntakeMl" | "ivIntakeMl" | "urineOutputMl",
+  label: string,
+][] = [
+  ["oralIntakeMl", "Oral in"],
+  ["ivIntakeMl", "IV in"],
+  ["urineOutputMl", "Urine out"],
+];
+
 /** A set on this device, not yet on the server — shown as exactly that. */
 function PendingObservationRow({ op }: { op: OutboxOp }) {
   const failed = op.status === "failed";
@@ -466,7 +532,14 @@ function PendingObservationRow({ op }: { op: OutboxOp }) {
           </Text>
         </VStack>
         <HStack gap={10} wrap style={{ flex: 1 }}>
-          {VITAL_LABELS.map(([key, label, suffix]) => {
+          {[
+            ...VITAL_LABELS,
+            ...(FLUID_LABELS.some(([key]) => typeof op.body[key] === "number")
+              ? FLUID_LABELS.map(
+                  ([key, label]): [string, string, string] => [key, label, " mL"],
+                )
+              : []),
+          ].map(([key, label, suffix]) => {
             const value = op.body[key];
             return (
               <Vital
@@ -518,18 +591,21 @@ function Vital({
 
 function TransferPanel({
   admissionId,
+  patientGender,
   open,
   onOpenChange: setOpen,
   focus,
 }: {
   admissionId: string;
+  patientGender?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   focus: number;
 }) {
   const [bedId, setBedId] = useState<string | null>(null);
   const [reason, setReason] = useState("");
-  const beds = useSelectableBeds();
+  // As on the admit form: a single-sex ward that does not take this patient is shown greyed, with why.
+  const beds = useSelectableBeds(patientGender ? { gender: patientGender } : {});
   const transfer = useTransfer(admissionId);
   const formRef = useRef<View>(null);
 
@@ -559,7 +635,7 @@ function TransferPanel({
       <Card testID="transfer-form">
         <VStack gap={12}>
           <Text variant="h4">Move to another bed</Text>
-          {/* Occupied beds are shown disabled rather than hidden. */}
+          {/* Occupied, reserved and wrong-sex beds are shown disabled, with the reason, rather than hidden. */}
           <Select
             label="New bed"
             value={bedId}

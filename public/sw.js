@@ -106,6 +106,24 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // The install manifest is not content-hashed: network-first, so a changed name or icon reaches installs.
+  if (url.pathname === "/manifest.json") {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (storable(response)) {
+            const copy = response.clone();
+            caches.open(VERSION).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() =>
+          caches.match(request).then((hit) => hit || Response.error()),
+        ),
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(request).then(
       (hit) =>

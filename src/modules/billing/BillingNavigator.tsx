@@ -6,6 +6,7 @@ import GenerateBillScreen from "./screens/GenerateBillScreen";
 import BillDetailScreen from "./screens/BillDetailScreen";
 import ReceiptScreen from "./screens/ReceiptScreen";
 import OutstandingScreen from "./screens/OutstandingScreen";
+import RefundSlipScreen from "./screens/RefundSlipScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -18,6 +19,7 @@ export default function BillingNavigator() {
       <Stack.Screen name="BillDetail" component={BillDetailScreen} />
       <Stack.Screen name="RecordPayment" component={BillDetailScreen} />
       <Stack.Screen name="Receipt" component={ReceiptScreen} />
+      <Stack.Screen name="RefundSlip" component={RefundSlipScreen} />
       <Stack.Screen name="Outstanding" component={OutstandingScreen} />
     </Stack.Navigator>
   );

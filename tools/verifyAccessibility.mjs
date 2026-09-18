@@ -1461,7 +1461,7 @@ const DETAIL = {
     },
     { screen: "Bill detail (paid)", path: `/billing/bills/${finalBill?.id}` },
     // Phase 12: the Hospital setup tabs that replaced API-only configuration.
-    ...["schedules", "services"].map((tab) => ({
+    ...["schedules", "services", "labtests"].map((tab) => ({
       screen: `Hospital setup (${tab})`,
       open: async (p) => {
         await go(p, "/admin/config");

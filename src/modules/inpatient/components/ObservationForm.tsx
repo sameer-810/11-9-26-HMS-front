@@ -103,6 +103,8 @@ export function ObservationForm({
       painScore: num(draft.painScore),
       bloodSugar: num(draft.bloodSugar),
       urineOutputMl: num(draft.urineOutputMl),
+      oralIntakeMl: num(draft.oralIntakeMl),
+      ivIntakeMl: num(draft.ivIntakeMl),
       clinicalConcern: concern.trim() || undefined,
     };
     const outcome = await record.mutateAsync({
@@ -331,14 +333,39 @@ export function ObservationForm({
               onChange={set("bloodSugar")}
               testID="obs-bloodSugar"
             />
-            <Field
-              label="Urine output"
-              unit="mL"
-              value={draft.urineOutputMl}
-              onChange={set("urineOutputMl")}
-              testID="obs-urineOutputMl"
-            />
           </View>
+
+          {/* Amounts since the previous set, so the 24-hour balance adds up without double counting. */}
+          <VStack gap={6} testID="obs-fluids">
+            <Text variant="label">Fluids since the last set</Text>
+            <Text variant="caption" tone="tertiary">
+              In mL. Leave a box empty if it was not measured — an empty box
+              is not counted as zero.
+            </Text>
+            <View style={styles.grid}>
+              <Field
+                label="Oral intake"
+                unit="mL"
+                value={draft.oralIntakeMl}
+                onChange={set("oralIntakeMl")}
+                testID="obs-oralIntakeMl"
+              />
+              <Field
+                label="IV intake"
+                unit="mL"
+                value={draft.ivIntakeMl}
+                onChange={set("ivIntakeMl")}
+                testID="obs-ivIntakeMl"
+              />
+              <Field
+                label="Urine output"
+                unit="mL"
+                value={draft.urineOutputMl}
+                onChange={set("urineOutputMl")}
+                testID="obs-urineOutputMl"
+              />
+            </View>
+          </VStack>
 
           <TextField
             label="Are you concerned about this patient?"

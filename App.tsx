@@ -28,9 +28,19 @@ void SplashScreen.preventAutoHideAsync();
 // which of these is registered at runtime depends on permissions (see navItems.ts).
 type InpatientParamList = {
   WardBoard: { mode?: "ward" | "icu" | "mine" } | undefined;
-  Bedside: { admissionId: string };
+  Bedside: {
+    admissionId: string;
+    tab?: "chart" | "observations" | "drugs" | "notes";
+  };
   AdmitPatient: { patientId?: string; consultationId?: string } | undefined;
   Discharge: { admissionId: string };
+  MedicalRecord: { patientId: string };
+  PatientDetail: { patientId: string };
+};
+
+type HandoverParamList = {
+  HandoverList: undefined;
+  Bedside: InpatientParamList["Bedside"];
   MedicalRecord: { patientId: string };
   PatientDetail: { patientId: string };
 };
@@ -63,6 +73,7 @@ type BillingParamList = {
   BillDetail: { billId: string };
   RecordPayment: { billId: string };
   Receipt: { paymentId: string };
+  RefundSlip: { refundId: string };
   Outstanding: undefined;
 };
 
@@ -88,7 +99,7 @@ type AppParamList = {
   Beds: undefined;
   Icu: NavigatorScreenParams<InpatientParamList> | undefined;
   NursingPatients: NavigatorScreenParams<InpatientParamList> | undefined;
-  Handover: undefined;
+  Handover: NavigatorScreenParams<HandoverParamList> | undefined;
   LabQueue: NavigatorScreenParams<LaboratoryParamList> | undefined;
   LabReports: NavigatorScreenParams<LaboratoryParamList> | undefined;
   PharmacyQueue: NavigatorScreenParams<PharmacyParamList> | undefined;
@@ -171,7 +182,13 @@ const linking: LinkingOptions<RootParamList> = {
               Bedside: "patients/:admissionId",
             },
           },
-          Handover: "nursing/handover",
+          Handover: {
+            path: "nursing/handover",
+            screens: {
+              HandoverList: "",
+              Bedside: "patients/:admissionId",
+            },
+          },
           LabQueue: {
             path: "lab/requests",
             screens: { LabQueueList: "", LabOrder: ":orderId" },
@@ -217,6 +234,7 @@ const linking: LinkingOptions<RootParamList> = {
               BillDetail: "bills/:billId",
               RecordPayment: "payment/:billId",
               Receipt: "receipt/:paymentId",
+              RefundSlip: "refund/:refundId",
               Outstanding: "outstanding",
             },
           },

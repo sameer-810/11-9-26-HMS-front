@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Pressable } from "react-native";
 
 import { useAuthStore } from "@shared/store/useAuthStore";
+import { PERMISSIONS } from "@shared/permissions";
 import { Text, VStack } from "@shared/ui";
 import type { Patient, PatientBanner } from "@modules/patient/types";
 import { useCurrentAdmission } from "@modules/printing/hooks/usePrinting";
@@ -25,7 +26,15 @@ export function PrintWristbandButton({
 }) {
   const hospitalName = useAuthStore((s) => s.hospital?.name ?? "");
   const admitted = patient.status === "admitted";
-  const admission = useCurrentAdmission(patient.id, admitted);
+  // Mirrors the API's read grant on /admissions; without it the lookup is a certain 403.
+  const seesAdmissions = useAuthStore((s) =>
+    s.hasAnyPermission(
+      PERMISSIONS.ADMISSION_MANAGE,
+      PERMISSIONS.NURSING_PATIENTS_VIEW,
+      PERMISSIONS.RECORD_VIEW,
+    ),
+  );
+  const admission = useCurrentAdmission(patient.id, admitted && seesAdmissions);
 
   // Under one year defaults to the infant band; an adult band slides off a neonate's hand.
   const [size, setSize] = useState<WristbandSize>(
@@ -33,9 +42,9 @@ export function PrintWristbandButton({
   );
   const other: WristbandSize = size === "adult" ? "infant" : "adult";
 
-  const waitingForAdmission = admitted && admission.isLoading;
+  const waitingForAdmission = admitted && seesAdmissions && admission.isLoading;
   const note =
-    admitted && admission.isError
+    admitted && (!seesAdmissions || admission.isError)
       ? "Ward and bed will not be printed: this login cannot see admissions."
       : `${size === "adult" ? "Adult" : "Infant"} band, ${WRISTBAND_STOCK[size].widthMm} × ${WRISTBAND_STOCK[size].lengthMm} mm`;
 

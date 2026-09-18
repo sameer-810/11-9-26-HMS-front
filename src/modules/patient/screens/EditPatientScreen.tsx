@@ -18,9 +18,14 @@ import {
   Banner,
   Skeleton,
   ErrorState,
+  ConfirmDialog,
 } from "@shared/ui";
 import { ControlledTextField } from "@shared/form/ControlledTextField";
-import { apiErrorCode, apiErrorMessage } from "@api/apiClient";
+import {
+  apiErrorCode,
+  apiErrorDetails,
+  apiErrorMessage,
+} from "@api/apiClient";
 import { useDebouncedValue } from "@shared/hooks/useDebouncedValue";
 import {
   useCheckDuplicates,
@@ -170,7 +175,7 @@ function EditPatientForm({
     matches: DuplicateMatch[];
   } | null>(null);
 
-  const { control, handleSubmit, setValue, formState } =
+  const { control, handleSubmit, setValue, getValues, formState } =
     useForm<RegisterPatientForm>({
       resolver: zodResolver(registerPatientSchema),
       mode: "onTouched",
@@ -217,10 +222,25 @@ function EditPatientForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkKey, enoughToCheck]);
 
-  const matches =
-    enoughToCheck && dupResult?.key === checkKey ? dupResult.matches : [];
+  /**
+   * The server's refusal, tied to the identity it was about. It re-checks with the date of
+   * birth and gender on file, so it can find a match the advisory check above did not.
+   */
+  const [refused, setRefused] = useState<{
+    key: string;
+    matches: DuplicateMatch[];
+  } | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const identityKey = `${watched.firstName || ""}|${watched.lastName || ""}|${watched.mobile || ""}|${watched.dateOfBirth || ""}|${watched.abhaNumber || ""}`;
+  const serverMatches =
+    refused && refused.key === identityKey ? refused.matches : null;
+  const mustConfirm = serverMatches !== null;
 
-  const submit = handleSubmit(async (v) => {
+  const advisory =
+    enoughToCheck && dupResult?.key === checkKey ? dupResult.matches : [];
+  const matches = serverMatches ?? advisory;
+
+  const save = async (v: RegisterPatientForm, confirmedNotDuplicate: boolean) => {
     setError(null);
     setUnchanged(false);
     const next = toPayload(v, patient);
@@ -239,7 +259,9 @@ function EditPatientForm({
     }
 
     try {
-      await update.mutateAsync(patch);
+      await update.mutateAsync(
+        confirmedNotDuplicate ? { ...patch, confirmedNotDuplicate } : patch,
+      );
       openScreen(
         navigation,
         "Patients",
@@ -248,13 +270,44 @@ function EditPatientForm({
         { pop: true },
       );
     } catch (err) {
+      if (apiErrorCode(err) === "POSSIBLE_DUPLICATE") {
+        // Same as registration: show who it matches, and ask before making a second record of them.
+        const found =
+          apiErrorDetails<{ matches?: DuplicateMatch[] }>(err)?.matches ?? [];
+        // Keyed on the raw form values, as the watched key is, not the trimmed ones.
+        const raw = getValues();
+        setRefused({
+          key: `${raw.firstName || ""}|${raw.lastName || ""}|${raw.mobile || ""}|${raw.dateOfBirth || ""}|${raw.abhaNumber || ""}`,
+          matches: found.filter((m) => m.id !== patient.id),
+        });
+        setConfirmOpen(true);
+        return;
+      }
       setError(
         apiErrorCode(err) === "CONFLICT"
           ? "Another record already uses one of these details. Check the patient ID and try again."
           : apiErrorMessage(err, "Could not save these details"),
       );
     }
+  };
+
+  const submit = handleSubmit((v) => {
+    if (mustConfirm) {
+      setConfirmOpen(true);
+      return;
+    }
+    return save(v, false);
   });
+
+  const confirmAndSave = handleSubmit((v) => {
+    setConfirmOpen(false);
+    return save(v, true);
+  });
+
+  const confirmMessage =
+    serverMatches && serverMatches.length === 1
+      ? `${serverMatches[0].fullName} (${serverMatches[0].patientId}) matches on ${serverMatches[0].reasons.join(" and ").toLowerCase()}. If this is the same person, open their record instead — two records split their history.`
+      : "Someone matching these details is already registered. If this is the same person, open their record instead — two records split their history.";
 
   return (
     <Screen
@@ -284,7 +337,7 @@ function EditPatientForm({
 
         <DuplicateWarning
           matches={matches}
-          mustConfirm={false}
+          mustConfirm={mustConfirm}
           onOpenExisting={(m) =>
             openScreen(navigation, "Patients", "PatientDetail", { id: m.id })
           }
@@ -514,7 +567,12 @@ function EditPatientForm({
             placeholder="14 digits"
             numericField
             maxLength={17}
-            hint="Optional. Once recorded it can be corrected, not removed."
+            testID="edit-abhaNumber"
+            hint={
+              initial.abhaNumber
+                ? "Optional. Correct it, or clear the box to remove a number recorded by mistake."
+                : "Optional. A patient without one still gets care."
+            }
           />
         </Card>
 
@@ -532,7 +590,8 @@ function EditPatientForm({
             }
           />
           <Button
-            label="Save details"
+            label={mustConfirm ? "Save anyway…" : "Save details"}
+            variant={mustConfirm ? "secondary" : "primary"}
             fullWidth={false}
             loading={update.isPending}
             onPress={submit}
@@ -540,6 +599,19 @@ function EditPatientForm({
           />
         </HStack>
       </VStack>
+
+      {/* The same last gate as registration, worded for a correction. */}
+      <ConfirmDialog
+        visible={confirmOpen}
+        title="Save details that match another patient?"
+        message={confirmMessage}
+        confirmLabel="Yes, this is someone else"
+        cancelLabel="Go back"
+        destructive
+        loading={update.isPending}
+        onConfirm={confirmAndSave}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </Screen>
   );
 }

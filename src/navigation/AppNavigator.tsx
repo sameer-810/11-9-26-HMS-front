@@ -23,6 +23,7 @@ import {
   IcuNavigator,
   MyPatientsNavigator,
   MyWardNavigator,
+  HandoverNavigator,
 } from "@modules/inpatient/InpatientNavigator";
 import {
   LabQueueNavigator,
@@ -71,7 +72,7 @@ const SCREENS: Record<string, React.ComponentType<Record<string, unknown>>> = {
   AdmittedPatients: AdmittedPatientsNavigator,
   Icu: IcuNavigator,
   NursingPatients: MyWardNavigator,
-  Handover: MyWardNavigator,
+  Handover: HandoverNavigator,
 
   // ---- Diagnostics (Phase 5) ----
   LabQueue: LabQueueNavigator,

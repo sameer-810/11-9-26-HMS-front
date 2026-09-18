@@ -37,6 +37,10 @@
       ]
     },
     {
+      "source": "/manifest.json",
+      "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+    },
+    {
       "source": "/index.html",
       "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
     },
@@ -52,7 +56,7 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!sw\\.js$|_expo/|assets/).*)",
+      "source": "/((?!sw\\.js$|manifest\\.json$|icons/|_expo/|assets/).*)",
       "destination": "/index.html"
     }
   ]

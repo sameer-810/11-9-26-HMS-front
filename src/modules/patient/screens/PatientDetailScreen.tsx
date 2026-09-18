@@ -249,6 +249,12 @@ export default function PatientDetailScreen() {
               value={`${patient.age}${patient.ageIsApproximate ? " (stated, not from a date of birth)" : ""}`}
             />
             <Detail label="Gender" value={patient.gender} />
+            <Detail
+              label="ABHA number"
+              value={patient.abhaNumber || "None recorded"}
+              testID="patient-abha"
+              tabular
+            />
             {seesClinical && patient.bloodGroup ? (
               <Detail
                 label="Blood group"

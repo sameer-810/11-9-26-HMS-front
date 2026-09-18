@@ -84,6 +84,49 @@ export interface Payment {
   voidReason: string;
 }
 
+export type CreditNoteStatus = "pending" | "approved" | "rejected";
+
+export const CREDIT_NOTE_STATUS_LABELS: Record<CreditNoteStatus, string> = {
+  pending: "Waiting for approval",
+  approved: "Approved",
+  rejected: "Rejected",
+};
+
+/** A correction to a finalised bill. Counts towards `credited` only once approved. */
+export interface CreditNote {
+  id: string;
+  creditNoteNumber: string;
+  amount: number;
+  reason: string;
+  status: CreditNoteStatus;
+  requestedByName: string;
+  requestedAt: string;
+  decidedByName?: string;
+  decidedAt?: string | null;
+  decisionNote?: string;
+}
+
+export interface Refund {
+  id: string;
+  refundNumber: string;
+  billId: string;
+  billNumber: string;
+  amount: number;
+  method: PaymentMethod;
+  methodLabel: string;
+  reference: string;
+  reason: string;
+  paidOutAt: string;
+  paidOutByName: string;
+}
+
+/** Statuses a credit note can be raised against: finalised, whatever has been paid. */
+export const CREDITABLE_STATUSES: BillStatus[] = [
+  "finalised",
+  "partially_paid",
+  "paid",
+];
+
 export interface Bill {
   id: string;
   billNumber: string;
@@ -114,7 +157,15 @@ export interface Bill {
   discountAmount: number;
   tax: number;
   total: number;
+  creditNotes: CreditNote[];
+  /** Approved credit notes only. */
+  credited: number;
+  /** Total less approved credit notes: what the patient owes in all. */
+  netTotal: number;
   amountPaid: number;
+  refunded: number;
+  /** Paid beyond the net total and not yet handed back. */
+  refundDue: number;
   balanceDue: number;
   hasUnpriced: boolean;
   notes: string;
@@ -126,8 +177,10 @@ export interface Bill {
   cancelledAt: string | null;
   cancelReason: string;
   payments?: Payment[];
+  refunds?: Refund[];
   warnings?: string[];
   payment?: Payment;
+  refund?: Refund;
 }
 
 export interface BillRow {
@@ -141,6 +194,8 @@ export interface BillRow {
   balanceDue: number;
   lineCount: number;
   discountStatus: Bill["discount"]["status"];
+  creditNotePending: boolean;
+  refundDue: number;
   createdAt: string;
   finalisedAt: string | null;
 }
@@ -189,6 +244,47 @@ export interface Receipt {
     status: BillStatus;
   } | null;
   footer: string;
+}
+
+/** `GET /billing/refunds/:id/receipt`: the slip the patient signs for money handed back. */
+export interface RefundReceipt {
+  hospital: Receipt["hospital"];
+  patient: BillPatient;
+  refund: Refund;
+  amountInWords: string;
+  bill: {
+    id: string;
+    billNumber: string;
+    billType: BillType;
+    total: number;
+    credited: number;
+    amountPaid: number;
+    refunded: number;
+    refundDue: number;
+    status: BillStatus;
+  } | null;
+  footer: string;
+}
+
+/** `GET /hospital`, as far as a printed invoice needs it. */
+export interface InvoiceHospital {
+  name: string;
+  registrationNumber: string;
+  address: {
+    line1: string;
+    line2: string;
+    city: string;
+    state: string;
+    pincode: string;
+  };
+  phone: string;
+  email: string;
+  gstin: string;
+}
+
+export interface BillingSettings {
+  taxRates: Partial<Record<ChargeCategory, number>>;
+  receiptFooter: string;
 }
 
 export type AgingBucket = "0_30" | "31_60" | "61_90" | "90_plus";

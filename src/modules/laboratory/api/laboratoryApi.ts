@@ -31,11 +31,64 @@ export interface SaveResultsResponse {
   };
 }
 
+/** One numeric parameter is the simple case; multi-parameter panels come from the standard catalogue. */
+export interface LabTestParameterBody {
+  code: string;
+  name: string;
+  unit?: string;
+  type?: "numeric" | "text";
+  ranges?: { sex: "any"; low: number | null; high: number | null }[];
+}
+
+export interface CreateLabTestBody {
+  code: string;
+  name: string;
+  category?: string;
+  sampleType?: string;
+  container?: string;
+  preparation?: string;
+  targetMinutes?: Record<LabUrgency, number>;
+  price?: number;
+  parameters: LabTestParameterBody[];
+}
+
+/** The code is fixed (old orders link prior results by it); parameters are left to the lab lead. */
+export type LabTestPatch = Partial<
+  Pick<
+    CreateLabTestBody,
+    "name" | "category" | "sampleType" | "preparation" | "targetMinutes" | "price"
+  > & { isActive: boolean }
+>;
+
 export const laboratoryApi = {
   tests: async (params: { search?: string; category?: string } = {}) => {
     const res = await apiClient.get<{ data: LabTest[] }>("/laboratory/tests", {
       params,
     });
+    return res.data.data;
+  },
+
+  /** The setup view: inactive tests included, so they can be switched back on. */
+  catalogue: async () => {
+    const res = await apiClient.get<{ data: LabTest[] }>("/laboratory/tests", {
+      params: { includeInactive: "true" },
+    });
+    return res.data.data;
+  },
+
+  createTest: async (body: CreateLabTestBody) => {
+    const res = await apiClient.post<{ data: LabTest }>(
+      "/laboratory/tests",
+      body,
+    );
+    return res.data.data;
+  },
+
+  updateTest: async (id: string, body: LabTestPatch) => {
+    const res = await apiClient.patch<{ data: LabTest }>(
+      `/laboratory/tests/${id}`,
+      body,
+    );
     return res.data.data;
   },
 

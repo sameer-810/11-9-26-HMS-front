@@ -132,6 +132,9 @@ export interface ObservationVitals {
   bloodSugar: number | null;
   weightKg: number | null;
   urineOutputMl: number | null;
+  /** Intake since the previous set, in mL. Null when not measured, never 0. */
+  oralIntakeMl: number | null;
+  ivIntakeMl: number | null;
 }
 
 export interface News2Parameter {
@@ -275,12 +278,25 @@ export interface Handover {
   outstanding: boolean;
 }
 
+/** Sums over the window. Each part is null when nothing was recorded, so it never reads as 0 mL. */
+export interface FluidBalance {
+  since: string;
+  oralIntakeMl: number | null;
+  ivIntakeMl: number | null;
+  intakeMl: number | null;
+  outputMl: number | null;
+  /** Null unless both intake and output were recorded. */
+  balanceMl: number | null;
+}
+
 export interface Bedside {
   admission: AdmissionRow | null;
   observations: Observation[];
   notes: NursingNote[];
   handovers: Handover[];
   round: DrugRound | null;
+  /** Absent from an API older than the fluid chart. */
+  fluidBalance?: FluidBalance | null;
   current: {
     total: number;
     band: News2Band | null;

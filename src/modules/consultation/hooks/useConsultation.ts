@@ -110,13 +110,17 @@ export const useCreatePrescription = () => {
   });
 };
 
-export const usePrescriptions = (params?: {
-  patientId?: string;
-  status?: string;
-}) =>
+export const usePrescriptions = (
+  params?: {
+    patientId?: string;
+    status?: string;
+  },
+  enabled = true,
+) =>
   useQuery({
     queryKey: ["prescriptions", params],
     queryFn: () => prescriptionApi.list(params),
+    enabled,
   });
 
 // ---- The record -------------------------------------------------------------

@@ -43,11 +43,16 @@ import {
   useUpdateConsultation,
   useSignConsultation,
   useAddAddendum,
+  usePrescriptions,
 } from "@modules/consultation/hooks/useConsultation";
 import { PrescribePanel } from "@modules/consultation/components/PrescribePanel";
+import { DoctorPrintPrescriptionButton } from "@modules/consultation/components/DoctorPrintPrescriptionButton";
 import { OrderTestsPanel } from "@modules/laboratory/components/OrderTestsPanel";
 import { LabFlagGlyph } from "@modules/laboratory/components/LabFlag";
 import { formatDateTime } from "@shared/format";
+import { nameWithStrength } from "@shared/utils/medicineName";
+import { useAuthStore } from "@shared/store/useAuthStore";
+import { PERMISSIONS } from "@shared/permissions";
 import type { Diagnosis, RestrictedDetails } from "@modules/consultation/types";
 
 /**
@@ -243,6 +248,13 @@ export default function ConsultationScreen() {
           />
         ) : null}
 
+        {signed && patientId ? (
+          <SignedPrescriptions
+            patientId={patientId}
+            consultationId={consultation.id}
+          />
+        ) : null}
+
         {signed ? (
           <AddendaPanel
             consultationId={consultation.id}
@@ -262,6 +274,54 @@ export default function ConsultationScreen() {
         onCancel={() => setSignOpen(false)}
       />
     </Screen>
+  );
+}
+
+/** What was prescribed in this consultation, each printable by the prescriber. */
+function SignedPrescriptions({
+  patientId,
+  consultationId,
+}: {
+  patientId: string;
+  consultationId: string;
+}) {
+  const canPrescribe = useAuthStore((s) => s.hasPermission)(
+    PERMISSIONS.PRESCRIPTION_CREATE,
+  );
+  const { data } = usePrescriptions({ patientId }, canPrescribe);
+  const mine = (data?.data ?? []).filter(
+    (p) => p.consultationId === consultationId && p.status !== "cancelled",
+  );
+  if (!canPrescribe || mine.length === 0) return null;
+
+  return (
+    <Card testID="consultation-prescriptions">
+      <SectionHeader
+        title="Prescriptions from this consultation"
+        subtitle="Print a copy for the patient to take to another pharmacy"
+      />
+      <VStack gap={10}>
+        {mine.map((p) => (
+          <HStack key={p.id} gap={10} align="center" wrap>
+            <VStack gap={1} flex={1}>
+              <Text variant="label" tone="primary" tabular>
+                {p.prescriptionNumber}
+              </Text>
+              <Text variant="caption" tone="secondary" numberOfLines={2}>
+                {p.lines
+                  .filter((l) => l.status !== "cancelled")
+                  .map((l) => nameWithStrength(l.medicineName, l.strength))
+                  .join(", ")}
+              </Text>
+            </VStack>
+            <DoctorPrintPrescriptionButton
+              prescriptionId={p.id}
+              testID={`consultation-print-${p.prescriptionNumber}`}
+            />
+          </HStack>
+        ))}
+      </VStack>
+    </Card>
   );
 }
 

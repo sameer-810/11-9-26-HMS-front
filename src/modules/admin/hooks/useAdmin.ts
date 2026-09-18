@@ -10,6 +10,7 @@ import { useAuthStore } from "@shared/store/useAuthStore";
 import type {
   AdminUser,
   BedBoard,
+  BedPatch,
   BedStatus,
   BillingSettingsPatch,
   BulkBedsBody,
@@ -19,6 +20,7 @@ import type {
   CreateUserBody,
   DepartmentBody,
   HospitalPatch,
+  RoomPatch,
   RoomType,
   ScheduleExceptionBody,
   TariffBody,
@@ -26,6 +28,7 @@ import type {
   UpdateUserBody,
   UserListParams,
   WardBody,
+  WardPatch,
 } from "@modules/admin/types";
 
 /** Keys under "admin" so they never collide with pickers caching a different shape (e.g. `["wards"]`). */
@@ -381,6 +384,36 @@ export const useSetWardActive = () => {
     mutationFn: ({ id, active }: { id: string; active: boolean }) =>
       adminApi.wards.update(id, { isActive: active }),
     onSuccess: () => afterBedEstateChange(qc),
+  });
+};
+
+export const useUpdateWard = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: WardPatch }) =>
+      adminApi.wards.update(id, body),
+    onSuccess: () => afterBedEstateChange(qc),
+  });
+};
+
+export const useUpdateRoom = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: RoomPatch }) =>
+      adminApi.rooms.update(id, body),
+    onSuccess: () => afterBedEstateChange(qc),
+    // A refusal (someone admitted meanwhile) should show the beds as they are now.
+    onError: () => afterBedEstateChange(qc),
+  });
+};
+
+export const useUpdateBed = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: BedPatch }) =>
+      adminApi.beds.update(id, body),
+    onSuccess: () => afterBedEstateChange(qc),
+    onError: () => afterBedEstateChange(qc),
   });
 };
 

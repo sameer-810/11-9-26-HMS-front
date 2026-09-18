@@ -17,12 +17,13 @@ import {
   ListOrdered,
   HeartPulse,
   ClipboardList,
+  ClipboardCheck,
 } from "lucide-react-native";
 import { formatRupees } from "@shared/format";
 
 import { palette } from "@shared/designSystem";
 import { useAuthStore } from "@shared/store/useAuthStore";
-import { ROLE_LABELS } from "@shared/permissions";
+import { PERMISSIONS, ROLE_LABELS } from "@shared/permissions";
 import {
   Screen,
   StatTile,
@@ -53,6 +54,9 @@ export default function DashboardScreen() {
   const navigation = useNavigation<any>();
   const user = useAuthStore((s) => s.user);
   const hospital = useAuthStore((s) => s.hospital);
+  const canApprove = useAuthStore((s) => s.hasPermission)(
+    PERMISSIONS.HOSPITAL_CONFIG,
+  );
   const { data, isLoading, isError, error, refetch, isRefetching } =
     useDashboardSummary();
   const reachable = new Set(useVisibleNavItems().map((i) => i.name));
@@ -420,6 +424,26 @@ export default function DashboardScreen() {
                         hint: "Opens outstanding bills",
                       })}
                     />
+                    {/* For whoever decides: approval is administration's (section 6.6). */}
+                    {canApprove ? (
+                      <StatTile
+                        label="Waiting for approval"
+                        value={tiles.billing.approvalsWaiting ?? 0}
+                        sublabel="discounts and credit notes"
+                        icon={ClipboardCheck}
+                        accent="violet"
+                        attention={(tiles.billing.approvalsWaiting ?? 0) > 0}
+                        testID="tile-billing-approvals"
+                        {...open({
+                          route: "Bills",
+                          params: {
+                            screen: "BillsList",
+                            params: { show: "approvals" },
+                          },
+                          hint: "Opens bills, where the ones waiting are marked",
+                        })}
+                      />
+                    ) : null}
                   </>
                 ) : null}
 

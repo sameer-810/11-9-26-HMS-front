@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   inpatientApi,
   type AdmissionQuery,
@@ -122,6 +127,16 @@ export const useDischarge = (admissionId: string) => {
     },
   });
 };
+
+export const useNurses = (enabled = true) =>
+  useQuery({
+    queryKey: ["nurses"],
+    queryFn: inpatientApi.nurses,
+    enabled,
+    staleTime: 5 * 60_000,
+    // A refusal or a missing list will not change on retry.
+    retry: false,
+  });
 
 export const useAssignNurse = (admissionId: string) => {
   const qc = useQueryClient();
@@ -253,6 +268,17 @@ export const useHandovers = (admissionId?: string) =>
     queryKey: ["handovers", admissionId],
     queryFn: () => inpatientApi.handovers(admissionId!),
     enabled: Boolean(admissionId),
+  });
+
+/** One handover list per admission, sharing the cache with each chart's SBAR panel. */
+export const useHandoversForMany = (admissionIds: string[]) =>
+  useQueries({
+    queries: admissionIds.map((admissionId) => ({
+      queryKey: ["handovers", admissionId],
+      queryFn: () => inpatientApi.handovers(admissionId),
+      refetchInterval: WARD_REFRESH_MS,
+      refetchOnWindowFocus: true,
+    })),
   });
 
 export const useSubmitHandover = () => {

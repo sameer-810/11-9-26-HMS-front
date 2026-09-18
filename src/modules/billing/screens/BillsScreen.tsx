@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { useNavigation } from "@react-navigation/native";
+import { View } from "react-native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { Receipt, FilePlus2, Clock } from "lucide-react-native";
 
 import { useAuthStore } from "@shared/store/useAuthStore";
@@ -18,16 +19,21 @@ import {
   EmptyState,
   StatTile,
   Pagination,
+  Banner,
 } from "@shared/ui";
 import { useDebouncedValue } from "@shared/hooks/useDebouncedValue";
 import { formatDateTime, formatRupees } from "@shared/format";
 import { useBills, useOutstanding } from "@modules/billing/hooks/useBilling";
 import { BillStatusText } from "@modules/billing/components/BillStatusText";
+import { BillBadge } from "@modules/billing/components/BillBadge";
 import type { BillStatus } from "@modules/billing/types";
 
-/** The bills — every state, newest first. */
+/** The bills — every state, newest first. Rows needing a decision or a refund are badged. */
 export default function BillsScreen() {
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+  // From the dashboard's approvals tile. The list cannot be filtered to approvals, so say where they are.
+  const approvalsHint = route.params?.show === "approvals";
   const canManage = useAuthStore((s) => s.hasPermission)(
     PERMISSIONS.BILLING_MANAGE,
   );
@@ -74,6 +80,16 @@ export default function BillsScreen() {
       }
     >
       <VStack gap={14}>
+        {approvalsHint ? (
+          <View testID="bills-approvals-hint">
+            <Banner
+              tone="info"
+              title="Waiting for approval"
+              message="Bills with a discount or credit note waiting for a decision are marked in the list below. Open one to approve or reject it. The list cannot yet be narrowed to only those bills."
+              onDismiss={() => navigation.setParams({ show: undefined })}
+            />
+          </View>
+        ) : null}
         <HStack gap={10} wrap>
           <StatTile
             label="Outstanding"
@@ -166,6 +182,24 @@ export default function BillsScreen() {
                       </Text>
                     ) : null}
                     <BillStatusText status={b.status} />
+                    {b.discountStatus === "pending" && b.status === "draft" ? (
+                      <BillBadge
+                        label="Discount waiting"
+                        testID={`bill-badge-discount-${b.billNumber}`}
+                      />
+                    ) : null}
+                    {b.creditNotePending ? (
+                      <BillBadge
+                        label="Credit note waiting"
+                        testID={`bill-badge-credit-${b.billNumber}`}
+                      />
+                    ) : null}
+                    {b.refundDue > 0 ? (
+                      <BillBadge
+                        label={`Refund due ${formatRupees(b.refundDue)}`}
+                        testID={`bill-badge-refund-${b.billNumber}`}
+                      />
+                    ) : null}
                   </VStack>
                 </HStack>
               </Card>

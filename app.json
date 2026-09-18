@@ -37,7 +37,9 @@
     },
     "web": {
       "bundler": "metro",
-      "output": "single"
+      "output": "single",
+      "themeColor": "#104E82",
+      "description": "Reception, consultation, wards, laboratory, pharmacy and billing on one connected platform."
     },
     "plugins": ["expo-secure-store", "expo-font", "expo-camera", "expo-audio"],
     "runtimeVersion": {

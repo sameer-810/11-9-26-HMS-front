@@ -35,6 +35,8 @@ import {
 } from "@modules/admin/types";
 
 type Filter = "all" | BedStatus;
+/** Which change the panel under a ward is making. */
+type BedAction = "maintenance" | "reserve";
 
 interface WardGroup {
   id: string;
@@ -62,7 +64,7 @@ function countOf(beds: Bed[]): BedCounts {
 
 /**
  * Bed management (IP-02). Shows no patient: reachable with beds.view alone, so the
- * occupant id is never followed. The only manual transition is out of service and back.
+ * occupant id is never followed. Manual changes are out of service and back, and reserve and release.
  */
 export default function BedsScreen() {
   const hasAnyPermission = useAuthStore((s) => s.hasAnyPermission);
@@ -76,6 +78,7 @@ export default function BedsScreen() {
   const board = useBedBoardCounts();
   const [filter, setFilter] = useState<Filter>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [action, setAction] = useState<BedAction>("maintenance");
   const [notice, setNotice] = useState<string | null>(null);
 
   const active = useMemo(
@@ -253,27 +256,39 @@ export default function BedsScreen() {
                             wardCode={g.code}
                             canManage={canManage}
                             selected={selected?.id === b.id}
-                            onToggle={() => {
+                            onAction={(next) => {
                               setNotice(null);
-                              setSelectedId(
-                                selected?.id === b.id ? null : b.id,
-                              );
+                              setAction(next);
+                              setSelectedId(b.id);
                             }}
+                            onClose={() => setSelectedId(null)}
                           />
                         ))}
                       </HStack>
                     )}
 
                     {selected && selected.ward?.id === g.id && canManage ? (
-                      <MaintenancePanel
-                        key={`${selected.id}-${selected.status}`}
-                        bed={selected}
-                        onCancel={() => setSelectedId(null)}
-                        onDone={(message) => {
-                          setSelectedId(null);
-                          setNotice(message);
-                        }}
-                      />
+                      action === "reserve" ? (
+                        <ReservePanel
+                          key={`${selected.id}-${selected.status}-reserve`}
+                          bed={selected}
+                          onCancel={() => setSelectedId(null)}
+                          onDone={(message) => {
+                            setSelectedId(null);
+                            setNotice(message);
+                          }}
+                        />
+                      ) : (
+                        <MaintenancePanel
+                          key={`${selected.id}-${selected.status}`}
+                          bed={selected}
+                          onCancel={() => setSelectedId(null)}
+                          onDone={(message) => {
+                            setSelectedId(null);
+                            setNotice(message);
+                          }}
+                        />
+                      )
                     ) : null}
                   </VStack>
                 </Card>
@@ -291,13 +306,15 @@ function BedTile({
   wardCode,
   canManage,
   selected,
-  onToggle,
+  onAction,
+  onClose,
 }: {
   bed: Bed;
   wardCode: string;
   canManage: boolean;
   selected: boolean;
-  onToggle: () => void;
+  onAction: (action: BedAction) => void;
+  onClose: () => void;
 }) {
   const s = bedState[bed.status];
   const kit = [
@@ -339,9 +356,17 @@ function BedTile({
       >
         {s.label}
       </Text>
-      {bed.status === "maintenance" && bed.maintenanceNote ? (
-        <Text variant="caption" tone="secondary" numberOfLines={2}>
-          {bed.maintenanceNote}
+      {(bed.status === "maintenance" || bed.status === "reserved") &&
+      bed.maintenanceNote ? (
+        <Text
+          variant="caption"
+          tone="secondary"
+          numberOfLines={2}
+          testID={`bed-note-${bed.id}`}
+        >
+          {bed.status === "reserved"
+            ? `Held for: ${bed.maintenanceNote}`
+            : bed.maintenanceNote}
         </Text>
       ) : null}
       {kit ? (
@@ -350,19 +375,43 @@ function BedTile({
         </Text>
       ) : null}
       {canManage && bed.status !== "occupied" ? (
-        <Button
-          label={
-            selected
-              ? "Close"
-              : bed.status === "maintenance"
-                ? "Return to service"
-                : "Out of service"
-          }
-          size="xs"
-          variant="secondary"
-          onPress={onToggle}
-          testID={`bed-maintenance-${bed.id}`}
-        />
+        selected ? (
+          <Button
+            label="Close"
+            size="xs"
+            variant="secondary"
+            onPress={onClose}
+            testID={`bed-close-${bed.id}`}
+          />
+        ) : (
+          <VStack gap={4}>
+            {bed.status === "available" || bed.status === "reserved" ? (
+              <Button
+                label={bed.status === "reserved" ? "Release" : "Reserve"}
+                size="xs"
+                variant="secondary"
+                onPress={() => onAction("reserve")}
+                accessibilityHint={
+                  bed.status === "reserved"
+                    ? `Makes bed ${bed.number} available again`
+                    : `Holds bed ${bed.number} so it cannot be chosen for another patient`
+                }
+                testID={`bed-${bed.status === "reserved" ? "release" : "reserve"}-${bed.id}`}
+              />
+            ) : null}
+            <Button
+              label={
+                bed.status === "maintenance"
+                  ? "Return to service"
+                  : "Out of service"
+              }
+              size="xs"
+              variant="secondary"
+              onPress={() => onAction("maintenance")}
+              testID={`bed-maintenance-${bed.id}`}
+            />
+          </VStack>
+        )
       ) : null}
     </View>
   );
@@ -454,6 +503,98 @@ function MaintenancePanel({
           fullWidth={false}
           onPress={onCancel}
           testID="bed-maintenance-cancel"
+        />
+      </HStack>
+    </VStack>
+  );
+}
+
+/** Reserve an available bed, or release a reserved one. Nothing about the patient is recorded here. */
+function ReservePanel({
+  bed,
+  onDone,
+  onCancel,
+}: {
+  bed: Bed;
+  onDone: (message: string) => void;
+  onCancel: () => void;
+}) {
+  const setStatus = useSetBedStatus();
+  const [note, setNote] = useState("");
+  const reserving = bed.status === "available";
+  const noteOk = note.trim().length >= 3 && note.trim().length <= 200;
+
+  const submit = () =>
+    setStatus.mutate(
+      {
+        id: bed.id,
+        status: reserving ? "reserved" : "available",
+        maintenanceNote: reserving ? note.trim() : undefined,
+      },
+      {
+        onSuccess: () =>
+          onDone(
+            reserving
+              ? `Bed ${bed.number} is reserved.`
+              : `Bed ${bed.number} is released and available.`,
+          ),
+      },
+    );
+
+  return (
+    <VStack gap={8} style={styles.panel} testID="bed-reserve-panel">
+      <Text variant="label">
+        {reserving ? `Reserve bed ${bed.number}` : `Release bed ${bed.number}`}
+      </Text>
+      {setStatus.isError ? (
+        <View testID="bed-reserve-error">
+          <Banner
+            tone="danger"
+            message={apiErrorMessage(
+              setStatus.error,
+              "Could not change the bed",
+            )}
+          />
+        </View>
+      ) : null}
+      {reserving ? (
+        <TextField
+          label="What is it held for?"
+          required
+          placeholder="Post-op from theatre 2, transfer from ICU"
+          value={note}
+          onChangeText={setNote}
+          maxLength={200}
+          hint="No patient names: the bed board is seen by staff who cannot open records. At least 3 characters."
+          testID="bed-reserve-note"
+        />
+      ) : bed.maintenanceNote ? (
+        <Text variant="body-sm" tone="secondary">
+          Held for: {bed.maintenanceNote}
+        </Text>
+      ) : null}
+      <Text variant="body-sm" tone="secondary">
+        {reserving
+          ? "A reserved bed is greyed out on the admit and transfer lists, so nobody else is put in it, until it is released."
+          : "It becomes available for admission and transfer straight away."}
+      </Text>
+      <HStack gap={8} wrap>
+        <Button
+          label={reserving ? "Reserve bed" : "Release bed"}
+          size="sm"
+          fullWidth={false}
+          disabled={reserving && !noteOk}
+          loading={setStatus.isPending}
+          onPress={submit}
+          testID={reserving ? "bed-reserve-submit" : "bed-release-submit"}
+        />
+        <Button
+          label="Cancel"
+          size="sm"
+          variant="ghost"
+          fullWidth={false}
+          onPress={onCancel}
+          testID="bed-reserve-cancel"
         />
       </HStack>
     </VStack>

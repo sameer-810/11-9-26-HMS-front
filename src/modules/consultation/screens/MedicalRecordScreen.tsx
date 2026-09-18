@@ -49,6 +49,7 @@ import {
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { PERMISSIONS } from "@shared/permissions";
 import { OrderTestsPanel } from "@modules/laboratory/components/OrderTestsPanel";
+import { DoctorPrintPrescriptionButton } from "@modules/consultation/components/DoctorPrintPrescriptionButton";
 import { ResultTable } from "@modules/laboratory/components/ResultTable";
 import {
   LAB_STAGE_LABELS,
@@ -478,7 +479,7 @@ function MedicationTab({ prescriptions }: { prescriptions: Prescription[] }) {
   return (
     <VStack gap={12}>
       {prescriptions.map((p) => (
-        <Card key={p.id}>
+        <Card key={p.id} testID={`record-prescription-${p.prescriptionNumber}`}>
           <VStack gap={10}>
             <HStack gap={10} align="center" wrap>
               <VStack gap={1} flex={1}>
@@ -491,6 +492,14 @@ function MedicationTab({ prescriptions }: { prescriptions: Prescription[] }) {
               </VStack>
               <StatusChip status={p.status.replace("_", " ")} size="sm" />
             </HStack>
+            {/* Prescribers only; the button renders nothing for anyone else. */}
+            {p.status !== "cancelled" ? (
+              <DoctorPrintPrescriptionButton
+                prescriptionId={p.id}
+                align="flex-start"
+                testID={`print-prescription-${p.prescriptionNumber}`}
+              />
+            ) : null}
 
             <VStack gap={8}>
               {p.lines.map((l) => (

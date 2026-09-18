@@ -292,6 +292,25 @@ export interface WardBody {
   departmentId?: string | null;
 }
 
+export type WardPatch = Partial<Omit<WardBody, "code">> & {
+  isActive?: boolean;
+};
+
+export interface RoomPatch {
+  type?: RoomType;
+  dailyCharge?: number;
+  isActive?: boolean;
+}
+
+/** A bed's number is fixed (updateBedSchema is strict). A charge of 0 falls back to the room's, then the ward's. */
+export interface BedPatch {
+  dailyCharge?: number;
+  hasOxygen?: boolean;
+  hasVentilator?: boolean;
+  hasMonitor?: boolean;
+  isActive?: boolean;
+}
+
 export interface Room {
   id: string;
   number: string;

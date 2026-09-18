@@ -5,9 +5,12 @@ import type {
   BillStatus,
   BillType,
   BillingPreview,
+  BillingSettings,
+  InvoiceHospital,
   Outstanding,
   PaymentMethod,
   Receipt,
+  RefundReceipt,
   TariffItem,
 } from "@modules/billing/types";
 
@@ -18,6 +21,13 @@ export interface PaymentBody {
   bankName?: string;
   chequeDate?: string;
   note?: string;
+}
+
+export interface RefundBody {
+  amount: number;
+  method: PaymentMethod;
+  reference?: string;
+  reason: string;
 }
 
 export const billingApi = {
@@ -131,6 +141,49 @@ export const billingApi = {
         `/billing/payments/${paymentId}/receipt`,
       )
     ).data.data,
+
+  // A finalised bill is corrected by credit note, never by editing its charges.
+  requestCreditNote: async (
+    id: string,
+    body: { amount: number; reason: string },
+  ) =>
+    (
+      await apiClient.post<{ data: Bill }>(
+        `/billing/bills/${id}/credit-notes`,
+        body,
+      )
+    ).data.data,
+  decideCreditNote: async (
+    id: string,
+    creditNoteId: string,
+    body: { approve: boolean; note?: string },
+  ) =>
+    (
+      await apiClient.post<{ data: Bill }>(
+        `/billing/bills/${id}/credit-notes/${creditNoteId}/decision`,
+        body,
+      )
+    ).data.data,
+  refund: async (id: string, body: RefundBody) =>
+    (
+      await apiClient.post<{ data: Bill }>(
+        `/billing/bills/${id}/refunds`,
+        body,
+      )
+    ).data.data,
+  refundReceipt: async (refundId: string) =>
+    (
+      await apiClient.get<{ data: RefundReceipt }>(
+        `/billing/refunds/${refundId}/receipt`,
+      )
+    ).data.data,
+
+  /** For the printed invoice: the hospital's letterhead and the receipt footer. */
+  hospital: async () =>
+    (await apiClient.get<{ data: InvoiceHospital }>("/hospital")).data.data,
+  settings: async () =>
+    (await apiClient.get<{ data: BillingSettings }>("/billing/settings")).data
+      .data,
 
   outstanding: async () =>
     (await apiClient.get<{ data: Outstanding }>("/billing/outstanding")).data

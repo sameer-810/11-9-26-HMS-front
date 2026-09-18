@@ -1,5 +1,6 @@
 import { apiClient } from "@api/apiClient";
 import type { Paginated } from "@modules/patient/types";
+import type { DoctorSummary } from "@modules/appointment/types";
 import type {
   Admission,
   AdmissionRequest,
@@ -53,6 +54,8 @@ export interface ObservationBody {
   bloodSugar?: number | null;
   weightKg?: number | null;
   urineOutputMl?: number | null;
+  oralIntakeMl?: number | null;
+  ivIntakeMl?: number | null;
   clinicalConcern?: string;
   /** Stamped before the first attempt; see shared/offline/outbox.ts. */
   clientOpId?: string;
@@ -158,6 +161,14 @@ export const inpatientApi = {
       "/admissions/my-patients",
     );
     return res.data;
+  },
+
+  /** Nurses to allocate by name. Mirrors GET /users/doctors. */
+  nurses: async () => {
+    const res = await apiClient.get<{ data: DoctorSummary[] }>(
+      "/users/nurses",
+    );
+    return res.data.data;
   },
 
   assignNurse: async (id: string, nurseId: string) => {

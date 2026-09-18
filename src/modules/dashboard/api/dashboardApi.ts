@@ -48,6 +48,8 @@ export interface DashboardSummary {
     };
     billing?: {
       draftBills: number;
+      /** Discounts and credit notes nobody has decided on yet. */
+      approvalsWaiting: number;
       outstandingBills: number;
       outstandingPaise: number;
       collectedTodayPaise: number;

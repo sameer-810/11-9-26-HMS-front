@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   laboratoryApi,
+  type CreateLabTestBody,
+  type LabTestPatch,
   type OrderTestsBody,
 } from "@modules/laboratory/api/laboratoryApi";
 import type {
@@ -29,6 +31,46 @@ export const useLabTests = (search?: string) =>
     queryFn: () => laboratoryApi.tests(search ? { search } : {}),
     staleTime: 5 * 60_000,
   });
+
+// ---- Catalogue setup (hospital.config) ----------------------------------------
+
+/** Ordering screens read ["lab-tests"]; a catalogue change refreshes them too. */
+function invalidateCatalogue(qc: ReturnType<typeof useQueryClient>) {
+  qc.invalidateQueries({ queryKey: ["lab-catalogue"] });
+  qc.invalidateQueries({ queryKey: ["lab-tests"] });
+}
+
+export const useLabCatalogue = (enabled = true) =>
+  useQuery({
+    queryKey: ["lab-catalogue"],
+    queryFn: laboratoryApi.catalogue,
+    enabled,
+  });
+
+export const useLoadStandardLabCatalogue = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: laboratoryApi.loadStandardCatalogue,
+    onSuccess: () => invalidateCatalogue(qc),
+  });
+};
+
+export const useCreateLabTest = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: CreateLabTestBody) => laboratoryApi.createTest(body),
+    onSuccess: () => invalidateCatalogue(qc),
+  });
+};
+
+export const useUpdateLabTest = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: LabTestPatch }) =>
+      laboratoryApi.updateTest(id, body),
+    onSuccess: () => invalidateCatalogue(qc),
+  });
+};
 
 export const useOrderTests = () => {
   const qc = useQueryClient();

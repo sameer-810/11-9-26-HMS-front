@@ -40,6 +40,14 @@ import {
 import { ChargeTable } from "@modules/billing/components/ChargeTable";
 import { BillStatusText } from "@modules/billing/components/BillStatusText";
 import {
+  CreditNoteRequest,
+  CreditNotes,
+  RefundForm,
+  Refunds,
+} from "@modules/billing/components/BillCorrections";
+import { PrintInvoiceButton } from "@modules/billing/components/PrintInvoiceButton";
+import {
+  CREDITABLE_STATUSES,
   PAYMENT_METHOD_LABELS,
   type Bill,
   type Charge,
@@ -48,7 +56,8 @@ import {
 
 /**
  * Bill detail (BL-02 to BL-04): drafts allow charge edits and discount requests;
- * finalised bills lock charges and accept payments only (section 7).
+ * finalised bills lock charges and accept payments only (section 7). A finalised
+ * bill is corrected by credit note, and money owed back is paid out as a refund.
  */
 export default function BillDetailScreen() {
   const route = useRoute<any>();
@@ -83,6 +92,7 @@ export default function BillDetailScreen() {
   const draft = bill.status === "draft";
   const payable =
     bill.status === "finalised" || bill.status === "partially_paid";
+  const creditable = CREDITABLE_STATUSES.includes(bill.status);
 
   return (
     <Screen
@@ -150,6 +160,11 @@ export default function BillDetailScreen() {
           </VStack>
         </Card>
 
+        {bill.status !== "cancelled" ? (
+          <HStack justify="flex-end">
+            <PrintInvoiceButton bill={bill} />
+          </HStack>
+        ) : null}
         <Totals bill={bill} />
 
         {draft && canManage ? <DraftActions bill={bill} /> : null}
@@ -159,7 +174,13 @@ export default function BillDetailScreen() {
         {payable && canPay ? (
           <PaymentForm key={`${bill.balanceDue}`} bill={bill} />
         ) : null}
+        {creditable && bill.refundDue > 0 && canPay ? (
+          <RefundForm key={`${bill.refundDue}`} bill={bill} />
+        ) : null}
+        <CreditNotes bill={bill} canDecide={creditable && canApprove} />
+        {creditable && canManage ? <CreditNoteRequest bill={bill} /> : null}
         <Payments bill={bill} canVoid={canManage} />
+        <Refunds bill={bill} />
       </VStack>
     </Screen>
   );
@@ -193,11 +214,41 @@ function Totals({ bill }: { bill: Bill }) {
         />
         {bill.status !== "draft" && bill.status !== "cancelled" ? (
           <>
+            {bill.credited > 0 ? (
+              <>
+                <Row
+                  label="Credit notes"
+                  value={`− ${formatRupees(bill.credited)}`}
+                  testID="bill-credited"
+                />
+                <Row
+                  label="Net total"
+                  value={formatRupees(bill.netTotal)}
+                  strong
+                  testID="bill-net-total"
+                />
+              </>
+            ) : null}
             <Row
               label="Paid"
               value={formatRupees(bill.amountPaid)}
               testID="bill-paid"
             />
+            {bill.refunded > 0 ? (
+              <Row
+                label="Refunded"
+                value={formatRupees(bill.refunded)}
+                testID="bill-refunded"
+              />
+            ) : null}
+            {bill.refundDue > 0 ? (
+              <Row
+                label="Refund due"
+                value={formatRupees(bill.refundDue)}
+                strong
+                testID="bill-refund-due"
+              />
+            ) : null}
             <Row
               label="Balance due"
               value={formatRupees(bill.balanceDue)}
