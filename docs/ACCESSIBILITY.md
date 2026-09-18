@@ -68,9 +68,13 @@ Useful while iterating: `A11Y_ROLES=nurse,lab`, `A11Y_VIEWPORTS=phone`,
 
 ### Coverage
 
-48 distinct screens × 9 roles (eight roles plus signed out) × 2 viewports =
-**182 audited renders**. The full screen × role matrix is printed at the end of
+55 distinct screens × 9 roles (eight roles plus signed out) × 2 viewports =
+**197 audited renders**. The full screen × role matrix is printed at the end of
 every run.
+
+Phases 12 and 13 added the screens that had no way in before: the walk-in sheet,
+moving an appointment, editing a patient's details, the formulary, and the
+_Doctor schedules_, _Services & prices_ and _Lab tests_ tabs of Hospital setup.
 
 Phase 11 added two screens to the audit — _Roles & permissions_ and a nurse's
 user page, which carries the ward allocation — and the admission requests panel

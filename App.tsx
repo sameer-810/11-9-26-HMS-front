@@ -135,7 +135,11 @@ const linking: LinkingOptions<RootParamList> = {
           Appointments: {
             path: "appointments",
             // A date in the link (?date=YYYY-MM-DD) opens the list on that day.
-            screens: { AppointmentsList: "", BookAppointment: "book" },
+            screens: {
+              AppointmentsList: "",
+              BookAppointment: "book",
+              RescheduleAppointment: "move/:id",
+            },
           },
           OpdQueue: "opd/queue",
           Emergency: {

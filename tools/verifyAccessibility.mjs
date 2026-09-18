@@ -1387,7 +1387,10 @@ const DETAIL = {
       screen: "Move appointment",
       open: async (p) => {
         await go(p, `/appointments?date=${clinicDate}`);
-        await p.locator('[data-testid^="move-"]').first().click();
+        await p
+          .locator('[data-testid^="move-"]:visible')
+          .first()
+          .click({ timeout: 15000 });
         await settle(p);
       },
     },

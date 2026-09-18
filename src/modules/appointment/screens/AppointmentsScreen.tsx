@@ -302,15 +302,45 @@ export default function AppointmentsScreen() {
             }
             mobileCard={(a) => {
               const p = a.patient as PatientBanner;
+              // The table's action column scrolls out of reach on a phone, so the card carries it.
+              const actionable =
+                canManage && ["scheduled", "arrived"].includes(a.status);
               return (
-                <ListRow
-                  title={p?.fullName ?? "—"}
-                  subtitle={`${formatWallTime(a.scheduledTime)} · ${(a.doctor as { fullName?: string })?.fullName ?? ""}`}
-                  meta={p?.patientId}
-                  right={
-                    <StatusChip status={a.status.replace("_", " ")} size="sm" />
-                  }
-                />
+                <VStack gap={8}>
+                  <ListRow
+                    title={p?.fullName ?? "—"}
+                    subtitle={`${formatWallTime(a.scheduledTime)} · ${(a.doctor as { fullName?: string })?.fullName ?? ""}`}
+                    meta={p?.patientId}
+                    right={
+                      <StatusChip status={a.status.replace("_", " ")} size="sm" />
+                    }
+                  />
+                  {actionable ? (
+                    <HStack gap={6} justify="flex-end">
+                      <Button
+                        label="Move"
+                        variant="secondary"
+                        size="xs"
+                        fullWidth={false}
+                        accessibilityHint="Choose another date or time"
+                        testID={`move-phone-${a.appointmentNumber}`}
+                        onPress={() =>
+                          navigation.navigate("RescheduleAppointment", {
+                            id: a.id,
+                          })
+                        }
+                      />
+                      <Button
+                        label="Cancel"
+                        variant="secondary"
+                        size="xs"
+                        fullWidth={false}
+                        testID={`cancel-phone-${a.appointmentNumber}`}
+                        onPress={() => setCancelTarget(a)}
+                      />
+                    </HStack>
+                  ) : null}
+                </VStack>
               );
             }}
           />
